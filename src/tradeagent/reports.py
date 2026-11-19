@@ -41,8 +41,9 @@ def _bucket_table(state: AccountState, config: Config) -> Table:
 
 def account_section(state: AccountState, config: Config) -> Section:
     daily = state.sim.daily
-    v, prev = state.value(), float(daily["value"].iloc[-2]) if len(daily) > 1 else state.value()
     dep_today = sum(a for d, a, _ in state.sim.deposits if d == state.day)
+    v = state.value()
+    prev = float(daily["value"].iloc[-2]) if len(daily) > 1 else v - dep_today   # day one: nothing before the deposit
     change = v - prev - dep_today
     spy = state.bars["SPY"]["close"]
     spy_ret = float(spy.loc[:state.day].iloc[-1] / spy.loc[:state.day].iloc[-2] - 1)
@@ -177,8 +178,8 @@ def digest(state: AccountState, config: Config, *, macro_lines: Optional[list[Li
     if system_lines:
         sections.append(Section("System", system_lines))
     v = state.value()
-    prev = float(state.sim.daily["value"].iloc[-2]) if len(state.sim.daily) > 1 else v
     dep_today = sum(a for d, a, _ in state.sim.deposits if d == state.day)
+    prev = float(state.sim.daily["value"].iloc[-2]) if len(state.sim.daily) > 1 else v - dep_today
     ch = v - prev - dep_today
     spy = state.bars["SPY"]["close"].loc[:state.day]
     subj = subject_line("digest", [f"{state.day:%a %b %d}", usd(v), f"{usd(ch, True)} ({pct(ch / prev if prev else 0)})",
