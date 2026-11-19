@@ -125,6 +125,18 @@ class Triggers(Strict):
         return self
 
 
+class MarketData(Strict):
+    primary: Literal["yahoo", "finnhub", "schwab"]
+    crosscheck: Optional[Literal["yahoo", "finnhub", "schwab"]] = None
+    max_disagreement: float = Field(gt=0, le=0.10)
+
+    @model_validator(mode="after")
+    def _different_sources(self) -> "MarketData":
+        if self.crosscheck == self.primary:
+            raise ValueError("crosscheck must be a different source from primary")
+        return self
+
+
 class News(Strict):
     sources: list[Literal["yahoo_finance", "sec_edgar"]] = Field(min_length=1)
     min_similar_events: int = Field(ge=1)
@@ -184,6 +196,7 @@ class Config(Strict):
     tiers: Tiers
     stars: Stars
     triggers: Triggers
+    market_data: MarketData
     news: News
     schedule: Schedule
     review: Review

@@ -32,6 +32,17 @@ def test_approved_numbers(project):
     assert c.evidence.min_trades == 30
 
 
+def test_market_data_sources(project):
+    c = load_config(project)
+    assert (c.market_data.primary, c.market_data.crosscheck, c.market_data.max_disagreement) == ("yahoo", "finnhub", 0.01)
+
+
+def test_crosscheck_must_differ_from_primary(project):
+    _write(project, lambda d: d["market_data"].__setitem__("crosscheck", "yahoo"))
+    with pytest.raises(ValidationError, match="different source"):
+        load_config(project)
+
+
 def test_orders_can_never_be_enabled(project):
     _write(project, lambda d: d["account"].__setitem__("allow_orders", True))
     with pytest.raises(ValidationError, match="never places trades"):

@@ -9,6 +9,7 @@ SERVICE = "trading-agent"
 # Name -> phase in which it becomes required.
 KNOWN_SECRETS: dict[str, str] = {
     "gmail_app_password": "Phase 3",
+    "finnhub_api_key": "Phase 4",
     "schwab_app_key": "Phase 2 (Schwab API only)",
     "schwab_app_secret": "Phase 2 (Schwab API only)",
     "schwab_refresh_token": "Phase 2 (Schwab API only)",

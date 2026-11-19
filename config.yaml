@@ -58,6 +58,12 @@ triggers:
   sigma_lookback_days: 60    # tuned in Phase 4 replay
   earnings_within_days: 3
 
+market_data:
+  primary: yahoo             # free, no key, unofficial (can rate-limit)
+  crosscheck: finnhub        # free API key, official
+  max_disagreement: 0.01     # if the two prices differ by more than 1%, the price is "unconfirmed" and fires no trigger
+  # Schwab's market data replaces both if API access is approved (Phase 2).
+
 news:
   sources: [yahoo_finance, sec_edgar]
   min_similar_events: 10

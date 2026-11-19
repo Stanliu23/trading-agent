@@ -13,6 +13,7 @@ All defaults were approved on 2026-11-18. Email layouts are agreed in EMAILS.md.
 | AI model | Your local Claude Code login (Vibe-Trading's `claude_cli` provider). No API bill. |
 | Alerts | Urgent signals are emailed immediately. Otherwise a 3-line premarket update (08:00 ET) and a full digest (16:30 ET). HTML, with $ in subject lines. |
 | Risk limit | Two profiles (see §2a). **Aggressive** until the account first reaches $1,000: 3% max loss per trade, pause at a 25% drop, ideas ranked by expected return. **Moderate** from then on: 2% per trade, pause at a 15% drop, ranked by stars. |
+| Market data | Yahoo (free, unofficial) as the primary source, cross-checked against Finnhub (free key, official). If the two differ by more than 1%, the price is marked unconfirmed and fires no trigger. Schwab's market data replaces both if API access is approved. |
 | News | A news item counts toward a rating only if similar past events moved the price measurably. Otherwise it is labelled "context, no measured impact". |
 | Universe | Liquid US stocks and ETFs. |
 | Check rate | Plain code checks every 15 min while the market is open. AI runs only when a rule fires, plus once after the close. |
