@@ -185,3 +185,79 @@ def digest(state: AccountState, config: Config, *, macro_lines: Optional[list[Li
                                    f"SPY {pct(float(spy.iloc[-1] / spy.iloc[-2] - 1))}",
                                    f"{n_actions} action{'s' if n_actions != 1 else ''}"], config.mode == "shadow")
     return Email("digest", subj, lead, sections, footer(state))
+
+
+# --- 08:00 premarket ----------------------------------------------------------------
+
+def premarket(state: AccountState, config: Config, *, macro_lines: Optional[list[Line]] = None) -> Email:
+    """Three lines before the open: today's actions (decided at yesterday's close), overnight macro, what to watch."""
+    today = market_calendar.next_session(state.day.date()).day
+    sells = state.sells_tomorrow()
+    buys = state.sim.next_orders
+    acts = ([f"sell {s['position'].symbol} ({'open' if s['when'] == 'open' else 'before close'})" for s in sells]
+            + [f"buy {o['symbol']} ({o['bucket'].replace('_', '-')})" for o in buys])
+    lead = Line((f"{len(acts)} action{'s' if len(acts) != 1 else ''} today: " + ", ".join(acts) + " (details in last night's digest).")
+                if acts else "No actions today.", _src(state), "strong")
+    lines = list(macro_lines or [Line("No confirmed macro news with a measured link to your holdings overnight.", tone="muted")])[:3]
+    watch = [f"{p.symbol} reports earnings {state.next_earnings(p.symbol):%b %d}" for p in state.sim.open_positions
+             if state.next_earnings(p.symbol) and (state.next_earnings(p.symbol) - today).days <= 2]
+    sections = [Section("Overnight", lines)]
+    if watch:
+        sections.append(Section("Today", [Line(" · ".join(watch) + ".", "Yahoo earnings calendar")]))
+    subj = subject_line("premarket", [f"{today:%a %b %d}", usd(state.value()), f"{len(acts)} action{'s' if len(acts) != 1 else ''}"],
+                        config.mode == "shadow")
+    return Email("premarket", subj, lead, sections, footer(state))
+
+
+# --- 15-minute urgent alerts --------------------------------------------------------------
+
+def urgent(state: AccountState, quotes: dict, config: Config, *, sigmas: Optional[dict[str, float]] = None,
+           filing_events: Optional[list[tuple[str, str, object]]] = None, fired: Optional[set[str]] = None,
+           now=None) -> tuple[Optional[Email], list[str]]:
+    """One email for everything urgent found in this check, or None. Returns (email, keys to record as fired).
+
+    quotes: symbol -> market.Quote; sigmas: symbol -> daily sigma; filing_events: (symbol, kind, impact.Impact)."""
+    from tradeagent import triggers as tg
+
+    now = now or pd.Timestamp.now(tz="America/New_York")
+    day = now.date()
+    fired = set(fired or ())
+    events, blocks = [], []
+    for p in state.sim.open_positions:
+        q = quotes.get(p.symbol)
+        if q is None:
+            continue
+        hit = tg.stop_or_target(p.symbol, q.price, p.stop, p.target, day)
+        if hit and hit.key not in fired:
+            word = "stop" if hit.rule == "stop_hit" else "target"
+            level = p.stop if word == "stop" else p.target
+            value = p.qty * q.price
+            events.append((hit.key, f"SELL {p.symbol}", f"{word} hit"))
+            blocks.append(ActionBox(f"SELL {p.symbol} now · {p.bucket.replace('_', '-')} bucket", [
+                Line(f"{p.symbol} is at {usd(q.price)}, {'at or below its stop' if word == 'stop' else 'at or above its target'} "
+                     f"of {usd(level)}.", f"Yahoo quote {now:%H:%M}", "down" if word == "stop" else "up"),
+                Line(f"Bought at {usd(p.entry)}: {pct(q.price / p.entry - 1)} so far. All {p.qty:.4f} shares, about {usd(value)}.",
+                     f"Yahoo quote {now:%H:%M}"),
+                Line(f"Rule: setup {p.setup_id} sells at its {word}.", f"setup {p.setup_id} rules")]))
+        sig = (sigmas or {}).get(p.symbol)
+        mv = tg.move(p.symbol, q.price, q.prev_close, sig, day, config)
+        if mv and mv.urgent and mv.key not in fired:
+            events.append((mv.key, p.symbol, f"{mv.detail['sigmas']:+.1f}σ move"))
+            blocks.append(Line(f"{p.symbol} {pct(mv.detail['return'])} today, a {mv.detail['sigmas']:+.1f}σ move for it "
+                               f"(its own last {config.triggers.sigma_lookback_days} days). No sell rule has fired; "
+                               f"stop {usd(p.stop) if p.stop else 'none (long-term)'}.", f"Yahoo quote {now:%H:%M}",
+                               "down" if mv.detail["return"] < 0 else "up"))
+    for sym, filing_id, imp in filing_events or []:
+        key = f"filing:{filing_id}"
+        if key in fired or not imp.measured:
+            continue
+        events.append((key, sym, imp.kind))
+        blocks.append(Line(f"New SEC filing for {sym}: {imp.line()}", "SEC 8-K + prices", "strong"))
+    if not events:
+        return None, []
+    lead_txt = "; ".join(f"{a} ({b})" for _, a, b in events)
+    subj = subject_line("urgent", [lead_txt], config.mode == "shadow")
+    em = Email("urgent", subj, Line(f"{len(events)} urgent item{'s' if len(events) != 1 else ''}: {lead_txt}.", tone="heading"),
+               [Section("Act now" if any(isinstance(b, ActionBox) for b in blocks) else "Heads-up", blocks)],
+               Footer(f"{now:%H:%M} ET, {now:%b %d}", None, "hypothetical account"))
+    return em, [k for k, _, _ in events]
