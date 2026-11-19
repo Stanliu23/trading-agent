@@ -31,7 +31,7 @@ _NUMBER = re.compile(r"\d")
 class Line:
     text: str
     source: Optional[str] = None       # e.g. "schwab 10:45", "setup S3"
-    tone: Literal["plain", "up", "down", "muted", "strong"] = "plain"
+    tone: Literal["plain", "up", "down", "muted", "strong", "heading"] = "plain"   # heading: a label, not data
 
 
 @dataclass(frozen=True)
@@ -57,12 +57,22 @@ class Card:
     funding: Optional[str]
     odds: str
     odds_source: str
-    why: str
+    why_buy: str                        # the setup's logic: why this kind of trade should work
+    why_buy_source: str
+    why: str                            # why now: today's trigger
     why_source: str
     stars_detail: str                   # "Edge 4 · Confidence 5 · Fit 3"
 
 
-Block = Union[Line, Table, Card]
+@dataclass(frozen=True)
+class ActionBox:
+    """A boxed action that is not a buy recommendation (e.g. sell at a stop). Rule: everything you would
+    actually do in the Schwab app is in a box; everything else is information."""
+    title: str
+    lines: list[Line]
+
+
+Block = Union[Line, Table, Card, ActionBox]
 
 
 @dataclass(frozen=True)
@@ -114,8 +124,10 @@ def subject_line(kind: Kind, parts: list[str], shadow: bool) -> str:
 def evidence_check(email: Email) -> list[str]:
     """Lines that contain a number but carry no source tag (cards and tables carry their own)."""
     bad = []
-    for line in [email.lead] + [b for s in email.sections for b in s.blocks if isinstance(b, Line)]:
-        if _NUMBER.search(line.text) and not line.source and line.tone != "muted":
+    lines = [b for s in email.sections for b in s.blocks if isinstance(b, Line)]
+    lines += [ln for s in email.sections for b in s.blocks if isinstance(b, ActionBox) for ln in b.lines]
+    for line in [email.lead] + lines:
+        if _NUMBER.search(line.text) and not line.source and line.tone not in ("muted", "heading"):
             bad.append(line.text)
     return bad
 
@@ -136,8 +148,8 @@ def _card_text(c: Card) -> list[str]:
     out.append(f"Max loss  {c.max_loss}")
     if c.funding:
         out.append(f"Funding   {c.funding}")
-    out += [f"Odds      {c.odds}{_tag(c.odds_source)}", f"Why now   {c.why}{_tag(c.why_source)}",
-            f"Stars     {c.stars_detail}"]
+    out += [f"Why buy   {c.why_buy}{_tag(c.why_buy_source)}", f"Why now   {c.why}{_tag(c.why_source)}",
+            f"Odds      {c.odds}{_tag(c.odds_source)}", f"Stars     {c.stars_detail}"]
     return out
 
 
@@ -159,6 +171,8 @@ def render_text(email: Email, shadow: bool) -> str:
                 lines.append("   " + b.text + _tag(b.source))
             elif isinstance(b, Table):
                 lines += ["   " + x for x in _table_text(b)]
+            elif isinstance(b, ActionBox):
+                lines += [f"   [{b.title}]"] + ["   " + ln.text + _tag(ln.source) for ln in b.lines]
             else:
                 lines += ["   " + x for x in _card_text(b)]
         lines.append("")
@@ -184,8 +198,9 @@ def _src(source: Optional[str]) -> str:
 
 def _line_html(b: Line) -> str:
     color = {"up": GREEN, "down": RED, "muted": GREY}.get(b.tone, INK)
-    weight = "600" if b.tone == "strong" else "400"
-    return f'<p style="margin:4px 0;color:{color};font-weight:{weight}">{_e(b.text)}{_src(b.source)}</p>'
+    weight = "600" if b.tone in ("strong", "heading") else "400"
+    top = "10px" if b.tone == "heading" else "4px"
+    return f'<p style="margin:{top} 0 4px;color:{color};font-weight:{weight}">{_e(b.text)}{_src(b.source)}</p>'
 
 
 def _table_html(t: Table) -> str:
@@ -213,11 +228,18 @@ def _card_html(c: Card) -> str:
     rows += row("Max loss", c.max_loss)
     if c.funding:
         rows += row("Funding", c.funding)
-    rows += row("Odds", c.odds, c.odds_source) + row("Why now", c.why, c.why_source) + row("Stars", c.stars_detail)
+    rows += (row("Why buy", c.why_buy, c.why_buy_source) + row("Why now", c.why, c.why_source)
+             + row("Odds", c.odds, c.odds_source) + row("Stars", c.stars_detail))
     return (f'<div style="border:1px solid #dadce0;border-radius:8px;padding:10px 12px;margin:8px 0">'
             f'<div style="font-weight:600;margin-bottom:6px">Tier {c.tier} · <span style="color:#f9ab00">{stars_text(c.stars)}</span>'
             f' · {_e(c.action)} {_e(c.symbol)} <span style="color:{GREY};font-weight:400">· {_e(c.bucket)} bucket</span></div>'
             f'<table style="border-collapse:collapse;font-size:13px">{rows}</table></div>')
+
+
+def _box_html(b: ActionBox) -> str:
+    inner = "".join(_line_html(ln) for ln in b.lines)
+    return (f'<div style="border:1px solid #dadce0;border-radius:8px;padding:10px 12px;margin:8px 0">'
+            f'<div style="font-weight:600;margin-bottom:4px">{_e(b.title)}</div>{inner}</div>')
 
 
 def render_html(email: Email, shadow: bool) -> str:
@@ -230,7 +252,8 @@ def render_html(email: Email, shadow: bool) -> str:
     for i, sec in enumerate(email.sections, 1):
         parts.append(f'<h3 style="font-size:13px;letter-spacing:.04em;color:{GREY};margin:16px 0 4px">{i} · {_e(sec.title.upper())}</h3>')
         for b in sec.blocks:
-            parts.append(_line_html(b) if isinstance(b, Line) else _table_html(b) if isinstance(b, Table) else _card_html(b))
+            parts.append(_line_html(b) if isinstance(b, Line) else _table_html(b) if isinstance(b, Table)
+                         else _box_html(b) if isinstance(b, ActionBox) else _card_html(b))
     parts.append(f'<p style="color:{GREY};font-size:11px;border-top:1px solid #dadce0;margin-top:18px;padding-top:8px">'
                  f'{_e(footer_text(email.footer))}</p></div>')
     return "".join(parts)

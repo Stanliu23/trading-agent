@@ -51,6 +51,7 @@ class Setup:
     target_r: Optional[float] = None            # target as a multiple of the entry-to-stop risk
     breakeven_after_r: Optional[float] = None   # once a day's high reaches entry + this many R, the stop moves up to the entry price (from the next day)
     notes: tuple[str, ...] = field(default_factory=tuple)
+    logic: str = ""                             # why the setup should work, shown as 'Why buy' in emails
 
 
 # --- short-term ---------------------------------------------------------------
@@ -103,6 +104,7 @@ LIBRARY: tuple[Setup, ...] = (
         universe=tuple(STOCKS + ETFS),
         rule="Price above its 200-day average and 2-day RSI below 10. Exit when the close is back above "
              "the 5-day average, at a 2.5×ATR stop, or after 10 days.",
+        logic="Short, sharp drops in a stock that is still in a long uptrend have tended to bounce back.",
         signal=_pullback_signal, exit_signal=_pullback_exit, stop_atr=2.5, max_hold_days=10,
     ),
     Setup(
@@ -110,6 +112,8 @@ LIBRARY: tuple[Setup, ...] = (
         universe=tuple(STOCKS),
         rule="Close at a 52-week high on volume 1.5× its 50-day average, above the 200-day average. "
              "Stop 2×ATR, target 4×ATR, exit after 20 days.",
+        logic="Stocks breaking to a 1-year high on heavy buying have tended to keep rising for weeks (momentum); "
+              "wins have averaged about twice the size of losses.",
         signal=_breakout_signal, stop_atr=2.0, target_atr=4.0, max_hold_days=20,
     ),
     Setup(
@@ -117,6 +121,8 @@ LIBRARY: tuple[Setup, ...] = (
         universe=tuple(ETFS),
         rule="ETF closes below its lower Bollinger band (20, 2) while above its 200-day average. "
              "Exit when the close is back above the 20-day average, at a 3×ATR stop, or after 15 days.",
+        logic="A diversified fund that dips unusually far while its long trend is up has tended to recover, "
+              "because no single company's news drags it down.",
         signal=_etf_reversion_signal, exit_signal=_etf_reversion_exit, stop_atr=3.0, max_hold_days=15,
     ),
     Setup(
@@ -124,6 +130,8 @@ LIBRARY: tuple[Setup, ...] = (
         universe=tuple(STOCKS),
         rule="Opens ≥4% above the prior close on 3× average volume and closes in the top half of its range "
              "(usually earnings). Stop at that day's low, target 2× the risk, exit after 20 days.",
+        logic="After a strong earnings surprise, big investors have tended to keep buying for weeks "
+              "(post-earnings drift).",
         signal=_gap_signal, stop_from_signal_low=True, target_r=2.0, max_hold_days=20,
         notes=("Proxy for post-earnings drift: no historical earnings dates in the free data.",),
     ),
@@ -132,6 +140,8 @@ LIBRARY: tuple[Setup, ...] = (
         universe=tuple(CORE_ETFS),
         rule="Buy broad index ETFs (VTI, QQQ, SCHD) with each deposit, into whichever is held least. "
              "Sell only on a measured thesis break, never on price noise.",
+        logic="Over 3-year spans, broad stock index funds have been positive in 92% of start dates since 2005; "
+              "steady monthly buying spreads out the timing risk.",
         signal=_month_start,
         notes=("Scored on 3-year forward returns from every month start; windows overlap, so "
                "Confidence is capped at 2.",),

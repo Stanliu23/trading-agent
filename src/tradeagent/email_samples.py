@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from tradeagent.emailer import Card, Email, Footer, Line, Section, Table, stars_text, subject_line
+from tradeagent.emailer import ActionBox, Card, Email, Footer, Line, Section, Table, stars_text, subject_line
+from tradeagent.setups.library import get
 
 SRC = "sample"
 
@@ -13,6 +14,7 @@ def _card() -> Card:
                 target="$93.00 (+10.1%)", thesis_rule=None, max_loss="$4.53 = 1.5% of account at stop",
                 funding="Sell $75 of BIL first (short-term bucket's parked cash)",
                 odds="741 past trades: 50% positive, avg +0.98%, 1 in 20 worse than −6.3%", odds_source="setup S2",
+                why_buy=get("S2").logic, why_buy_source="setup S2",
                 why="Closed at a 52-week high on 1.9× normal volume, above its 200-day average", why_source=SRC,
                 stars_detail="Edge 4 · Confidence 5 · Fit 3")
 
@@ -24,7 +26,8 @@ def _lt_card() -> Card:
                 max_loss="no stop: long-term holding",
                 funding="from this month's deposit (long-term share $100; the other $25 waits in BIL)",
                 odds="567 three-year windows since 2005: 92% positive, 1 in 20 worse than −13.8%",
-                odds_source="setup L1", why="Long-term share is 35%; this deposit tops it up toward 40%",
+                odds_source="setup L1", why_buy=get("L1").logic, why_buy_source="setup L1",
+                why="Long-term share is 35%; this deposit tops it up toward 40%",
                 why_source=SRC, stars_detail="Edge 4 · Confidence 2 · Fit 5")
 
 
@@ -35,7 +38,8 @@ def footer() -> Footer:
 def urgent(shadow: bool) -> Email:
     return Email("urgent", subject_line("urgent", ["SELL BBBB", "stop hit", "~$103", "act before close"], shadow),
                  Line("BBBB hit its stop at $41.20 (−6.0% from entry) at 10:45 ET.", SRC, "strong"),
-                 [Section("Action", [Line("Sell all 2.5 shares (short-term bucket). Estimated proceeds $103.", SRC)]),
+                 [Section("Action", [ActionBox("SELL BBBB · short-term bucket",
+                                               [Line("Sell all 2.5 shares. Estimated proceeds $103; they go to BIL.", SRC)])]),
                   Section("Why", [Line("Stop rule from the original recommendation (Nov 4, Tier 2 ★★★☆☆)", SRC),
                                   Line("Drop is a 2.8σ move vs its own 60-day daily range", SRC),
                                   Line("No measured-impact news found; sector ETF down 0.4% only", SRC)]),
@@ -58,10 +62,9 @@ def digest(shadow: bool) -> Email:
                                       Table(["Bucket", "Now", "Target", "Band", ""],
                                             [["Long-term", "35%", "40%", "35–45%", "✓"], ["Short-term", "65%", "60%", "55–65%", "✓"]], SRC),
                                       Line("Cash parked in BIL $120.00 (+$0.40 interest this month) · drop from peak −2.1% (pause at −15%)", SRC)]),
-                  Section("Actions for tomorrow", [_card()]),
-                  Section("Recommendations", [Line(f"Tier 1: none qualified today.", tone="muted"),
-                                              Line("Tier 2: AAAA (above).", tone="muted"),
-                                              Line("Tier 3: none qualified today.", tone="muted")]),
+                  Section("Recommendations for tomorrow", [Line("Tier 1 (low risk): none qualified today.", tone="muted"),
+                                                           Line("Tier 2 (medium risk):", tone="heading"), _card(),
+                                                           Line("Tier 3 (high risk): none qualified today.", tone="muted")]),
                   Section("Long-term this month", [_lt_card()]),
                   Section("News on your holdings", [Line("Measured impact: CCCC 8-K (CEO change); past 14 similar events: median −3.4% over 5 days.", SRC),
                                                     Line("Context only, no measured impact: 2 headlines.", tone="muted")]),

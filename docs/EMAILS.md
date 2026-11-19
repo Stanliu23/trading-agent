@@ -14,6 +14,7 @@ Every number, ticker and price below is made-up sample data that only shows the 
 - Recommendations always show the tier, the stars, the size in dollars and % of the account, and the most you can lose at the stop.
 - If no idea qualifies for a tier, the email says "Tier 2: none qualified today" rather than leaving the tier out.
 - Footer on every email: data freshness, days until the Schwab login expires, and "This agent cannot place trades."
+- **Boxes mean action (2026-11-18):** anything you would actually do in the Schwab app (a buy, a sell, a trim) is in a box. Everything else is plain information. Buy recommendations sit in a box directly under their tier heading.
 
 ## Shared recommendation card
 
@@ -23,10 +24,13 @@ Size      $1,200 = 2.4% of account   Entry ≤ $84.50
 Stop      $79.40 (−6.0%)             Target $93.00 (+10.1%)
 Max loss  $72 = 0.14% of account at stop
 Funding   Sell $1,200 of BIL first (short-term bucket's parked cash)
+Why buy   A diversified fund that dips unusually far while its long trend is up has tended to recover.   [setup S3]
+Why now   XLF closed below its lower Bollinger band yesterday, still above its 200-day average   [prices 11-17]
 Odds      628 past trades: 71% positive, median +1.4%, 1 in 20 worse than −5.1%   [setup S3]
-Why now   Earnings estimates up 4.2% in 30 days (3rd percentile of revisions)   [estimates 11-17]
 Stars     Edge 4 · Confidence 5 · Fit 3
 ```
+
+**Why buy** is the setup's reasoning (why this kind of trade has worked), from the setup library. **Why now** is today's specific trigger.
 
 Long-term buys have no fixed stop. In its place they show a thesis-break rule, e.g. "Sell if forward EPS estimate falls > 15% from today."
 
@@ -74,13 +78,13 @@ Subject: Daily · Tue Nov 18 · $50,240 · +$201 (+0.4%) · SPY +0.2% · 1 actio
    Short-term 59%  (target 60%, band 55–65%)  ✓
    Cash parked in BIL $3,110 (+$11 interest this month) · Drawdown from peak −2.1% (pause at −15%)
 
-2  ACTIONS FOR TOMORROW  (1)
-   [recommendation card(s)]
+2  RECOMMENDATIONS FOR TOMORROW
+   Tier 1 (low risk):    [boxed card] … or "none qualified today"
+   Tier 2 (medium risk): [boxed card]
+   Tier 3 (high risk):   none qualified today
 
-3  RECOMMENDATIONS
-   Tier 1: [card] … or "none qualified today"
-   Tier 2: …
-   Tier 3: …
+3  LONG-TERM THIS MONTH (deposit days)
+   [boxed card]
 
 4  NEWS ON YOUR HOLDINGS
    Measured impact:  CCCC 8-K, CEO change. Past 14 similar events: median −3.4% over 5 days.   [SEC 8-K]
