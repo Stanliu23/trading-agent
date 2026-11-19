@@ -25,17 +25,17 @@ profiles:
     tier3_max_loss_per_trade: 0.015
     drawdown_pause: 0.25
     rank_by: expected_return
-    buckets:
-      long_term:  {target: 0.25, min: 0.20, max: 0.30}
-      short_term: {target: 0.75, min: 0.70, max: 0.80}
+    buckets:   # long-term 15-20% in both phases (approved 2026-11-18)
+      long_term:  {target: 0.175, min: 0.15, max: 0.20}
+      short_term: {target: 0.825, min: 0.80, max: 0.85}
   moderate:
     max_loss_per_trade: 0.02
     tier3_max_loss_per_trade: 0.01
     drawdown_pause: 0.15
     rank_by: stars
-    buckets:
-      long_term:  {target: 0.35, min: 0.30, max: 0.40}
-      short_term: {target: 0.65, min: 0.60, max: 0.70}
+    buckets:   # long-term 15-20% in both phases (approved 2026-11-18)
+      long_term:  {target: 0.175, min: 0.15, max: 0.20}
+      short_term: {target: 0.825, min: 0.80, max: 0.85}
 
 # The goal (approved 2026-11-18): short-term trading must earn more than the same money held in the
 # long-term index funds. Checked every weekly review over the last 3 months (63 sessions).

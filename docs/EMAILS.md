@@ -69,8 +69,8 @@ Subject: Daily · Tue Nov 18 · $50,240 · +$201 (+0.4%) · SPY +0.2% · 1 actio
 
 1  ACCOUNT
    Value $50,240  (+$201, +0.4%)   SPY +0.2%            [schwab 16:30]
-   Long-term  34%  (target 35%, band 30–40%)  ✓
-   Short-term 66%  (target 65%, band 60–70%)  ✓
+   Long-term  18%  (target 17.5%, band 15–20%)  ✓
+   Short-term 82%  (target 82.5%, band 80–85%)  ✓
    Cash $3,110 · Drawdown from peak −2.1% (pause at −15%)
 
 2  ACTIONS FOR TOMORROW  (1)

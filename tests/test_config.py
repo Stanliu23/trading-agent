@@ -23,8 +23,8 @@ def test_approved_numbers(project):
     agg, mod = c.profiles.aggressive, c.profiles.moderate
     assert (agg.max_loss_per_trade, agg.tier3_max_loss_per_trade, agg.drawdown_pause) == (0.03, 0.015, 0.25)
     assert (mod.max_loss_per_trade, mod.tier3_max_loss_per_trade, mod.drawdown_pause) == (0.02, 0.01, 0.15)
-    assert (agg.buckets.long_term.min, agg.buckets.long_term.max) == (0.20, 0.30)
-    assert (mod.buckets.long_term.min, mod.buckets.long_term.max) == (0.30, 0.40)
+    assert (agg.buckets.long_term.min, agg.buckets.long_term.max, agg.buckets.long_term.target) == (0.15, 0.20, 0.175)
+    assert mod.buckets == agg.buckets   # same split in both phases
     assert agg.rank_by == "expected_return" and mod.rank_by == "stars"
     assert c.profiles.switch_to_moderate_at == 1000
     assert (c.tiers.tier1.max_loss_rate, c.tiers.tier1.max_tail_loss) == (0.25, 0.08)
@@ -52,7 +52,7 @@ def test_orders_can_never_be_enabled(project):
 
 
 def test_bucket_targets_must_sum_to_one(project):
-    _write(project, lambda d: d["profiles"]["moderate"]["buckets"]["long_term"].__setitem__("target", 0.40))
+    _write(project, lambda d: d["profiles"]["moderate"]["buckets"]["long_term"].__setitem__("target", 0.19))  # in band, sum 1.015
     with pytest.raises(ValidationError, match="add up to 1"):
         load_config(project)
 

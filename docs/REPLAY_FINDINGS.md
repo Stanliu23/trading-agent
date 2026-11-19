@@ -41,3 +41,18 @@ Rule: short-term trading must beat holding VTI/QQQ/SCHD over 3 months, or it pau
 - 6-month result: time-weighted −0.0% (was −7.9%), vs SPY −0.6%. Short-term P&L −$15.41 over 16 trades (was −$145.08 over 31).
 - **Trade-off:** while paused, short-term cash sits idle (50% of the account on average, 66% at the end), because money never moves to the long-term bucket.
 - **Open question:** what evidence should a restart need? A natural option is to keep tracking the paused setups on paper, so the weekly report shows whether they would have worked.
+
+## Long-term share cut to 15–20% (2026-11-18)
+
+$1,800 deposited on the same days ($300 on 2026-05-18, then $250 on the first session of each month), value on 2026-11-18:
+
+| Where the money went | Value | vs $1,800 |
+|---|---|---|
+| T-bills only (BIL) | $1,819.76 | +$19.76 |
+| **This agent** (15–20% long-term, goal safeguard on) | **$1,792.61** | −$7.39 |
+| VTI/QQQ/SCHD only, equal | $1,769.69 | −$30.31 |
+| SPY only | $1,749.68 | −$50.32 |
+
+- In this window, nothing invested in stocks ended above the money put in. Only T-bills did.
+- The agent beat the index funds mainly because the goal safeguard paused short-term trading on 2026-08-21, leaving 83% of the account in cash at the end, while stocks dipped. That came from sitting out, not from skill.
+- Time-weighted +1.1% vs SPY −0.6%. Short-term: 17 trades, −$5.96 (S3 7 of 7 winners, +$25.42; S2 3 of 9, −$22.48).

@@ -42,10 +42,10 @@ def test_stop_and_target():
 def test_bucket_drift_fires_once_per_episode(cfg):
     agg = cfg.profiles.aggressive
     state = {}
-    (e,) = tg.bucket_drift(10, 90, agg, D, state)                              # long-term 10% < 20%: one alert, not two
+    (e,) = tg.bucket_drift(10, 90, agg, D, state)                              # long-term 10% < 15%: one alert, not two
     assert e.detail["long_term_share"] == 0.1
     assert tg.bucket_drift(11, 89, agg, D, state) == []                        # still out: silent
-    assert tg.bucket_drift(25, 75, agg, D, state) == []                        # back in band
+    assert tg.bucket_drift(17, 83, agg, D, state) == []                        # back in band (15-20%)
     assert len(tg.bucket_drift(35, 65, agg, D, state)) == 1                    # new episode
 
 
