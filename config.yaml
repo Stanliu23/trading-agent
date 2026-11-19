@@ -82,8 +82,8 @@ triggers:
 
 market_data:
   primary: yahoo             # free, no key, unofficial (can rate-limit)
-  crosscheck: finnhub        # free API key, official
-  max_disagreement: 0.01     # if the two prices differ by more than 1%, the price is "unconfirmed" and fires no trigger
+  crosscheck: null           # Finnhub cross-check skipped for now (2026-11-18); set to finnhub to turn it back on
+  max_disagreement: 0.01     # used only when a crosscheck source is set
   # Schwab's market data replaces both if API access is approved (Phase 2).
 
 news:

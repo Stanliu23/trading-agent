@@ -17,7 +17,7 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 
 1. **Ask Schwab whether a Schwab International account can register for the Trader API** (individual access at developer.schwab.com). I couldn't confirm this online. If it can, register an app; I'll give you the exact callback URL in Phase 2.
 2. ~~Check fractional shares~~ **Done 2026-11-18:** the trade ticket offers buying in dollars.
-3. **Get a free Finnhub API key** at finnhub.io, then store it with `uv run tradeagent set-secret finnhub_api_key`. It's needed by Phase 4.
+3. ~~Get a Finnhub API key~~ **Skipped 2026-11-18:** Yahoo only for now.
 4. **Create the agent's Gmail:** a new account with 2-Step Verification turned on, then an app password. It sends to your Outlook address.
 5. **Set up the always-on Mac:**
    - your macOS user stays logged in;
@@ -65,7 +65,7 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 ## Phase 4: trigger rules (no AI)
 
 - Every rule is set in `config.yaml` with an exact threshold.
-- A price fetcher pulls from Yahoo and cross-checks Finnhub. If they disagree by more than 1%, the price is marked unconfirmed.
+- A price fetcher pulls from Yahoo. The Finnhub cross-check stays off unless you turn it on in `config.yaml`.
 - We replay the last 6 months of prices and count how often each rule would have fired. Rules that fire too often get adjusted.
 
 **Done when:** you approve the replay report (alerts per week, per rule).

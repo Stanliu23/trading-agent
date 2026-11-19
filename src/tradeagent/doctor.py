@@ -39,9 +39,12 @@ def _local_email(config: Config) -> Check:
     return Check("Email addresses", "ok", "recipient and sender set")
 
 
-def _secrets() -> list[Check]:
+def _secrets(config: Config) -> list[Check]:
+    used_sources = {config.market_data.primary, config.market_data.crosscheck}
     out = []
     for name, phase in secrets.KNOWN_SECRETS.items():
+        if name == "finnhub_api_key" and "finnhub" not in used_sources:
+            continue  # Finnhub not in use
         try:
             present = secrets.has_secret(name)
         except Exception as exc:  # Keychain locked or unavailable
@@ -123,10 +126,14 @@ def run_checks(root: Path = PROJECT_ROOT, db_path: Path | None = None, today: da
     except Exception as exc:
         return checks + [Check("Config", "fail", f"config.yaml invalid: {exc}")]
     checks.append(Check("Config", "ok", f"valid; mode={config.mode.upper()}, account reader={config.account.reader}"))
+    md = config.market_data
+    checks.append(Check("Market data", "ok" if md.crosscheck else "warn",
+                        f"{md.primary}, cross-checked by {md.crosscheck}" if md.crosscheck
+                        else f"{md.primary} only, no cross-check: a bad quote can fire a false alert"))
     if config.account.reader == "undecided":
         checks.append(Check("Account reader", "warn", "undecided: waiting on Schwab API answer (Phase 2)"))
     checks.append(_local_email(config))
-    checks += _secrets()
+    checks += _secrets(config)
     db_check = _database(db_path)
     checks.append(db_check)
     if db_check.status == "ok":

@@ -85,6 +85,8 @@ def test_doctor_reports_without_failing_on_missing_phase_items(project, tmp_path
     assert "Fri Nov 27" in by_name["Market calendar"].detail and "half day" in by_name["Market calendar"].detail
     assert by_name["Keychain: gmail_app_password"].status == "warn"
     assert by_name["Email addresses"].status == "warn"
+    assert "Keychain: finnhub_api_key" not in by_name          # Finnhub not in use
+    assert by_name["Market data"].status == "warn" and "yahoo only" in by_name["Market data"].detail
     report = doctor.format_report(checks)
     assert "failing" in report
 
@@ -93,3 +95,11 @@ def test_doctor_fails_on_invalid_config(project, tmp_path):
     (project / "config.yaml").write_text("version: 2\n")
     checks = doctor.run_checks(root=project, db_path=tmp_path / "agent.db")
     assert checks[-1].name == "Config" and checks[-1].status == "fail"
+
+
+def test_doctor_asks_for_finnhub_key_when_crosscheck_on(project, tmp_path):
+    cfg = (project / "config.yaml").read_text().replace("crosscheck: null", "crosscheck: finnhub")
+    (project / "config.yaml").write_text(cfg)
+    by_name = {c.name: c for c in doctor.run_checks(root=project, db_path=tmp_path / "agent.db")}
+    assert by_name["Keychain: finnhub_api_key"].status == "warn"
+    assert by_name["Market data"].status == "ok"

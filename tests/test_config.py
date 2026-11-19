@@ -34,7 +34,7 @@ def test_approved_numbers(project):
 
 def test_market_data_sources(project):
     c = load_config(project)
-    assert (c.market_data.primary, c.market_data.crosscheck, c.market_data.max_disagreement) == ("yahoo", "finnhub", 0.01)
+    assert (c.market_data.primary, c.market_data.crosscheck) == ("yahoo", None)
 
 
 def test_crosscheck_must_differ_from_primary(project):
