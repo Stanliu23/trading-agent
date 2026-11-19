@@ -131,3 +131,28 @@ What this shows:
 - **60/40 + restart is the only version that beat index funds only** (60 months +$9,194 vs +$7,516; 24 months +$1,097 vs +$1,039). It also had the deepest drop (−20%).
 - **Hidden problem: 100/0 can't actually reach 100%.** The 25% per-position cap with only 3 long-term ETFs limits long-term holdings to 75%, so about 25% sat idle. That is why 100/0 trails "index funds only".
 - **Caveat on the 60-month window:** it overlaps 2021–2023, which the setups were designed on, so it flatters short-term trading. The 6-month window (2026) is the only fully unseen period, and there no version beat T-bills.
+
+## Restart + T-bills, and are the safeguards needed? (2026-11-18)
+
+Profit vs deposits. "Restart" = goal safeguard on with the restart rule. "Off" = goal safeguard off, T-bills on.
+
+| Split | Version | 60 mo ($15,300) | 24 mo ($6,300) | 12 mo ($3,300) | 6 mo ($1,800) |
+|---|---|---|---|---|---|
+| 20/80 | restart | +$4,286 | +$390 | −$93 | +$3 |
+| 20/80 | restart + T-bills | +$4,864 | +$751 | −$59 | +$7 |
+| 20/80 | safeguard off | +$7,431 | +$577 | −$23 | −$114 |
+| 40/60 | restart | +$5,888 | +$647 | −$26 | −$13 |
+| 40/60 | restart + T-bills | +$5,780 | +$475 | −$2 | −$3 |
+| 40/60 | safeguard off | +$7,359 | +$682 | +$3 | −$98 |
+| 60/40 | restart | +$9,194 | +$1,097 | −$71 | −$46 |
+| 60/40 | restart + T-bills | +$10,003 | +$1,166 | −$57 | −$40 |
+| 60/40 | safeguard off | +$8,661 | +$644 | −$22 | −$103 |
+| – | *index funds only* | *+$7,516* | *+$1,039* | *+$194* | *−$30* |
+| – | *T-bills only* | *+$1,722* | *+$255* | *+$67* | *+$20* |
+
+What this shows:
+- **T-bills on idle cash helped in 10 of 12 split/window cases** (the exceptions: 40/60 over 60 and 24 months, a path effect).
+- **The goal safeguard is insurance, not a profit engine.** In 2026 (the only fully unseen period) it saved about $100 per $1,800 in every split. Over longer windows it sometimes cost money (20/80 and 40/60 over 60 months) and sometimes added (60/40 over 24 and 60 months).
+- **Over the last 12 months, short-term trading lost money in every version** (−$89 to −$203), and every version trailed both index funds (+$194) and T-bills (+$67).
+- **Hidden problem: the drawdown pause never fired,** in any version or window, even with a −20% time-weighted drop. It measures the drop on raw account value, and monthly deposits hide the fall. It should measure the drop with deposits removed (time-weighted).
+- Turning the drawdown pause off changed nothing, for the same reason.
