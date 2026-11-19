@@ -47,6 +47,8 @@ All defaults were approved on 2026-11-18. Email layouts are agreed in EMAILS.md.
 | Order ideas by | expected return after costs | stars |
 | Long-term bucket | 35–45% (target 40%) | 35–45% (target 40%) |
 
+**Drawdown is measured time-weighted (fixed 2026-11-18):** the drop from peak uses a performance index with deposits removed (`risk.performance_index_next`). Measured on raw account value, monthly deposits hid real drops, so the pause never fired. New short-term trades resume when the performance index makes a new high.
+
 The evidence bar is the same in both profiles: at least 30 past trades and a positive result on held-out data.
 Account value includes deposits. The switch to moderate happens once and is never reversed.
 

@@ -8,7 +8,7 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from tradeagent.risk import (Idea, bucket_room, drawdown_paused, earnings_blocks_entry, fit_score,
+from tradeagent.risk import (Idea, bucket_room, drawdown_paused, earnings_blocks_entry, fit_score, performance_index_next,
                              holdings_correlation, planned_exit_day, rank, size_position, split_deposit)
 
 
@@ -162,3 +162,30 @@ def test_short_term_vs_benchmark():
     strong = pd.Series(np.linspace(1000, 1200, 70), index=idx)                                        # +~19%
     assert not short_term_vs_benchmark(strong, pd.Series(dtype=float), bench, 63).behind
     assert not short_term_vs_benchmark(strong.head(40), pd.Series(dtype=float), bench, 63).ready      # too short
+
+
+def test_deposits_cannot_hide_a_drawdown(profiles):
+    """Investments fall 20% over a month while $250 deposits keep the raw balance rising."""
+    _, mod = profiles
+    values, inflows = [1000.0], [0.0]
+    holdings = 1000.0
+    for day in range(1, 21):
+        holdings *= 0.9889                     # about -20% over 20 sessions
+        dep = 250.0 if day % 5 == 0 else 0.0
+        holdings += dep
+        values.append(holdings); inflows.append(dep)
+    assert values[-1] > values[0]              # raw balance went UP...
+    idx, peak, fired = 1.0, 1.0, False
+    for i in range(1, len(values)):
+        idx = performance_index_next(idx, values[i - 1], values[i], inflows[i])
+        peak = max(peak, idx)
+        fired = fired or drawdown_paused(idx, peak, mod)
+    assert idx == pytest.approx(0.9889 ** 20, rel=1e-6)   # ...but performance fell ~20%
+    assert fired                                          # so the 15% pause fires
+    assert not drawdown_paused(values[-1], max(values), mod)  # the old raw-value check would not have
+
+
+def test_performance_index_ignores_deposits():
+    assert performance_index_next(1.0, 100, 350, 250) == pytest.approx(1.0)   # +250 deposit, no gain
+    assert performance_index_next(1.0, 100, 340, 250) == pytest.approx(0.9)   # deposit, -10% on the old money
+    assert performance_index_next(1.0, 0, 300, 300) == 1.0                    # first deposit

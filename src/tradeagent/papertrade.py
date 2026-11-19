@@ -157,7 +157,9 @@ def simulate_portfolio(
     signals_seen = 0
     notes: list[str] = []
     ever_reached = False
-    peak = 0.0
+    peak = 0.0          # peak of the time-weighted performance index
+    perf = 1.0
+    prev_value = 0.0
     paused = False
     lt_rotation = 0
     drifting: dict[str, bool] = {}
@@ -264,9 +266,12 @@ def simulate_portfolio(
         if value >= config.profiles.switch_to_moderate_at:
             ever_reached = True
         profile = active_profile(config, ever_reached_switch=ever_reached)
-        if value > peak:
-            peak, paused = value, False
-        if not paused and risk.drawdown_paused(value, peak, profile):
+        # Drawdown is measured on the time-weighted index, so deposits cannot hide a fall.
+        inflow = sum(a for d_, a, _ in deposits if d_ == day) if n > 0 else 0.0
+        perf = 1.0 if n == 0 else risk.performance_index_next(perf, prev_value, value, inflow)
+        if perf > peak:
+            peak, paused = perf, False
+        if not paused and risk.drawdown_paused(perf, peak, profile):
             paused = True
             alerts["urgent:drawdown pause"] += 1
         if bucket_drift(lt_val + cash["long_term"], st_val + cash["short_term"], profile, day.date(), drifting):
@@ -279,7 +284,8 @@ def simulate_portfolio(
         rows.append({"date": day, "value": value, "cash_lt": cash["long_term"], "cash_st": cash["short_term"],
                      "lt_value": lt_val, "st_value": st_val, "positions": len(positions),
                      "profile": active_profile_name(config, ever_reached_switch=ever_reached), "paused": paused,
-                     "goal_paused": goal_paused_on is not None})
+                     "goal_paused": goal_paused_on is not None, "perf_index": perf})
+        prev_value = value  # final value of the day (after any T-bill interest)
 
         # Weekly goal check (last session of the week): short-term must beat holding the index funds.
         week_end = n + 1 == len(calendar) or calendar[n + 1].isocalendar()[1] != day.isocalendar()[1]

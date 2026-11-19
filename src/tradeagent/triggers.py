@@ -87,13 +87,14 @@ def bucket_drift(long_term_value: float, short_term_value: float, profile: Profi
     return events
 
 
-def drawdown(account_value: float, peak_value: float, profile: Profile, already_paused: bool) -> Optional[Event]:
-    """Fires once when the account first crosses the pause level; silent while it stays paused."""
-    if peak_value <= 0 or already_paused:
+def drawdown(performance_index: float, peak_index: float, profile: Profile, already_paused: bool) -> Optional[Event]:
+    """Fires once when the time-weighted performance index (deposits removed, see
+    risk.performance_index_next) first falls ``drawdown_pause`` below its peak; silent while paused."""
+    if peak_index <= 0 or already_paused:
         return None
-    if account_value <= peak_value * (1 - profile.drawdown_pause) + 1e-9:
-        return Event("drawdown_pause", None, True, "now", f"pause:{peak_value:.2f}",
-                     {"value": account_value, "peak": peak_value, "pause_at": profile.drawdown_pause})
+    if performance_index <= peak_index * (1 - profile.drawdown_pause) + 1e-9:
+        return Event("drawdown_pause", None, True, "now", f"pause:{peak_index:.4f}",
+                     {"drop": round(performance_index / peak_index - 1, 4), "pause_at": profile.drawdown_pause})
     return None
 
 

@@ -101,11 +101,22 @@ def earnings_blocks_entry(
     return False, ""
 
 
-def drawdown_paused(account_value: float, peak_value: float, profile: Profile) -> bool:
-    """True when the account is at least ``drawdown_pause`` below its peak: no new short-term trades."""
-    if peak_value <= 0:
+def performance_index_next(index_prev: float, value_prev: float, value_now: float, inflow_today: float) -> float:
+    """Advance a time-weighted performance index by one day. Deposits are removed first, so new money
+    never counts as a gain and never hides a loss."""
+    if value_prev <= 0:
+        return index_prev
+    return index_prev * ((value_now - inflow_today) / value_prev)
+
+
+def drawdown_paused(performance_index: float, peak_index: float, profile: Profile) -> bool:
+    """True when the time-weighted performance index is at least ``drawdown_pause`` below its peak.
+
+    Pass the performance index (deposits removed), not raw account value: with regular deposits the raw
+    value can keep rising while the investments fall, so a raw-value check would never fire."""
+    if peak_index <= 0:
         return False
-    return account_value <= peak_value * (1 - profile.drawdown_pause) + 1e-9
+    return performance_index <= peak_index * (1 - profile.drawdown_pause) + 1e-9
 
 
 def split_deposit(amount: float, long_term_value: float, short_term_value: float, profile: Profile) -> dict[str, float]:

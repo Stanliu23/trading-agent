@@ -280,3 +280,7 @@ Pass rule, also fixed in advance: (1) the new symbols' trades average above 0R f
 **Verdict:** nothing passes both rules. The new ETFs pass per trade but hurt the account. The new stocks help the account in all 4 windows, but per trade they showed no edge for S2 in the design years. The account gain probably comes from having more signals to choose from (better spread, less idle cash) rather than from the new names being good trades. That could be real, or it could be path luck.
 
 **Downloader hardened:** Yahoo throttling sank whole batches. `prices.daily_bars` now fetches 6 symbols at a time with up to 3 retries.
+
+## Drawdown pause fixed (2026-11-18)
+
+The pause now uses the time-weighted performance index (deposits removed). A test shows investments falling about 20% while deposits push the raw balance up: the new check fires and the old one doesn't. With the current settings (40/60, all safeguards) the worst time-weighted drop was −11.7% (60 months), −11.2% (24), −7.2% (12) and −4.8% (6), so the 15% pause never triggered and results are unchanged. It would have mattered in the higher long-term splits (60/40 and 75/25 reached −19% to −20%).
