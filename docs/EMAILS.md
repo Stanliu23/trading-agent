@@ -78,22 +78,26 @@ Subject: Daily · Tue Nov 18 · $50,240 · +$201 (+0.4%) · SPY +0.2% · 1 actio
    Short-term 59%  (target 60%, band 55–65%)  ✓
    Cash parked in BIL $3,110 (+$11 interest this month) · Drawdown from peak −2.1% (pause at −15%)
 
-2  RECOMMENDATIONS FOR TOMORROW
-   Tier 1 (low risk):    [boxed card] … or "none qualified today"
-   Tier 2 (medium risk): [boxed card]
-   Tier 3 (high risk):   none qualified today
+2  SELLS FOR TOMORROW (listed first: they free up cash)
+   [box per sell] Exit signals → sell at the open. Time limit ending → sell before tomorrow's close.
+   Stops and targets don't wait for the digest: they get an urgent email the moment they're hit.
 
-3  LONG-TERM THIS MONTH (deposit days)
+3  BUYS FOR TOMORROW (as many as qualify; each tier can hold several boxed cards)
+   Tier 1 (low risk):    [boxed card] … or "none qualified today"
+   Tier 2 (medium risk): [boxed card] [boxed card] …
+   Tier 3 (high risk):   [boxed card, half-size]
+
+4  LONG-TERM THIS MONTH (deposit days)
    [boxed card]
 
-4  NEWS ON YOUR HOLDINGS
+5  NEWS ON YOUR HOLDINGS
    Measured impact:  CCCC 8-K, CEO change. Past 14 similar events: median −3.4% over 5 days.   [SEC 8-K]
    Context only (no measured impact): 2 items, one line each.
 
-5  WATCH NEXT
+6  WATCH NEXT
    AAAA earnings Thu after close · BBBB 1.2% from its stop
 
-6  SYSTEM
+7  SYSTEM
    Runs 27/27 OK · AI runs today: 2 · Schwab login expires in 4 days
 ```
 

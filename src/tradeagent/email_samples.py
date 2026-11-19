@@ -19,6 +19,16 @@ def _card() -> Card:
                 stars_detail="Edge 4 · Confidence 5 · Fit 3")
 
 
+def _tier3_card() -> Card:
+    return Card(tier=3, stars=3, action="BUY", symbol="DDDD", bucket="short-term",
+                size="$30 = 10.0% of account", entry="Entry ≤ $212.00", stop="$197.10 (−7.0%)",
+                target="$241.80 (+14.1%)", thesis_rule=None, max_loss="$2.10 = 0.7% of account at stop (Tier 3: half-size)",
+                funding="Sell $30 of BIL first", odds="90 past trades: 56% positive, avg +1.41%, 1 in 20 worse than −7.1%",
+                odds_source="setup S4", why_buy=get("S4").logic, why_buy_source="setup S4",
+                why="Opened 5.2% above yesterday's close on 3.4× volume after earnings, closed in the top 20% of its range",
+                why_source=SRC, stars_detail="Edge 5 · Confidence 2 · Fit 3")
+
+
 def _lt_card() -> Card:
     return Card(tier=2, stars=4, action="BUY", symbol="VTI", bucket="long-term", size="$75 = 25.0% of account (position cap)",
                 entry="at the open", stop=None, target=None,
@@ -56,15 +66,22 @@ def premarket(shadow: bool) -> Email:
 
 
 def digest(shadow: bool) -> Email:
-    return Email("digest", subject_line("digest", ["Tue Nov 18", "$300.42", "+$1.20 (+0.4%)", "SPY +0.2%", "1 action"], shadow),
-                 Line("1 action for tomorrow: BUY AAAA (Tier 2, ★★★★☆), $75.", SRC, "strong"),
+    return Email("digest", subject_line("digest", ["Tue Nov 18", "$300.42", "+$1.20 (+0.4%)", "SPY +0.2%", "4 actions"], shadow),
+                 Line("4 actions for tomorrow: sell XLF at the open, sell EEEE before the close, buy AAAA and DDDD.", SRC, "strong"),
                  [Section("Account", [Line("Value $300.42 (+$1.20, +0.4%) · SPY +0.2%", SRC, "up"),
                                       Table(["Bucket", "Now", "Target", "Band", ""],
                                             [["Long-term", "35%", "40%", "35–45%", "✓"], ["Short-term", "65%", "60%", "55–65%", "✓"]], SRC),
                                       Line("Cash parked in BIL $120.00 (+$0.40 interest this month) · drop from peak −2.1% (pause at −15%)", SRC)]),
-                  Section("Recommendations for tomorrow", [Line("Tier 1 (low risk): none qualified today.", tone="muted"),
-                                                           Line("Tier 2 (medium risk):", tone="heading"), _card(),
-                                                           Line("Tier 3 (high risk): none qualified today.", tone="muted")]),
+                  Section("Sells for tomorrow (do these first: they free up cash)", [
+                      ActionBox("SELL XLF at tomorrow's open · short-term bucket",
+                                [Line("Exit signal: closed back above its 20-day average today (setup S3 rule).", SRC),
+                                 Line("All 1.2 shares, about $66; proceeds go back to BIL. Trade result so far +1.8%.", SRC, "up")]),
+                      ActionBox("SELL EEEE before tomorrow's close · short-term bucket",
+                                [Line("Time limit: tomorrow is day 20 of 20 for a breakout trade (setup S2 rule).", SRC),
+                                 Line("All 0.4 shares, about $58; proceeds go back to BIL. Trade result so far −1.1%.", SRC, "down")])]),
+                  Section("Buys for tomorrow", [Line("Tier 1 (low risk): none qualified today.", tone="muted"),
+                                                Line("Tier 2 (medium risk):", tone="heading"), _card(),
+                                                Line("Tier 3 (high risk):", tone="heading"), _tier3_card()]),
                   Section("Long-term this month", [_lt_card()]),
                   Section("News on your holdings", [Line("Measured impact: CCCC 8-K (CEO change); past 14 similar events: median −3.4% over 5 days.", SRC),
                                                     Line("Context only, no measured impact: 2 headlines.", tone="muted")]),

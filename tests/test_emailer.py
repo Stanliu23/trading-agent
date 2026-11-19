@@ -51,7 +51,7 @@ def test_all_samples_render_and_pass_evidence_check():
 def test_card_shows_required_fields():
     text = emailer.render_text(email_samples.digest(False), False)
     for must in ("[TIER 2", "★★★★☆", "Size", "Max loss", "Funding", "Sell $75 of BIL first", "Stars", "Why buy", "Why now",
-                 "Tier 1 (low risk): none qualified today", "Tier 3 (high risk): none qualified today"):
+                 "Tier 1 (low risk): none qualified today", "SELLS FOR TOMORROW", "BUY  DDDD", "Tier 3: half-size"):
         assert must in text
 
 
@@ -109,7 +109,19 @@ def test_every_action_is_boxed():
     for name, build in email_samples.ALL.items():
         em = build(False)
         for sec in em.sections:
-            if sec.title.lower().startswith(("action", "recommendations", "long-term")):
+            if sec.title.lower().startswith(("action", "recommendations", "long-term", "sells", "buys")):
                 assert any(isinstance(b, (Card, ActionBox)) for b in sec.blocks) or all(
                     "none qualified" in getattr(b, "text", "") for b in sec.blocks), (name, sec.title)
     assert "<div style=\"border:1px solid" in emailer.render_html(email_samples.urgent(False), False)
+
+
+def test_digest_lists_several_sells_and_buys_sells_first():
+    from tradeagent.emailer import ActionBox, Card
+    em = email_samples.digest(False)
+    titles = [sec.title.lower() for sec in em.sections]
+    assert titles.index(next(t for t in titles if t.startswith("sells"))) < titles.index("buys for tomorrow")
+    sells = next(sec for sec in em.sections if sec.title.lower().startswith("sells"))
+    buys = next(sec for sec in em.sections if sec.title.lower() == "buys for tomorrow")
+    assert sum(isinstance(b, ActionBox) for b in sells.blocks) == 2
+    assert sum(isinstance(b, Card) for b in buys.blocks) == 2
+    assert "4 actions" in em.subject
