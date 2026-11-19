@@ -56,3 +56,26 @@ $1,800 deposited on the same days ($300 on 2026-05-18, then $250 on the first se
 - In this window, nothing invested in stocks ended above the money put in. Only T-bills did.
 - The agent beat the index funds mainly because the goal safeguard paused short-term trading on 2026-08-21, leaving 83% of the account in cash at the end, while stocks dipped. That came from sitting out, not from skill.
 - Time-weighted +1.1% vs SPY −0.6%. Short-term: 17 trades, −$5.96 (S3 7 of 7 winners, +$25.42; S2 3 of 9, −$22.48).
+
+## Aggressive vs moderate, and 17.5% vs 0% long-term (2026-11-18)
+
+Same rules otherwise ($300 start + $250 per month, goal safeguard on, every recommendation taken). Idle cash earns 0% in the simulator.
+
+**24 months (2024-11-18 to 2026-11-18), $6,300 deposited:**
+
+| Variant | End value | Short-term P&L | Goal pause |
+|---|---|---|---|
+| Aggressive under $1k, 17.5% long-term (current) | $6,489.87 | +$0.06 (30 trades) | 2025-05-16 |
+| Aggressive under $1k, 0% long-term | $6,303.49 | +$3.49 (34) | 2025-05-16 |
+| Moderate from start, 17.5% long-term | $6,487.72 | +$3.10 (20) | 2025-02-21 |
+| Moderate from start, 0% long-term | $6,306.16 | +$6.16 (20) | 2025-02-21 |
+| Index funds only (VTI/QQQ/SCHD) | $7,338.83 | – | – |
+| SPY only | $7,112.22 | – | – |
+| T-bills only (BIL) | $6,554.88 | – | – |
+
+**6 months (2026-05-18 to 2026-11-18), $1,800 deposited:** aggressive $1,792.61; moderate from start $1,805.63; with 0% long-term $1,797.97 and $1,801.69; index funds only $1,769.69; T-bills $1,819.76.
+
+Findings:
+- **Aggressive vs moderate makes almost no difference** (−$13 to +$2). At $250 a month, deposits pass $1,000 within about 3 months, so the aggressive phase is short.
+- **Long-term funds produced nearly all of the 24-month gain** (+$184 vs ≈$0 with 0% long-term). Short-term trading netted about $0 over 2 years.
+- **Biggest problem:** the goal safeguard paused short-term trading early (Feb or May 2025) and never restarted, because the replay has no restart rule. So about 82% of each deposit sat in cash earning nothing for most of 2 years. That is why the agent trails index-only by about $850 and even trails T-bills.
