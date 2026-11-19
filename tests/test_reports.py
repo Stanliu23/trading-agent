@@ -64,3 +64,31 @@ def test_urgent_stop_hit_once_and_3_sigma():
     assert again is None and keys2 == []                                  # each event only once
     calm = {pos.symbol: Quote(pos.symbol, pos.stop * 1.10, pos.stop * 1.10, now.to_pydatetime())}
     assert reports.urgent(st, calm, cfg, sigmas={pos.symbol: 0.01}, now=now)[0] is None
+
+
+def test_weekly_report_sections_and_sources():
+    cfg = load_config()
+    st = _state(cfg)
+    em = reports.weekly(st, cfg)
+    assert em.kind == "weekly" and emailer.evidence_check(em) == []
+    titles = [s.title for s in em.sections]
+    assert titles[0].startswith("Performance") and any(t.startswith("Fix needed") for t in titles)
+    assert "Why things moved" in titles and "Recommendation scorecard" in titles
+
+
+def test_twr_removes_deposits():
+    import pandas as pd
+    idx = pd.bdate_range("2026-01-05", periods=5)
+    vals = pd.Series([100, 101, 351, 351, 355.1], index=idx, dtype=float)   # +250 deposit on day 3
+    flows = pd.Series({idx[2]: 250.0})
+    r = reports.twr(vals, flows, idx[1], idx[-1])
+    assert r == pytest.approx((101 / 100) * (351 - 250) / 101 * 1 * 355.1 / 351 - 1, rel=1e-9)
+
+
+def test_classify_expected_vs_decision():
+    from types import SimpleNamespace as NS
+    stats = {"S2": {"tail_ret": -0.063}}
+    small = NS(setup_id="S2", entry=100, exit=95, reason="stop")
+    big = NS(setup_id="S2", entry=100, exit=85, reason="stop")
+    assert reports.classify(small, stats)[0] == "expected_variance"
+    assert reports.classify(big, stats)[0] == "decision"

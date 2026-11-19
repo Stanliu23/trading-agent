@@ -261,3 +261,152 @@ def urgent(state: AccountState, quotes: dict, config: Config, *, sigmas: Optiona
                [Section("Act now" if any(isinstance(b, ActionBox) for b in blocks) else "Heads-up", blocks)],
                Footer(f"{now:%H:%M} ET, {now:%b %d}", None, "hypothetical account"))
     return em, [k for k, _, _ in events]
+
+
+# --- Saturday weekly report -----------------------------------------------------------
+
+SECTOR_ETF = {"tech": "XLK", "semiconductors": "XLK", "banks": "XLF", "payments": "XLF", "pharma": "XLV", "health": "XLV",
+              "oil": "XLE", "retail": "XLY", "consumer": "XLP", "media": "XLY", "restaurants": "XLY", "apparel": "XLY",
+              "railroads": "XLI", "industrials": "XLI", "utilities": "XLU", "materials": "XLB"}
+CAUSES = ("calculation", "decision", "system", "expected_variance")
+
+
+def twr(values: pd.Series, inflows: pd.Series, start: pd.Timestamp, end: pd.Timestamp) -> Optional[float]:
+    """Time-weighted return between two closes, with deposits removed."""
+    v = values.loc[:end]
+    v = v[v.index >= v.index[v.index.searchsorted(start) - 1]] if v.index.searchsorted(start) > 0 else v.loc[start:]
+    if len(v) < 2:
+        return None
+    f = inflows.reindex(v.index, fill_value=0.0)
+    daily = ((v - f) / v.shift(1) - 1).iloc[1:]
+    daily = daily[v.shift(1).iloc[1:] > 0]
+    return float((1 + daily).prod() - 1) if len(daily) else None
+
+
+def classify(trade, stats: dict[str, dict]) -> tuple[str, str]:
+    """(cause, step) for a losing closed trade. A loss within the setup's tested odds is expected variance."""
+    ret = trade.exit / trade.entry - 1
+    tail = stats.get(trade.setup_id, {}).get("tail_ret")
+    step = {"stop": "entry signal (the trade went against it)", "time": "time limit", "signal": "exit rule",
+            "target": "target"}.get(trade.reason, trade.reason)
+    if tail is not None and ret < tail - 0.001:
+        return "decision", step          # worse than 1-in-20 for this setup: the rule, not luck
+    return "expected_variance", step
+
+
+def _decompose(state: AccountState, sym: str, start: pd.Timestamp, end: pd.Timestamp) -> Optional[tuple[float, float, float, float]]:
+    from tradeagent.macro import NAMES
+    def r(s):
+        c = state.bars.get(s, pd.DataFrame()).get("close")
+        if c is None:
+            return None
+        c = c.loc[:end]
+        i = c.index.searchsorted(start)
+        return None if i == 0 or i > len(c) - 1 else float(c.iloc[-1] / c.iloc[i - 1] - 1)
+    total, mkt = r(sym), r("SPY")
+    if total is None or mkt is None:
+        return None
+    sector_etf = SECTOR_ETF.get(NAMES.get(sym, ("", ""))[1])
+    sec = r(sector_etf) if sector_etf and sector_etf != sym else None
+    sector_part = (sec - mkt) if sec is not None else 0.0
+    return total, mkt, sector_part, total - mkt - sector_part
+
+
+def weekly(state: AccountState, config: Config, *, system_lines: Optional[list[Line]] = None,
+           watch_lines: Optional[list[Line]] = None) -> Email:
+    d = state.sim.daily
+    end = state.day
+    week_start = end - pd.DateOffset(days=int(end.weekday()))          # Monday of the last session's week
+    month_start = end.replace(day=1)
+    first = d.index[0]
+    lt_in = pd.Series({day: s["long_term"] for day, _, s in state.sim.deposits[1:]}, dtype=float)
+    st_in = pd.Series(state.sim.st_inflows, dtype=float).drop(labels=[first], errors="ignore")
+    all_in = pd.Series({day: a for day, a, _ in state.sim.deposits[1:]}, dtype=float)
+    series = {"Account": (d["value"], all_in), "Long-term": (d["lt_value"] + d["cash_lt"], lt_in),
+              "Short-term": (d["st_value"] + d["cash_st"], st_in)}
+    bench = pd.DataFrame({b: state.bars[b]["close"] for b in config.goal.benchmark if b in state.bars}).loc[:end]
+    bench_val = (bench / bench.iloc[0]).mean(axis=1)
+    rows, perf = [], {}
+    for name, (vals, flows) in list(series.items()) + [("Index funds", (bench_val, pd.Series(dtype=float)))]:
+        cells = []
+        for s in (week_start, month_start, first):
+            x = twr(vals, flows, max(s, first), end)
+            cells.append("–" if x is None else pct(x))
+            perf[(name, s)] = x
+        rows.append([name, *cells])
+    perf_table = Table(["", "Week", "Month", "Since start"], rows, f"{_src(state)} + prices")
+    acct_w = perf[("Account", week_start)] or 0.0
+    spy = state.bars["SPY"]["close"].loc[:end]
+    spy_w = float(spy.iloc[-1] / spy.loc[:week_start - pd.DateOffset(days=1)].iloc[-1] - 1)
+
+    # closed trades this week and the last 4 weeks
+    trades = [t for t in state.sim.trades if t.bucket == "short_term"]
+    this_week = [t for t in trades if t.exit_day >= week_start]
+    last4 = [t for t in trades if t.exit_day >= end - pd.DateOffset(weeks=4)]
+    causes4 = [classify(t, state.stats)[0] for t in last4 if t.exit < t.entry]
+    from collections import Counter
+    counts = Counter(c for c in causes4 if c != "expected_variance")
+    fixes = [c for c, n in counts.items() if n >= config.review.recurrence.count]
+
+    well, wrong = [], []
+    for t in this_week:
+        ret = t.exit / t.entry - 1
+        if ret > 0:
+            well.append(Line(f"✓ {t.symbol} ({t.setup_id}) {pct(ret)}, closed by its {t.reason}.", f"{_src(state)}", "up"))
+        else:
+            cause, step = classify(t, state.stats)
+            wrong.append(Line(f"✗ {t.symbol} ({t.setup_id}) {pct(ret)}. Cause: {cause.replace('_', ' ')}. Step: {step}.",
+                              f"setup {t.setup_id} odds + {_src(state)}", "down"))
+
+    moved = []
+    held = {p.symbol for p in state.sim.open_positions} | {t.symbol for t in this_week}
+    decomp = [(s, _decompose(state, s, week_start, end)) for s in sorted(held)]
+    decomp = sorted([x for x in decomp if x[1]], key=lambda x: -abs(x[1][0]))[:6]
+    for s, (tot, m, sec, own) in decomp:
+        moved.append(Line(f"{s} {pct(tot)} = market {pct(m)} · sector {pct(sec)} · stock-specific {pct(own)}",
+                          "prices (SPY, sector ETF)", "up" if tot >= 0 else "down"))
+
+    score = [[f"{t.setup_id} {t.symbol} {t.entry_day:%b %d}", str(state.stats.get(t.setup_id, {}).get("tier") or "–"),
+              "assumed (shadow)", pct(t.exit / t.entry - 1),
+              "yes" if classify(t, state.stats)[0] == "expected_variance" or t.exit >= t.entry else "no"]
+             for t in this_week]
+
+    nxt_lines = []
+    nxt_month = (end + pd.offsets.MonthBegin(1)).normalize()
+    if (nxt_month - end).days <= 9:
+        lt_share = active_profile(config, ever_reached_switch=d["profile"].iloc[-1] == "moderate").buckets.long_term.target
+        dep = config.shadow.monthly_deposit
+        nxt_lines.append(Line(f"Deposit expected around {nxt_month:%b %d}: {usd(dep)}, about {usd(dep * lt_share)} long-term "
+                              f"/ {usd(dep * (1 - lt_share))} short-term (the 40/60 rule).", "shadow settings"))
+    for p in state.sim.open_positions:
+        ne = state.next_earnings(p.symbol)
+        if ne and 0 < (ne - end.date()).days <= 9:
+            nxt_lines.append(Line(f"{p.symbol} reports earnings {ne:%b %d}.", "Yahoo earnings calendar"))
+
+    summary = (f"Account {pct(acct_w)} this week vs SPY {pct(spy_w)}; "
+               + ("short-term buys are paused by the goal check." if state.sim.goal_paused else
+                  "short-term trading is active."))
+    sections = [Section("Performance (time-weighted, deposits removed)", [perf_table])]
+    sections.append(Section(f"Fix needed (same cause {config.review.recurrence.count}x in {config.review.recurrence.weeks} weeks)",
+                            [Line(f"{c.replace('_', ' ').title()}: {counts[c]} losing trades in 4 weeks traced to this cause. "
+                                  f"Proposed change goes to you for approval; nothing changes automatically.",
+                                  f"{_src(state)}", "down") for c in fixes]
+                            or [Line("None this week.", tone="muted")]))
+    sections.append(Section("Why things moved", moved or [Line("No holdings this week.", tone="muted")]))
+    sections.append(Section("Recommendation scorecard",
+                            [Table(["Recommendation", "Tier", "Acted?", "Result", "Within odds?"], score, _src(state))]
+                            if score else [Line("No trades closed this week.", tone="muted")]))
+    sections.append(Section("What went well / what went wrong", well + wrong or [Line("Nothing closed this week.", tone="muted")]))
+    guards = safeguard_lines(state)
+    if guards:
+        sections.append(Section("Safeguards", guards))
+    if watch_lines:
+        sections.append(Section("Watched on paper", watch_lines))
+    if nxt_lines:
+        sections.append(Section("Next week", nxt_lines))
+    if system_lines:
+        sections.append(Section("System", system_lines))
+    v = state.value()
+    subj = subject_line("weekly", [f"{week_start:%b %d}–{end:%b %d}", usd(v), f"{pct(acct_w)} vs SPY {pct(spy_w)}",
+                                   f"{len(fixes)} fix needed" if fixes else "no fix needed"], config.mode == "shadow")
+    return Email("weekly", subj, Line(summary, f"{_src(state)} + prices", "strong"), sections, footer(state))
