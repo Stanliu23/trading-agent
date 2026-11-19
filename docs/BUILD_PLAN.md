@@ -110,7 +110,7 @@ Vibe-Trading's engine has no per-trade stops, so our own per-trade simulator pro
 - `tradeagent tick` runs whatever is due by New York time; launchd calls it every 15 minutes (`tradeagent launchd-plist`).
 - `tradeagent run <kind> --dry-run` writes previews to `data/run_preview/`.
 
-Waiting for your review of the previews.
+Previews emailed and approved on your phone 2026-11-19. **Phase 7 done.**
 
 - The premarket update, daily digest and Saturday report.
 - Each holding's move is split into market, sector and stock-specific parts, using SPY and the sector's ETF as the yardsticks.
