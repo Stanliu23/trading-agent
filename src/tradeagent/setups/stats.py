@@ -42,6 +42,7 @@ class SetupStats:
     tier: Optional[int]
     edge: int
     confidence: int
+    recommendable: bool = False          # passes evidence AND edge >= evidence.min_edge
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -131,6 +132,7 @@ def compute_stats(setup: Setup, trades: list[Trade], symbols_tested: int, config
         passes_evidence=passes, evidence_note="; ".join(problems) or "passes",
         tier=tier_for(loss_rate, tail, config) if passes else None,
         edge=edge, confidence=confidence,
+        recommendable=passes and edge >= ev.min_edge,
     )
 
 

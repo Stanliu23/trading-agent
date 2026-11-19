@@ -88,6 +88,7 @@ class Evidence(Strict):
     min_trades: int = Field(ge=1)
     min_history_years: float = Field(gt=0)
     require_positive_holdout: bool
+    min_edge: int = Field(ge=0, le=5)
 
 
 class Backtest(Strict):
@@ -120,17 +121,20 @@ class Scoring(Strict):
     confidence_trades: list[int] = Field(min_length=3, max_length=3)
     confidence_years_positive: float = Fraction
     confidence_holdout_decay: float = Fraction
+    fit_correlation: list[float] = Field(min_length=5, max_length=5)
 
     @model_validator(mode="after")
     def _steps_ascending(self) -> "Scoring":
         _ascending(self.edge_swing_r, "edge_swing_r")
         _ascending(self.edge_long_term, "edge_long_term")
         _ascending([float(x) for x in self.confidence_trades], "confidence_trades")
+        _ascending(self.fit_correlation, "fit_correlation")
         return self
 
 
 class Positions(Strict):
     max_position_pct: float = Field(gt=0, le=1)
+    min_position_usd: float = Field(ge=0)
     skip_entries_before_earnings: bool
 
 

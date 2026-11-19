@@ -125,10 +125,35 @@ class Idea:
     tier: int
     stars: int
     expected_return: float
+    correlation: float = 0.0   # 60-day correlation with current holdings (0 when nothing is held)
 
 
 def rank(ideas: list[Idea], profile: Profile) -> list[Idea]:
-    """Aggressive: highest expected return first. Moderate: most stars first, then expected return."""
+    """Aggressive: highest expected return first. Moderate: most stars first, then expected return.
+    Ties go to the idea least correlated with what you already hold (never alphabetical)."""
     if profile.rank_by == "expected_return":
-        return sorted(ideas, key=lambda i: (-i.expected_return, -i.stars, i.symbol))
-    return sorted(ideas, key=lambda i: (-i.stars, -i.expected_return, i.symbol))
+        return sorted(ideas, key=lambda i: (-i.expected_return, i.correlation, -i.stars, i.symbol))
+    return sorted(ideas, key=lambda i: (-i.stars, -i.expected_return, i.correlation, i.symbol))
+
+
+def holdings_correlation(candidate: "pd.Series", holdings: dict[str, "pd.Series"], weights: dict[str, float],
+                         lookback: int = 60) -> float:
+    """Correlation of a candidate's daily returns with the value-weighted returns of current holdings."""
+    import pandas as pd
+
+    if not holdings or sum(weights.values()) <= 0:
+        return 0.0
+    rets = pd.DataFrame({k: v.pct_change() for k, v in holdings.items()}).tail(lookback)
+    w = pd.Series(weights).reindex(rets.columns).fillna(0)
+    port = (rets * (w / w.sum())).sum(axis=1, min_count=1)
+    cand = candidate.pct_change().reindex(rets.index)
+    both = pd.concat([cand, port], axis=1).dropna()
+    if len(both) < lookback // 2:
+        return 0.0
+    c = both.iloc[:, 0].corr(both.iloc[:, 1])
+    return 0.0 if pd.isna(c) else float(c)
+
+
+def fit_score(correlation: float, steps: list[float]) -> int:
+    """Fit sub-score 0-5: 5 minus the number of correlation steps exceeded."""
+    return 5 - sum(correlation > s for s in steps)

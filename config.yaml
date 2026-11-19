@@ -42,6 +42,7 @@ evidence:
   min_trades: 30
   min_history_years: 5
   require_positive_holdout: true
+  min_edge: 2                     # only setups scoring >= 2 of 5 on Edge are recommended (approved 2026-11-18)
 
 backtest:
   history_start: "2015-01-01"
@@ -59,9 +60,11 @@ scoring:
   confidence_trades: [30, 100, 300]               # 2 / 3 / 4 points at these trade counts
   confidence_years_positive: 0.70                 # +1 if at least this share of calendar years were positive
   confidence_holdout_decay: 0.5                   # -1 if held-out expectancy < half of in-sample
+  fit_correlation: [0.2, 0.4, 0.6, 0.8, 0.9]      # Fit = 5 minus the steps the idea's 60-day correlation with your holdings exceeds
 
 positions:
   max_position_pct: 0.25          # no single position above 25% of account value
+  min_position_usd: 20            # smaller amounts stay as cash (approved 2026-11-18)
   skip_entries_before_earnings: true   # no new short-term stock entry if earnings fall before the planned exit
 
 tiers:

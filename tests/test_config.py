@@ -30,6 +30,8 @@ def test_approved_numbers(project):
     assert (c.tiers.tier1.max_loss_rate, c.tiers.tier1.max_tail_loss) == (0.25, 0.08)
     assert (c.tiers.tier2.max_loss_rate, c.tiers.tier2.max_tail_loss) == (0.40, 0.15)
     assert c.evidence.min_trades == 30
+    assert c.evidence.min_edge == 2
+    assert (c.positions.max_position_pct, c.positions.min_position_usd) == (0.25, 20)
 
 
 def test_market_data_sources(project):

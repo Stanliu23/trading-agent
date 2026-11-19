@@ -28,7 +28,8 @@ STOCKS = ["AAPL", "MSFT", "AMZN", "GOOGL", "META", "NVDA", "JPM", "V", "MA", "UN
           "ADBE", "CRM", "INTC", "AMD", "QCOM", "TXN", "AVGO", "NFLX", "DIS", "MCD", "NKE",
           "BAC", "WFC", "LLY", "TMO", "UNP"]
 
-CORE_ETFS = ["SPY", "QQQ", "VTI", "SCHD"]
+# SPY dropped 2026-11-18: near-duplicate of VTI.
+CORE_ETFS = ["VTI", "QQQ", "SCHD"]
 
 Signal = Callable[[pd.DataFrame], pd.Series]
 
@@ -128,8 +129,8 @@ LIBRARY: tuple[Setup, ...] = (
     Setup(
         id="L1", name="Core index accumulation", bucket="long_term", kind="accumulate",
         universe=tuple(CORE_ETFS),
-        rule="Buy broad index ETFs (SPY, QQQ, VTI, SCHD) with each deposit. Sell only on a measured "
-             "thesis break, never on price noise.",
+        rule="Buy broad index ETFs (VTI, QQQ, SCHD) with each deposit, into whichever is held least. "
+             "Sell only on a measured thesis break, never on price noise.",
         signal=_month_start,
         notes=("Scored on 3-year forward returns from every month start; windows overlap, so "
                "Confidence is capped at 2.",),

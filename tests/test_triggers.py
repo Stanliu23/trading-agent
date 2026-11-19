@@ -109,3 +109,31 @@ def test_portfolio_invariants(cfg):
         prior = d.loc[:t.entry_day, "value"].iloc[-2] if len(d.loc[:t.entry_day]) > 1 else 300
         assert t.dollars_in <= 0.25 * prior + 0.01
     assert all(p.stop is None for p in sim.open_positions if p.bucket == "long_term")
+    assert all(t.dollars_in >= 20 * (1 - 0.0005) - 0.01 for t in sim.trades)  # $20 minimum (less entry cost)
+    assert all(p.qty * p.entry >= 20 * (1 - 0.0005) - 0.01 for p in sim.open_positions)
+
+
+def test_low_edge_setup_never_traded(cfg):
+    syms = ["SPY", "QQQ", "VTI", "SCHD", "IWM", "XLK", "AAPL", "MSFT"]
+    bars = {s: _walk(i) for i, s in enumerate(syms)}
+    stats = {s.id: {"passes_evidence": True, "recommendable": s.id != "S1", "tier": 2, "mean_ret": 0.01,
+                    "edge": 1 if s.id == "S1" else 3, "confidence": 3} for s in LIBRARY}
+    sim = simulate_portfolio(bars, cfg, stats, "2025-11-03", str(bars["SPY"].index[-1].date()), 300, 250,
+                             {"AAPL": [date(2026, 1, 29)], "MSFT": [date(2026, 1, 28)]})
+    assert all(t.setup_id != "S1" for t in sim.trades)
+    assert all(p.setup_id != "S1" for p in sim.open_positions)
+
+
+def test_long_term_spreads_across_core_etfs(cfg):
+    """'Buy whichever is held least' must count every lot, so no ETF ends far above the others."""
+    from tradeagent.setups.library import CORE_ETFS
+    syms = ["SPY", "QQQ", "VTI", "SCHD"]
+    bars = {s: _walk(i, drift=0.0, vol=0.002) for i, s in enumerate(syms)}  # flat prices: lots compare fairly
+    stats = {s.id: {"passes_evidence": True, "recommendable": s.kind == "accumulate", "tier": 2, "mean_ret": 0.01,
+                    "edge": 3, "confidence": 2} for s in LIBRARY}
+    sim = simulate_portfolio(bars, cfg, stats, "2025-06-02", str(bars["SPY"].index[-1].date()), 300, 250, {})
+    held = {s: 0.0 for s in CORE_ETFS}
+    for p in sim.open_positions:
+        held[p.symbol] += p.qty * p.entry
+    assert min(held.values()) > 0
+    assert max(held.values()) / min(held.values()) < 2.0

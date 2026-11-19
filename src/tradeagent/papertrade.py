@@ -22,6 +22,7 @@ from tradeagent import risk
 from tradeagent.config import Config, active_profile
 from tradeagent.setups import indicators as ind
 from tradeagent.setups.library import CORE_ETFS, ETFS, LIBRARY, Setup
+from tradeagent.setups.stats import stars
 from tradeagent.triggers import bucket_drift
 
 MIN_ORDER_USD = 1.0  # Schwab fractional orders start at $1
@@ -102,7 +103,12 @@ def simulate_portfolio(
     earnings = earnings or {}
     cost_half = config.backtest.round_trip_cost / 2
     calendar = bars["SPY"].loc[start:end].index
-    swing = [s for s in LIBRARY if s.kind == "swing" and stats.get(s.id, {}).get("passes_evidence")]
+    def usable(sid):
+        st = stats.get(sid, {})
+        return st.get("recommendable", st.get("passes_evidence", False))
+
+    min_order = max(MIN_ORDER_USD, config.positions.min_position_usd)
+    swing = [s for s in LIBRARY if s.kind == "swing" and usable(s.id)]
     # Precompute signals, exit signals once per symbol.
     sig, exs = {}, {}
     for s in swing:
@@ -231,8 +237,11 @@ def simulate_portfolio(
                      "profile": "moderate" if ever_reached else "aggressive", "paused": paused})
 
         # 5a. long-term: spend long-term cash on the core ETF we hold least of (equal spread)
-        if cash["long_term"] >= MIN_ORDER_USD and n + 1 < len(calendar):
-            held = Counter({p.symbol: p.qty * (price(p.symbol, day) or p.entry) for p in positions if p.bucket == "long_term"})
+        if cash["long_term"] >= min_order and n + 1 < len(calendar):
+            held = Counter()
+            for p in positions:  # sum every lot: one symbol can have several purchases
+                if p.bucket == "long_term":
+                    held[p.symbol] += p.qty * (price(p.symbol, day) or p.entry)
             sym = min(CORE_ETFS, key=lambda s: (held.get(s, 0), (CORE_ETFS.index(s) - lt_rotation) % len(CORE_ETFS)))
             lt_rotation += 1
             room = risk.bucket_room(profile, "long_term", value, lt_val)
@@ -246,11 +255,11 @@ def simulate_portfolio(
                                         position_cap_pct=cap_left)
             if sz is None:
                 pass
-            elif sz.size_usd >= MIN_ORDER_USD:
+            elif sz.size_usd >= min_order:
                 cash["long_term"] -= sz.size_usd
                 queued.append((next(s for s in LIBRARY if s.id == "L1"), sym, sz.size_usd, None, None, "long_term"))
-            elif cash["long_term"] >= MIN_ORDER_USD:
-                blocked[f"long-term cash idle ({sz.limited_by})"] += 1
+            else:
+                blocked[f"long-term cash waiting (below ${min_order:.0f} minimum, {sz.limited_by})"] += 1
 
         # 5b. short-term signals
         if n + 1 >= len(calendar):
@@ -273,7 +282,16 @@ def simulate_portfolio(
         if paused:
             blocked["drawdown pause"] += len(cands)
             continue
-        ideas = [risk.Idea(sym, s.id, st["tier"], 0, st["mean_ret"]) for s, sym, st in cands]
+        hold_px = {p.symbol: bars[p.symbol]["close"].loc[:day] for p in positions}
+        hold_w = Counter()
+        for p in positions:
+            hold_w[p.symbol] += p.qty * (price(p.symbol, day) or p.entry)
+        ideas = []
+        for s, sym, st in cands:
+            corr = risk.holdings_correlation(bars[sym]["close"].loc[:day], hold_px, dict(hold_w))
+            fit = risk.fit_score(corr, config.scoring.fit_correlation)
+            star = stars(st.get("edge", 0), st.get("confidence", 0), fit)
+            ideas.append(risk.Idea(sym, s.id, st["tier"], star, st["mean_ret"], corr))
         order = risk.rank(ideas, profile)
         by_key = {(s.id, sym): (s, sym, st) for s, sym, st in cands}
         for idea in order:
@@ -302,8 +320,8 @@ def simulate_portfolio(
             sz = risk.size_position(profile=profile, tier=st["tier"], account_value=value, entry=float(df["close"].iloc[i]),
                                     stop=stop, room_usd=room, cash_usd=cash["short_term"],
                                     position_cap_pct=config.positions.max_position_pct)
-            if sz.size_usd < MIN_ORDER_USD:
-                blocked[f"no room ({sz.limited_by})"] += 1
+            if sz.size_usd < min_order:
+                blocked[f"below ${min_order:.0f} minimum ({sz.limited_by})"] += 1
                 continue
             cash["short_term"] -= sz.size_usd
             queued.append((s, sym, sz.size_usd, stop, target, "short_term"))

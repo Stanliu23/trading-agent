@@ -81,7 +81,7 @@ The tail measure is the 5th-percentile trade, not the single worst trade, becaus
 
 - **Edge:** expected return per unit of risk, on held-out data.
 - **Confidence:** sample size, and how consistent the result is across years.
-- **Fit:** low correlation with what you already hold, and room left in the bucket.
+- **Fit:** 5 minus the steps (0.2, 0.4, 0.6, 0.8, 0.9) that the idea's 60-day correlation with your current holdings exceeds. With nothing held, Fit is 5. Room left in the bucket is enforced by sizing, not by Fit.
 
 Score steps (approved 2026-11-18 with the setup table) live in `config.yaml` under `scoring`.
 
@@ -92,6 +92,10 @@ Score steps (approved 2026-11-18 with the setup table) live in `config.yaml` und
 - Long-term setups are tested from 2005 to 2025 on **3-year** forward returns. Their held-out period is the last 2 years of entries that have a complete 3-year result.
 - Vibe-Trading's backtest engine works on portfolio weights and has no per-trade stops. So per-trade results come from our own simulator (`setups/simulate.py`), with prices from Vibe-Trading's Yahoo loader.
 - **Max position:** 25% of account value per position, in both profiles.
+- **Min position:** $20. Smaller amounts stay as cash (approved 2026-11-18).
+- **Min edge:** a setup is recommended only if it scores at least 2 of 5 on Edge. Today that rules out S1 (approved 2026-11-18).
+- **Ties:** ideas that rank equal go to the one least correlated with what you hold, never alphabetically (approved 2026-11-18).
+- **L1 ETFs:** VTI, QQQ and SCHD. Each long-term purchase goes to whichever you hold least of, counting all lots. SPY was dropped as a near-duplicate of VTI (approved 2026-11-18).
 - **Earnings:** no new short-term *stock* entry if the stock's next earnings date falls on or before the planned exit. If the date is unknown, the entry is blocked. ETFs are exempt.
 
 ## 5. Weekly report (Saturday 09:00 ET)

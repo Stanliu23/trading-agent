@@ -60,8 +60,8 @@ def to_markdown(results: list[SetupStats], missing: dict[str, list[str]], config
         f"Costs: {bt.round_trip_cost:.1%} per round trip. Held-out period: short-term trades entered from "
         f"{bt.holdout_start} on; long-term, the last {bt.long_term_holdout_years:g} years of complete entries.",
         "",
-        "| Setup | Trades | Loss rate | Avg | Median | 5th pct | Worst | Exp. R | Held-out | Years + | Evidence | Tier | Edge | Conf. |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| Setup | Trades | Loss rate | Avg | Median | 5th pct | Worst | Exp. R | Held-out | Years + | Evidence | Tier | Edge | Conf. | Used? |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for r in results:
         held = (f"{_num(r.out_metric)}R ({r.out_n})" if r.kind == "swing" else f"{_pct(r.out_metric)} ({r.out_n})")
@@ -69,7 +69,7 @@ def to_markdown(results: list[SetupStats], missing: dict[str, list[str]], config
             f"| **{r.setup_id}** {r.name} | {r.n} | {_pct(r.loss_rate, 0, sign=False)} | {_pct(r.mean_ret, 2)} | "
             f"{_pct(r.median_ret, 2)} | {_pct(r.tail_ret)} | {_pct(r.worst_ret)} | {_num(r.exp_r)} | {held} | "
             f"{_pct(r.years_positive, 0, sign=False)} | {'pass' if r.passes_evidence else r.evidence_note} | "
-            f"{r.tier or '–'} | {r.edge} | {r.confidence} |"
+            f"{r.tier or '–'} | {r.edge} | {r.confidence} | {'yes' if r.recommendable else 'no (Edge < ' + str(config.evidence.min_edge) + ')' if r.passes_evidence else 'no'} |"
         )
     lines += ["", "## Column meanings", "",
               "- **Loss rate:** share of trades that lost money after costs. Tier 1 needs ≤ 25%, Tier 2 ≤ 40%.",
@@ -78,7 +78,10 @@ def to_markdown(results: list[SetupStats], missing: dict[str, list[str]], config
               "- **Exp. R:** average result per unit of risk (1R = the distance from entry to stop).",
               "- **Held-out:** the same metric on trades entered after the cutoff, which the setups were never shaped on.",
               "- **Years +:** share of calendar years whose average trade was positive.",
-              "- **Edge / Conf.:** two of the three star sub-scores. **Fit** is added per recommendation, from your current holdings.",
+              "- **Edge / Conf.:** two of the three star sub-scores. **Fit** is added per recommendation: 5 minus the "
+              "correlation steps (0.2, 0.4, 0.6, 0.8, 0.9) that the idea's 60-day correlation with your holdings exceeds.",
+              f"- **Used?:** a setup is recommended only if it passes the evidence rules and scores at least "
+              f"{config.evidence.min_edge} on Edge.",
               "", "## Setup rules", ""]
     from tradeagent.setups.library import LIBRARY as LIB
     for s in LIB:

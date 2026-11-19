@@ -5,8 +5,11 @@ import pytest
 from tradeagent.config import load_config
 from datetime import date
 
-from tradeagent.risk import (Idea, bucket_room, drawdown_paused, earnings_blocks_entry, planned_exit_day, rank,
-                             size_position, split_deposit)
+import numpy as np
+import pandas as pd
+
+from tradeagent.risk import (Idea, bucket_room, drawdown_paused, earnings_blocks_entry, fit_score,
+                             holdings_correlation, planned_exit_day, rank, size_position, split_deposit)
 
 
 @pytest.fixture
@@ -120,3 +123,25 @@ def test_size_rounds_down_to_the_cent(profiles):
     s = size_position(profile=agg, tier=1, account_value=300, entry=100, stop=None, room_usd=1e9,
                       cash_usd=10.006, position_cap_pct=1.0)
     assert s.size_usd == 10.0 and s.size_usd <= 10.006
+
+
+def test_ties_go_to_least_correlated_not_alphabetical(profiles):
+    agg, mod = profiles
+    ideas = [Idea("AAPL", "S2", 3, 3, 0.01, correlation=0.8), Idea("XOM", "S2", 3, 3, 0.01, correlation=0.1)]
+    assert [i.symbol for i in rank(ideas, agg)] == ["XOM", "AAPL"]
+    assert [i.symbol for i in rank(ideas, mod)] == ["XOM", "AAPL"]
+
+
+def test_fit_score_steps():
+    steps = [0.2, 0.4, 0.6, 0.8, 0.9]
+    assert [fit_score(c, steps) for c in (-0.3, 0.2, 0.3, 0.5, 0.7, 0.85, 0.95)] == [5, 5, 4, 3, 2, 1, 0]
+
+
+def test_holdings_correlation():
+    rng = np.random.default_rng(0)
+    idx = pd.bdate_range("2026-01-01", periods=80)
+    base = pd.Series(100 * np.cumprod(1 + rng.normal(0, 0.01, 80)), index=idx)
+    other = pd.Series(100 * np.cumprod(1 + rng.normal(0, 0.01, 80)), index=idx)
+    assert holdings_correlation(base, {"A": base}, {"A": 100}) == pytest.approx(1.0)
+    assert abs(holdings_correlation(other, {"A": base}, {"A": 100})) < 0.4
+    assert holdings_correlation(base, {}, {}) == 0.0          # nothing held -> best fit
