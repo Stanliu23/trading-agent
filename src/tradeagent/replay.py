@@ -86,6 +86,7 @@ def run(config: Config, months: int = 6, starting_cash: float = 300, monthly_dep
                      sorted(set(STOCKS) - set(earnings)), bars["SPY"]["close"])
     path = root / "docs" / "REPLAY.md"
     path.write_text(md, encoding="utf-8")
+    (root / "docs" / "TRADE_LOG.md").write_text(trade_log(sim, start, today), encoding="utf-8")
     return path
 
 
@@ -173,4 +174,51 @@ def to_markdown(sim: SimResult, watch, news, config, start, end, starting_cash, 
             lines.append(f"- No price data: {', '.join(missing)}")
         if no_earnings:
             lines.append(f"- No earnings dates from Yahoo (entries blocked): {', '.join(no_earnings)}")
+    return "\n".join(lines) + "\n"
+
+
+WHY = {
+    "S2": "closed at a 52-week high on 1.5x normal volume, above its 200-day average",
+    "S3": "ETF closed below its lower Bollinger band (20-day, 2 std) while above its 200-day average",
+    "S4": "opened 4%+ above yesterday's close on 3x volume and closed in the top half of its range",
+    "S1": "2-day RSI under 10 while above its 200-day average",
+}
+EXIT = {"stop": "stop-loss hit", "target": "profit target hit", "signal": "exit signal (back to its average)",
+        "time": "time limit reached"}
+
+
+def trade_log(sim: SimResult, start, end) -> str:
+    rows = sorted((t for t in sim.trades if t.bucket == "short_term"), key=lambda t: t.entry_day)
+    lines = [f"# Short-term trade log (hypothetical account, {start} to {end})", "",
+             "Every short-term buy and sell the agent would have recommended, assuming you took each one. "
+             "Buys fill at the open the morning after the signal; stops and targets are watched during the day.", "",
+             "## Rules behind each buy", ""]
+    for sid, why in WHY.items():
+        if any(t.setup_id == sid for t in rows):
+            lines.append(f"- **{sid}:** {why}.")
+    lines += ["", "## Closed trades", "",
+              "| # | Bought | Buy price | Setup | Size | Stop | Target | Sold | Sell price | Why sold | Days | P&L |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for k, t in enumerate(rows, 1):
+        days = len(pd.bdate_range(t.entry_day, t.exit_day))
+        ret = t.exit / t.entry - 1
+        lines.append(
+            f"| {k} | {t.entry_day.date()} {t.symbol} | ${t.entry:,.2f} | {t.setup_id} | ${t.dollars_in:,.0f} | "
+            f"{'$%.2f' % t.stop if t.stop else '–'} | {'$%.2f' % t.target if t.target else '–'} | "
+            f"{t.exit_day.date()} | ${t.exit:,.2f} | {EXIT.get(t.reason, t.reason)} | {days} | "
+            f"{'+' if t.pnl >= 0 else '−'}${abs(t.pnl):,.2f} ({ret:+.1%}) |")
+    st = [p for p in sim.open_positions if p.bucket == "short_term"]
+    if st:
+        lines += ["", "## Still open", "", "| Bought | Setup | Buy price | Stop | Target |", "|---|---|---|---|---|"]
+        for p in st:
+            lines.append(f"| {p.entry_day.date()} {p.symbol} | {p.setup_id} | ${p.entry:,.2f} | "
+                         f"{'$%.2f' % p.stop if p.stop else '–'} | {'$%.2f' % p.target if p.target else '–'} |")
+    if rows:
+        df = pd.DataFrame([t.__dict__ for t in rows])
+        lines += ["", "## Totals by setup", "", "| Setup | Trades | Winners | P&L |", "|---|---|---|---|"]
+        for sid, g in df.groupby("setup_id"):
+            lines.append(f"| {sid} | {len(g)} | {(g['pnl'] > 0).mean():.0%} | ${g['pnl'].sum():+,.2f} |")
+    skipped = {k: v for k, v in sim.blocked.items() if "switched off" in k}
+    if skipped:
+        lines += ["", "Signals skipped by the per-setup switch: " + "; ".join(f"{k}: {v}" for k, v in skipped.items()) + "."]
     return "\n".join(lines) + "\n"

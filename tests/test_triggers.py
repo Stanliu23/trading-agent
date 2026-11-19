@@ -162,7 +162,8 @@ def test_goal_rules_wrapper_matches_plain_run_when_restart_off(cfg):
     bars = {s: _walk(i) for i, s in enumerate(syms)}
     stats = {s.id: {"passes_evidence": True, "tier": 2, "mean_ret": 0.01 * (k + 1)} for k, s in enumerate(LIBRARY)}
     args = (bars, cfg, stats, "2025-11-03", str(bars["SPY"].index[-1].date()), 300, 250, {})
-    off = cfg.model_copy(update={"goal": cfg.goal.model_copy(update={"restart_when_paper_book_recovers": False})})
+    off = cfg.model_copy(update={"goal": cfg.goal.model_copy(update={"restart_when_paper_book_recovers": False}),
+                                 "setup_switch": cfg.setup_switch.model_copy(update={"enabled": False})})
     plain = simulate_portfolio(*((bars, off) + args[2:]))
     wrapped = simulate_with_goal_rules(*((bars, off) + args[2:]))
     assert plain.daily["value"].iloc[-1] == pytest.approx(wrapped.daily["value"].iloc[-1])
@@ -187,3 +188,18 @@ def test_idle_cash_earns_parking_return(cfg):
     plain = simulate_with_goal_rules(bars, off, *args)
     parked = simulate_with_goal_rules(bars, cfg, *args)
     assert parked.daily["value"].iloc[-1] > plain.daily["value"].iloc[-1]   # no trades: only cash yield differs
+
+
+def test_setup_switch_skips_a_losing_setup(cfg):
+    """A setup whose last N paper trades average below zero is skipped; with the switch off it trades."""
+    syms = ["SPY", "QQQ", "VTI", "SCHD", "IWM", "XLK", "AAPL", "MSFT"]
+    bars = {s: _walk(i) for i, s in enumerate(syms)}
+    stats = {s.id: {"passes_evidence": True, "tier": 2, "mean_ret": 0.01} for s in LIBRARY}
+    end = str(bars["SPY"].index[-1].date())
+    strict = simulate_portfolio(bars, cfg, stats, "2025-11-03", end, 300, 250, {}, setup_switch_n=5,
+                                setup_switch_min_r=99.0)       # impossible bar: every setup is switched off
+    loose = simulate_portfolio(bars, cfg, stats, "2025-11-03", end, 300, 250, {})
+    n_strict = len([t for t in strict.trades if t.bucket == "short_term"])
+    n_loose = len([t for t in loose.trades if t.bucket == "short_term"])
+    assert any("switched off" in k for k in strict.blocked)
+    assert n_strict < n_loose      # trades only before a setup has N closed paper trades to judge

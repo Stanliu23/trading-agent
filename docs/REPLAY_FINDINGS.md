@@ -156,3 +156,69 @@ What this shows:
 - **Over the last 12 months, short-term trading lost money in every version** (−$89 to −$203), and every version trailed both index funds (+$194) and T-bills (+$67).
 - **Hidden problem: the drawdown pause never fired,** in any version or window, even with a −20% time-weighted drop. It measures the drop on raw account value, and monthly deposits hide the fall. It should measure the drop with deposits removed (time-weighted).
 - Turning the drawdown pause off changed nothing, for the same reason.
+
+## Why short-term trading loses money lately (2026-11-18)
+
+**Each setup's paper record, every signal on the watchlist, no portfolio limits:**
+
+| Setup | Design 2015–23 | Check 2024–25 | Unseen 2026 |
+|---|---|---|---|
+| S2 breakouts | 49% wins, +0.15R | 54%, +0.25R | 44%, **+0.21R** (still works) |
+| S3 ETF dips | 71% wins, +0.19R | 71%, +0.17R | **54%, −0.08R** (broke) |
+| S4 gap-ups | 57%, +0.46R | 47%, +0.42R | 29%, −0.27R (7 trades only) |
+
+**Dollars in the account (40/60, no pause):** S2 +$14 (12 months) and +$406 (24 months); **S3 −$106 and −$111**; S4 −$15 and −$128.
+
+What this shows:
+- **The losses come from S3, not from short-term trading in general.** S3's ETFs move little, so its positions are sized up to the 25% cap, and its losers are large in dollars (12 months: losers averaged $352, winners $241).
+- **Picking isn't the problem.** The account's S2 trades averaged +1.13% vs +1.39% for all S2 signals, with the same sector mix. (My earlier guess that the correlation tiebreak picks weak sectors was wrong.)
+- **The market-trend filter wouldn't help in 2026.** SPY was above its 200-day average on 95% of days. Dips simply stopped bouncing back as reliably.
+- **Recent months were rough for every setup:** August–November 2026 entries won 0–40% of the time.
+- **The goal safeguard pauses everything, including S2, which still works.**
+
+**Fix tested: a per-setup switch.** A setup is skipped while its last 20 paper trades average below 0R, and resumes when they turn positive. The numbers were set before testing.
+
+| 40/60 | 60 mo | 24 mo | 12 mo | 6 mo |
+|---|---|---|---|---|
+| Current (goal pause + restart + T-bills) | +$5,780 | +$475 | −$2 | −$3 |
+| Switch + goal pause + restart | +$6,730 | +$556 | +$52 | −$24 |
+| Switch only | +$6,841 | +$599 | +$81 | −$50 |
+| No safeguards | +$7,359 | +$682 | +$3 | −$98 |
+
+The switch plus the goal pause beats current in 3 of 4 windows, and gives up $21 in the last 6 months. It reacts after a setup's damage starts (20 trades), so S3 still lost $73–84.
+
+## Best long/short ratio (2026-11-18)
+
+All current rules plus the per-setup switch. Profit as % of money deposited:
+
+| Long/short | 60 mo | 24 mo | 12 mo | 6 mo | Worst drop (60 mo) | Worst-case gap to the best split |
+|---|---|---|---|---|---|---|
+| 0/100 | +23.4% | +5.3% | −1.8% | −0.7% | −8.2% | 23.6 pts |
+| 20/80 | +22.3% | +5.6% | −0.8% | −1.0% | −8.0% | 24.7 pts |
+| 30/70 | +30.0% | +6.3% | −2.6% | −1.3% | −9.2% | 17.0 pts |
+| 40/60 (current) | +44.0% | +8.8% | +1.6% | −1.3% | −11.2% | 7.1 pts |
+| 50/50 | +42.9% | +7.5% | +3.5% | −2.0% | −12.6% | 8.4 pts |
+| **60/40** | **+47.0%** | +15.0% | +3.1% | −1.9% | −14.7% | **2.0 pts** |
+| 70/30 | +41.2% | **+15.9%** | **+5.1%** | −1.2% | −16.8% | 5.8 pts |
+| 75/25 (max possible) | +43.7% | +14.0% | +4.8% | −1.9% | −18.8% | 3.4 pts |
+
+- **No single split wins every window.** 60/40 is the most robust: it never trails the best split by more than 2 points, and it has the best long-window result. 70/30 ranks best on average across the recent windows, but trails by 5.8 points over 60 months.
+- **More long-term = deeper drops** (−8% at 0/100 up to −19% at 75/25).
+- **Above 75% long-term is impossible** under the 25% position cap with 3 long-term ETFs.
+- **Caveat:** these windows mostly had rising markets, which favour more long-term. Choosing a ratio from them is itself fitting to the past.
+- **The per-setup switch's effect depends on the split:** it helped 40/60 in 3 of 4 windows, but cost 60/40 about 18 points over 60 months. Treat it as insurance, not a sure gain.
+
+## How far trades move before exiting (design years 2015–23 only)
+
+| | S2 breakouts | S3 ETF dips | S4 gap-ups |
+|---|---|---|---|
+| Losers that were up ≥ +0.5R first | 43% | 18% | 50% |
+| Losers that were up ≥ +1R first | 12% | 0% | 17% |
+| Winners: best point → close (median) | +1.92R → +1.53R | +0.80R → +0.60R | +2.11R → +1.96R |
+| Trades reaching +3R | 2% | 0% | 3% |
+| Winners that first dipped below −0.5R | 33% | 25% | 37% |
+
+Ideas to test (not adopted; each would need design → check → unseen-2026):
+- **S2:** move the stop to breakeven after +1R, which would affect the 12% of losers that were up +1R first. A bigger target is pointless, since only 2% of trades reach +3R.
+- **S3:** moves are small (winners peak at +0.8R), so its 3×ATR stop is wide relative to the gain. Test a 2×ATR stop and a shorter time limit.
+- **S4:** exits already capture most of the move; leave as is.

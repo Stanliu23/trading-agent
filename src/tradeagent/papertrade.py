@@ -55,6 +55,8 @@ class ClosedTrade:
     dollars_in: float
     pnl: float
     reason: str
+    stop: Optional[float] = None
+    target: Optional[float] = None
 
 
 @dataclass
@@ -103,6 +105,8 @@ def simulate_portfolio(
     idle_cash_returns: pd.Series | None = None,
     paused_deposits_to_long_term: bool = False,
     restart_shadow: tuple[pd.Series, dict] | None = None,
+    setup_switch_n: int | None = None,
+    setup_switch_min_r: float = 0.0,
 ) -> SimResult:
     """Run the hypothetical account from ``start`` to ``end``. ``stats`` maps setup id -> stats dict.
 
@@ -111,6 +115,8 @@ def simulate_portfolio(
     - ``paused_deposits_to_long_term``: while the goal pause is on, whole deposits go to the long-term funds.
     - ``restart_shadow``: (short-term value series, short-term inflows) of the same account run without
       the pause. At each weekly check the pause lifts once that paper book is no longer behind the index funds.
+    - ``setup_switch_n``: per-setup switch. A setup is skipped while the average R of its last N closed
+      paper trades (every watchlist signal, closed before today) is below zero.
     """
     earnings = earnings or {}
     cost_half = config.backtest.round_trip_cost / 2
@@ -120,6 +126,16 @@ def simulate_portfolio(
         return st.get("recommendable", st.get("passes_evidence", False))
 
     min_order = max(MIN_ORDER_USD, config.positions.min_position_usd)
+    paper_by_setup = {}
+    if setup_switch_n:
+        from tradeagent.setups.simulate import simulate as _sim
+        for s in LIBRARY:
+            if s.kind != "swing":
+                continue
+            tr = [t for sym in s.universe if sym in bars
+                  for t in _sim(bars[sym], s, sym, config.backtest.round_trip_cost, 252)]
+            if tr:
+                paper_by_setup[s.id] = pd.DataFrame({"exit": [t.exit_date for t in tr], "r": [t.r for t in tr]}).sort_values("exit")
     swing = [s for s in LIBRARY if s.kind == "swing" and usable(s.id)]
     # Precompute signals, exit signals once per symbol.
     sig, exs = {}, {}
@@ -173,7 +189,8 @@ def simulate_portfolio(
         cash[p.bucket] += proceeds
         dollars_in = p.qty * p.entry
         trades.append(ClosedTrade(p.symbol, p.setup_id, p.bucket, p.entry_day, day, p.entry, px,
-                                  round(dollars_in, 2), round(proceeds - dollars_in * (1 + cost_half), 2), reason))
+                                  round(dollars_in, 2), round(proceeds - dollars_in * (1 + cost_half), 2), reason,
+                                  p.stop, p.target))
         positions.remove(p)
         if reason in ("stop", "target"):
             alerts[f"urgent:{reason}"] += 1
@@ -329,6 +346,12 @@ def simulate_portfolio(
                     blocked["already held"] += 1
                     continue
                 st = stats[s.id]
+                if setup_switch_n and s.id in paper_by_setup:
+                    pb = paper_by_setup[s.id]
+                    recent = pb[pb["exit"] < day]["r"].tail(setup_switch_n)
+                    if len(recent) == setup_switch_n and recent.mean() < setup_switch_min_r:
+                        blocked[f"{s.id} switched off (last {setup_switch_n} paper trades below {setup_switch_min_r:+g}R)"] += 1
+                        continue
                 cands.append((s, sym, st))
         if not cands:
             continue
@@ -394,6 +417,9 @@ def simulate_with_goal_rules(bars, config: Config, stats, start, end, starting_c
     If the restart rule is on, first run the same
     account without the pause to get the paper book, then run the real one with restarts allowed.
     (The simulator assumes you approve each restart the agent asks for.)"""
+    if config.setup_switch.enabled and "setup_switch_n" not in kwargs:
+        kwargs["setup_switch_n"] = config.setup_switch.last_n_trades
+        kwargs["setup_switch_min_r"] = config.setup_switch.min_avg_r
     park = config.cash.park_idle_in
     if park and kwargs.get("idle_cash_returns") is None and park in bars:
         # Approximation: idle cash earns the T-bill ETF's daily return; the extra buy/sell orders are not modelled.

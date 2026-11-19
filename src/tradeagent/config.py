@@ -141,6 +141,12 @@ class Scoring(Strict):
         return self
 
 
+class SetupSwitch(Strict):
+    enabled: bool
+    last_n_trades: int = Field(ge=5)
+    min_avg_r: float
+
+
 class Cash(Strict):
     park_idle_in: Optional[str] = None
     min_park_usd: float = Field(ge=0)
@@ -258,6 +264,7 @@ class Config(Strict):
     evidence: Evidence
     backtest: Backtest
     scoring: Scoring
+    setup_switch: SetupSwitch
     cash: Cash
     positions: Positions
     tiers: Tiers

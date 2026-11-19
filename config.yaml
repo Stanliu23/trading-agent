@@ -75,6 +75,13 @@ scoring:
   confidence_holdout_decay: 0.5                   # -1 if held-out expectancy < half of in-sample
   fit_correlation: [0.2, 0.4, 0.6, 0.8, 0.9]      # Fit = 5 minus the steps the idea's 60-day correlation with your holdings exceeds
 
+# Per-setup switch (approved 2026-11-18): every watchlist signal is tracked on paper. A setup is skipped
+# while its last N closed paper trades average below min_avg_r, and resumes when they recover.
+setup_switch:
+  enabled: true
+  last_n_trades: 20
+  min_avg_r: 0.0
+
 # Idle cash (approved 2026-11-18): uninvested cash in either bucket is parked in a T-bill ETF and sold
 # first when a trade needs it. Amounts under min_park_usd stay as plain cash.
 cash:
