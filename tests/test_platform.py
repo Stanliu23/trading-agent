@@ -56,7 +56,7 @@ def test_init_db_is_idempotent_and_latch_is_one_way(tmp_path):
     db.init_db(path)
     db.init_db(path)
     with db.connect(path) as conn:
-        assert db.get_meta(conn, "schema_version") == "1"
+        assert db.get_meta(conn, "schema_version") == str(db.SCHEMA_VERSION)
         assert not db.ever_reached_switch(conn)
         db.mark_reached_switch(conn)
     db.init_db(path)  # re-running init must not reset the latch

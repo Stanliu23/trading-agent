@@ -104,9 +104,9 @@ def _line(text: str, cited: list[str], facts: dict[str, Fact], tone="plain") -> 
     return Line(text, " + ".join(sources), tone)
 
 
-def template(facts: list[Fact]) -> Writeup:
-    """No-AI write-up: the first fact is 'why now', the next three are lines, verbatim."""
-    first, rest = facts[0], facts[1:4]
+def template(facts: list[Fact], already_shown: frozenset[str] = frozenset()) -> Writeup:
+    """No-AI write-up: the first fact is 'why now', the next three (not already shown) are lines, verbatim."""
+    first, rest = facts[0], [f for f in facts[1:] if f.id not in already_shown][:3]
     return Writeup(Line(first.text, first.source), [Line(f.text, f.source) for f in rest])
 
 
@@ -134,12 +134,15 @@ def claude_runner(system: str, prompt: str, schema: dict, config: Config) -> dic
 
 
 def runs_today(conn, today: str) -> int:
-    return conn.execute("SELECT COUNT(*) FROM ai_runs WHERE substr(run_at,1,10) = ? AND status IN ('ok','fallback','error')",
+    """AI calls that actually reached Claude today ('ok' or 'rejected'); failed sign-ins and skips don't count."""
+    return conn.execute("SELECT COUNT(*) FROM ai_runs WHERE substr(run_at,1,10) = ? AND status IN ('ok','rejected')",
                         (today,)).fetchone()[0]
 
 
 def write(purpose: str, facts: list[Fact], config: Config, *, conn=None, runner: Runner = claude_runner,
-          now: Optional[datetime] = None) -> Writeup:
+          now: Optional[datetime] = None, already_shown: frozenset[str] = frozenset()) -> Writeup:
+    """``already_shown``: fact ids the email already displays (e.g. odds and plan on a card); lines that only
+    restate them are skipped as redundant."""
     """Write the lines for one alert. Falls back to ``template`` whenever the AI can't be used safely."""
     if not facts:
         raise ValueError("no facts to write from")
@@ -147,24 +150,28 @@ def write(purpose: str, facts: list[Fact], config: Config, *, conn=None, runner:
     by_id = {f.id: f for f in facts}
     own = conn is None
     conn = conn or db.connect(db.init_db())   # init_db is idempotent: adds tables new versions need
-    status = "fallback"
+    status = "off"
     try:
         if not config.ai.enabled:
-            return template(facts)
+            return template(facts, already_shown)
         if runs_today(conn, now.date().isoformat()) >= config.ai.max_runs_per_day:
             status = "capped"
-            return template(facts)
-        prompt = "Facts:\n" + "\n".join(f"[{f.id}] {f.text}" for f in facts) + f"\n\nWrite the lines for: {purpose}"
+            return template(facts, already_shown)
+        shown = f"\nAlready shown in the email (cite if needed, do not restate in lines): {sorted(already_shown)}" if already_shown else ""
+        prompt = ("Facts:\n" + "\n".join(f"[{f.id}] {f.text}" for f in facts) + shown
+                  + f"\n\nWrite the lines for: {purpose}")
         try:
             out = runner(SYSTEM, prompt, SCHEMA, config)
         except Exception:
             status = "error"
-            return template(facts)
+            return template(facts, already_shown)
         dropped = []
         wn = out.get("why_now") or {}
         why_problem = check(wn.get("text", ""), wn.get("facts", []), by_id)
         lines = []
         for item in (out.get("lines") or [])[:3]:
+            if item.get("facts") and set(item["facts"]) <= set(already_shown):
+                continue                                   # only restates what the email already shows
             problem = check(item.get("text", ""), item.get("facts", []), by_id)
             if problem:
                 dropped.append(f"{item.get('text', '')!r}: {problem}")
@@ -172,8 +179,8 @@ def write(purpose: str, facts: list[Fact], config: Config, *, conn=None, runner:
                 lines.append(_line(item["text"], item["facts"], by_id))
         if why_problem:
             dropped.insert(0, f"why_now {wn.get('text', '')!r}: {why_problem}")
-            fb = template(facts)
-            status = "fallback"
+            fb = template(facts, already_shown)
+            status = "rejected"
             return Writeup(fb.why_now, lines or fb.lines, used_ai=bool(lines), dropped=dropped)
         status = "ok"
         return Writeup(_line(wn["text"], wn["facts"], by_id), lines, used_ai=True, dropped=dropped)

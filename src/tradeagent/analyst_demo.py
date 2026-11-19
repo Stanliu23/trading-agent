@@ -48,7 +48,8 @@ def run(config: Config, runner=analyst.claude_runner) -> list[dict]:
                                   r.stop if pd.notna(r.stop) else None, r.target if pd.notna(r.target) else None,
                                   s.max_hold_days)
             purpose = f"a SELL alert for {r.symbol} ({r.reason})"
-        w = analyst.write(purpose, fs, config, runner=runner)
+        w = analyst.write(purpose, fs, config, runner=runner,
+                          already_shown=frozenset({"odds", "plan"}) if buy else frozenset())
         if buy:
             st = stats[r.setup_id]
             star = stars(st["edge"], st["confidence"], 5)               # Fit 5: the demo account holds nothing else
@@ -60,7 +61,7 @@ def run(config: Config, runner=analyst.claude_runner) -> list[dict]:
                          funding=None, odds=fs[1].text, odds_source=fs[1].source, why_buy=s.logic,
                          why_buy_source=f"setup {r.setup_id}", why=w.why_now.text, why_source=w.why_now.source,
                          stars_detail=f"Edge {st['edge']} · Confidence {st['confidence']} · Fit 5")
-            blocks = [block] + [ln for ln in w.lines if ln.text != fs[1].text]   # odds already on the card
+            blocks = [block] + w.lines
         else:
             blocks = [ActionBox(f"SELL {r.symbol} · short-term bucket", [w.why_now] + w.lines)]
         em = Email("digest", f"Analyst demo {k}: {purpose}", Line(f"Demo alert {k} of 5: {purpose}.", tone="heading"),

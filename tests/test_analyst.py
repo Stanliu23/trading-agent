@@ -56,8 +56,9 @@ def test_ai_failure_and_cap_use_template(cfg, conn):
         raise RuntimeError("OAuth session expired")
     w = analyst.write("BUY AAAA", FACTS, cfg, conn=conn, runner=boom, now=NOW)
     assert w.why_now.text == FACTS[0].text and len(w.lines) == 2
+    good = {"why_now": {"text": "AAAA closed at $84.20, a 52-week high.", "facts": ["f1"]}, "lines": []}
     for _ in range(cfg.ai.max_runs_per_day):
-        analyst.write("x", FACTS, cfg, conn=conn, runner=boom, now=NOW)
+        analyst.write("x", FACTS, cfg, conn=conn, runner=lambda *a: good, now=NOW)   # real AI runs count
     called = []
     w = analyst.write("x", FACTS, cfg, conn=conn, runner=lambda *a: called.append(1) or {}, now=NOW)
     assert called == [] and not w.used_ai                       # capped: the AI is not called at all
@@ -81,3 +82,37 @@ def test_trailing_zero_numbers_are_not_confused():
     assert analyst.check("It rose 10%.", ["a"], f) is not None      # 10 is not 1
     assert analyst.check("It rose 1.0% on 100 shares.", ["a"], f) is None
     assert analyst.check("It rose 1% on 10 shares.", ["a"], f) is not None
+
+
+def test_failed_calls_do_not_use_up_the_cap(cfg, conn):
+    def boom(*a):
+        raise RuntimeError("not signed in")
+    for _ in range(cfg.ai.max_runs_per_day + 3):
+        analyst.write("x", FACTS, cfg, conn=conn, runner=boom, now=NOW)
+    called = []
+    good = {"why_now": {"text": "AAAA closed at $84.20, a 52-week high.", "facts": ["f1"]}, "lines": []}
+    w = analyst.write("x", FACTS, cfg, conn=conn, runner=lambda *a: called.append(1) or good, now=NOW)
+    assert called == [1] and w.used_ai
+
+
+def test_old_database_is_migrated(tmp_path):
+    import sqlite3
+    p = tmp_path / "old.db"
+    with sqlite3.connect(p) as c:
+        c.execute("CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        c.execute("INSERT INTO meta VALUES ('schema_version','1')")
+        c.execute("CREATE TABLE ai_runs(id INTEGER PRIMARY KEY, run_at TEXT, purpose TEXT, status TEXT CHECK (status IN ('ok','fallback')))")
+    db.init_db(p)
+    with db.connect(p) as c:
+        c.execute("INSERT INTO ai_runs(run_at, purpose, status) VALUES ('2026-11-19','x','rejected')")   # new value accepted
+        assert db.get_meta(c, "schema_version") == "2"
+
+
+def test_lines_restating_the_card_are_skipped(cfg, conn):
+    out = {"why_now": {"text": "AAAA closed at $84.20, a 52-week high.", "facts": ["f1"]},
+           "lines": [{"text": "741 past trades, 50% positive.", "facts": ["f2"]},
+                     {"text": "Earnings moved it +2.1% over 5 days in 14 events.", "facts": ["f3"]}]}
+    w = analyst.write("BUY", FACTS, cfg, conn=conn, runner=runner_returning(out), now=NOW, already_shown=frozenset({"f2"}))
+    assert [l.text for l in w.lines] == ["Earnings moved it +2.1% over 5 days in 14 events."]
+    t = analyst.template(FACTS, frozenset({"f2"}))
+    assert [l.text for l in t.lines] == [FACTS[2].text]

@@ -9,7 +9,7 @@ from pathlib import Path
 from tradeagent.config import PROJECT_ROOT
 
 DEFAULT_DB = PROJECT_ROOT / "data" / "agent.db"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS ai_runs (
     id        INTEGER PRIMARY KEY,
     run_at    TEXT NOT NULL,
     purpose   TEXT NOT NULL,
-    status    TEXT NOT NULL CHECK (status IN ('ok','fallback','error','capped'))
+    status    TEXT NOT NULL CHECK (status IN ('ok','rejected','error','capped','off'))
 );
 
 CREATE TABLE IF NOT EXISTS review_items (
@@ -125,6 +125,7 @@ def connect(path: Path = DEFAULT_DB) -> sqlite3.Connection:
 def init_db(path: Path = DEFAULT_DB) -> Path:
     """Create tables if missing. Safe to run repeatedly."""
     with connect(path) as conn:
+        _migrate(conn)
         conn.executescript(SCHEMA)
         conn.execute(
             "INSERT INTO meta(key, value) VALUES ('schema_version', ?) "
@@ -136,6 +137,17 @@ def init_db(path: Path = DEFAULT_DB) -> Path:
             "ON CONFLICT(key) DO NOTHING"
         )
     return path
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """v1 -> v2: the ai_runs log changed its status values; it only holds a run log, so it is rebuilt."""
+    has_meta = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='meta'").fetchone()
+    if not has_meta:
+        return
+    row = conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
+    if row and int(row[0]) < 2:
+        conn.execute("DROP TABLE IF EXISTS ai_runs")
+        conn.execute("UPDATE meta SET value='2' WHERE key='schema_version'")
 
 
 def get_meta(conn: sqlite3.Connection, key: str) -> str | None:
