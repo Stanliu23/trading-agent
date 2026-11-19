@@ -37,6 +37,13 @@ profiles:
       long_term:  {target: 0.35, min: 0.30, max: 0.40}
       short_term: {target: 0.65, min: 0.60, max: 0.70}
 
+# The goal (approved 2026-11-18): short-term trading must earn more than the same money held in the
+# long-term index funds. Checked every weekly review over the last 3 months (63 sessions).
+goal:
+  benchmark: [VTI, QQQ, SCHD]      # equal-weight
+  window_sessions: 63
+  pause_short_term_if_behind: true  # stop new short-term recommendations; restart only with your OK
+
 # A setup is rated only if it clears all of these.
 evidence:
   min_trades: 30

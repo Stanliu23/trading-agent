@@ -157,3 +157,34 @@ def holdings_correlation(candidate: "pd.Series", holdings: dict[str, "pd.Series"
 def fit_score(correlation: float, steps: list[float]) -> int:
     """Fit sub-score 0-5: 5 minus the number of correlation steps exceeded."""
     return 5 - sum(correlation > s for s in steps)
+
+
+@dataclass(frozen=True)
+class GoalCheck:
+    ready: bool            # enough history to judge
+    behind: bool           # short-term trading earned less than the benchmark over the window
+    short_term_return: Optional[float]
+    benchmark_return: Optional[float]
+
+
+def short_term_vs_benchmark(
+    bucket_value: "pd.Series",
+    bucket_inflows: "pd.Series",
+    benchmark_closes: "pd.DataFrame",
+    window: int,
+) -> GoalCheck:
+    """Time-weighted return of the short-term bucket (cash + positions, deposits removed) against an
+    equal-weight hold of the benchmark funds, over the last ``window`` sessions."""
+    import pandas as pd
+
+    v = bucket_value.dropna()
+    if len(v) <= window:
+        return GoalCheck(False, False, None, None)
+    flows = bucket_inflows.reindex(v.index, fill_value=0.0)
+    daily = ((v - flows) / v.shift(1) - 1).iloc[1:].tail(window)
+    if daily.isna().any() or (v.shift(1).tail(window) <= 0).any():
+        return GoalCheck(False, False, None, None)
+    st_ret = float((1 + daily).prod() - 1)
+    b = benchmark_closes.reindex(v.index).ffill().pct_change().iloc[1:].tail(window).mean(axis=1)
+    bench_ret = float((1 + b.fillna(0)).prod() - 1)
+    return GoalCheck(True, st_ret < bench_ret, st_ret, bench_ret)

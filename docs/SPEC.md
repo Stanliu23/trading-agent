@@ -45,6 +45,13 @@ All defaults were approved on 2026-11-18. Email layouts are agreed in EMAILS.md.
 The evidence bar is the same in both profiles: at least 30 past trades and a positive result on held-out data.
 Account value includes deposits. The switch to moderate happens once and is never reversed.
 
+## 2b. The goal: positive income that beats simply holding the index funds (approved 2026-11-18)
+
+- Short-term trading succeeds only if it earns more than the same money held in VTI, QQQ and SCHD (equal-weight). Otherwise it adds risk without adding income.
+- **Weekly check** (last session of the week): compare the short-term bucket's time-weighted return over the last 63 sessions (about 3 months; deposits removed) with the index funds.
+- **If it's behind:** stop new short-term recommendations, send one urgent email explaining the numbers, and restart only with your OK. Open short-term trades still follow their exits. Short-term cash waits in the short-term bucket (it never moves to long-term; see §2).
+- No rule can guarantee positive income. This safeguard limits how long losing trading can run.
+
 ## 3. The run cycle
 
 1. **Scheduler (launchd on the Mac):** runs every 15 min from 9:30 to 16:00 ET on trading days, a premarket run at 08:00 ET, a close run at 16:30 ET, and a weekly run on Saturday at 09:00 ET.

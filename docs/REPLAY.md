@@ -4,26 +4,27 @@ Replay 2026-05-18 to 2026-11-18: 129 trading sessions. Starting cash $300.00, th
 
 ## The account
 
-- Deposited $1,800.00; ended at **$1,659.68** ($-140.32, -7.8% on money put in).
-- **Time-weighted return** (deposits removed): -7.9%, vs SPY -0.6% over the same sessions.
-- Largest drop from a peak, time-weighted: -11.7%. (Raw account value: -5.4%, softened by deposits.)
+- Deposited $1,800.00; ended at **$1,777.75** ($-22.25, -1.2% on money put in).
+- **Time-weighted return** (deposits removed): -0.0%, vs SPY -0.6% over the same sessions.
+- Largest drop from a peak, time-weighted: -4.1%. (Raw account value: -2.0%, softened by deposits.)
 - Switched from aggressive to moderate on 2026-08-03.
+- Goal (short-term must beat holding VTI/QQQ/SCHD over 3 months): Goal check 2026-08-21: short-term +1.0% vs index funds +4.7% over 63 sessions; new short-term recommendations paused until you approve a restart.
 - Profile at the end: moderate. Drawdown pause active on 0 sessions.
-- Cash sitting idle: 31% of the account on average; 0% at the end.
-- Positions open at the end: 10; average open 6.4.
-- Long-term share at the end: 32%.
+- Cash sitting idle: 50% of the account on average; 66% at the end.
+- Positions open at the end: 7; average open 5.3.
+- Long-term share at the end: 34%.
 
 ## Short-term trades
 
-- 31 closed trades, 35% winners, total P&L $-145.08.
-- Average position $188.24; smallest $31.24; 0 positions under $20.
-- Exits: stop 17, signal 9, time 5.
+- 16 closed trades, 56% winners, total P&L $-15.41.
+- Average position $129.95; smallest $31.24; 0 positions under $20.
+- Exits: stop 7, signal 6, time 3.
 
 | Setup | Trades | Win rate | P&L |
 |---|---|---|---|
-| S2 | 12 | 25% | $-68.54 |
-| S3 | 17 | 47% | $-59.85 |
-| S4 | 2 | 0% | $-16.69 |
+| S2 | 9 | 33% | $-26.17 |
+| S3 | 6 | 100% | $19.61 |
+| S4 | 1 | 0% | $-8.85 |
 
 ## Open positions at the end
 
@@ -33,33 +34,31 @@ Replay 2026-05-18 to 2026-11-18: 129 trading sessions. Starting cash $300.00, th
 | QQQ | L1 | long-term | $740.81 × 0.0576 | 2026-06-02 |
 | SCHD | L1 | long-term | $31.82 × 2.6244 | 2026-07-02 |
 | QQQ | L1 | long-term | $707.42 × 0.0829 | 2026-08-04 |
-| VTI | L1 | long-term | $374.75 × 0.1302 | 2026-09-02 |
-| SCHD | L1 | long-term | $32.77 × 6.3002 | 2026-10-02 |
-| MA | S2 | short-term | $642.43 × 0.5585 | 2026-10-30 |
-| XLE | S3 | short-term | $61.38 × 3.3465 | 2026-11-06 |
-| PG | S2 | short-term | $171.34 × 1.8604 | 2026-11-17 |
-| DIA | S3 | short-term | $505.54 × 0.5066 | 2026-11-18 |
+| VTI | L1 | long-term | $374.75 × 0.4979 | 2026-09-02 |
+| SCHD | L1 | long-term | $32.77 × 2.5834 | 2026-10-02 |
+| QQQ | L1 | long-term | $684.39 × 0.1204 | 2026-11-03 |
 
 ## Signals not taken
 
 112 setup signals fired on the watchlist; reasons some were not taken:
 
-- already held: 40
-- below $20 minimum (cash): 15
-- earnings before planned exit: 11
-- below $20 minimum (bucket_room): 10
+- goal pause (behind the index funds): 60
+- already held: 24
+- below $20 minimum (cash): 7
+- earnings before planned exit: 4
 - same symbol, lower-ranked setup: 1
 
 ## Alerts this account would have produced
 
 | Alert | Count | Per week |
 |---|---|---|
-| (close-to-close ≥3σ) | 12 | 0.5 |
-| digest:2σ move (intraday touch) | 86 | 3.3 |
+| (close-to-close ≥3σ) | 11 | 0.4 |
+| digest:2σ move (intraday touch) | 76 | 2.9 |
 | digest:bucket drift | 1 | 0.0 |
-| digest:new recommendation | 35 | 1.4 |
-| urgent:3σ move (intraday touch) | 25 | 1.0 |
-| urgent:stop | 17 | 0.7 |
+| digest:new recommendation | 16 | 0.6 |
+| urgent:3σ move (intraday touch) | 21 | 0.8 |
+| urgent:goal missed, short-term paused | 1 | 0.0 |
+| urgent:stop | 7 | 0.3 |
 
 ## Watchlist alert rates (if every symbol were held)
 

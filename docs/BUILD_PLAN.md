@@ -104,6 +104,7 @@ Vibe-Trading's engine has no per-trade stops, so our own per-trade simulator pro
 - Each holding's move is split into market, sector and stock-specific parts, using SPY and the sector's ETF as the yardsticks.
 - The scorecard and the cause labels (Calculation, Decision, System, Expected variance).
 - The check that flags any cause seen 3 times in 4 weeks.
+- The goal check: short-term vs index funds over 63 sessions; pause and email if behind (logic already in `risk.short_term_vs_benchmark`).
 
 **Done when:** a weekly report built from replayed weeks reads correctly to you.
 

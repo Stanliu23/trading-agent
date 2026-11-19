@@ -84,6 +84,12 @@ class Universe(Strict):
     markets: list[Literal["us_stocks", "us_etfs"]] = Field(min_length=1)
 
 
+class Goal(Strict):
+    benchmark: list[str] = Field(min_length=1)
+    window_sessions: int = Field(ge=20)
+    pause_short_term_if_behind: bool
+
+
 class Evidence(Strict):
     min_trades: int = Field(ge=1)
     min_history_years: float = Field(gt=0)
@@ -240,6 +246,7 @@ class Config(Strict):
     account: Account
     universe: Universe
     profiles: Profiles
+    goal: Goal
     evidence: Evidence
     backtest: Backtest
     scoring: Scoring

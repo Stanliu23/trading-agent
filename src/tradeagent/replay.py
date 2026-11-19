@@ -125,6 +125,8 @@ def to_markdown(sim: SimResult, watch, news, config, start, end, starting_cash, 
         f"- **Time-weighted return** (deposits removed): {twr:+.1%}, vs SPY {spy_ret:+.1%} over the same sessions.",
         f"- Largest drop from a peak, time-weighted: {twr_dd:.1%}. (Raw account value: {max_dd:.1%}, softened by deposits.)",
         f"- Switched from aggressive to moderate on {switch_day.date() if switch_day is not None else 'never'}.",
+        "- Goal (short-term must beat holding VTI/QQQ/SCHD over 3 months): "
+        + ("; ".join(sim.notes) if sim.notes else "never fell behind at a weekly check."),
         f"- Profile at the end: {d['profile'].iloc[-1]}. Drawdown pause active on {int(d['paused'].sum())} sessions.",
         f"- Cash sitting idle: {idle.mean():.0%} of the account on average; {idle.iloc[-1]:.0%} at the end.",
         f"- Positions open at the end: {len(sim.open_positions)}; average open {d['positions'].mean():.1f}.",

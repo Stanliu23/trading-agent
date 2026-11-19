@@ -32,3 +32,12 @@ Hypothetical account: $300 to start, $250 on the first session of each month, fr
 - **New issue: idle cash.** Without S1 there are few signals, so cash sat idle at 31% of the account on average (was 19%).
 - In this window S2 won 3 of 12 trades (backtest: 50% winners) and S3 won 8 of 17 (backtest: 71%). Results that bad happen about 1 time in 20 by chance for each setup. That's a small sample, but the shadow run should watch it.
 - L1's statistics changed with SPY removed: 567 windows, 8% losing, 5th percentile −13.8%, now **Tier 2** (was 3), Edge 4, Confidence 2.
+
+## Goal safeguard (added 2026-11-18)
+
+Rule: short-term trading must beat holding VTI/QQQ/SCHD over 3 months, or it pauses until you approve a restart.
+
+- In the replay it paused on 2026-08-21: short-term +1.0% vs index funds +4.7% over 63 sessions.
+- 6-month result: time-weighted −0.0% (was −7.9%), vs SPY −0.6%. Short-term P&L −$15.41 over 16 trades (was −$145.08 over 31).
+- **Trade-off:** while paused, short-term cash sits idle (50% of the account on average, 66% at the end), because money never moves to the long-term bucket.
+- **Open question:** what evidence should a restart need? A natural option is to keep tracking the paused setups on paper, so the weekly report shows whether they would have worked.

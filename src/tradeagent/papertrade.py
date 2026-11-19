@@ -127,11 +127,15 @@ def simulate_portfolio(
     blocked, alerts = Counter(), Counter()
     deposits, rows = [], []
     signals_seen = 0
+    notes: list[str] = []
     ever_reached = False
     peak = 0.0
     paused = False
     lt_rotation = 0
     drifting: dict[str, bool] = {}
+    goal_paused_on = None
+    st_inflows: dict = {}
+    bench = pd.DataFrame({b: bars[b]["close"] for b in config.goal.benchmark if b in bars})
 
     def price(sym, day, col="close"):
         df = bars[sym]
@@ -146,6 +150,7 @@ def simulate_portfolio(
         split = risk.split_deposit(amount, lt_val + cash["long_term"], st_val + cash["short_term"], profile)
         cash["long_term"] += split["long_term"]
         cash["short_term"] += split["short_term"]
+        st_inflows[day] = st_inflows.get(day, 0.0) + split["short_term"]
         deposits.append((day, amount, split))
 
     def close_position(p: Position, px: float, day, reason: str):
@@ -236,7 +241,21 @@ def simulate_portfolio(
             alerts["digest:bucket drift"] += 1
         rows.append({"date": day, "value": value, "cash_lt": cash["long_term"], "cash_st": cash["short_term"],
                      "lt_value": lt_val, "st_value": st_val, "positions": len(positions),
-                     "profile": "moderate" if ever_reached else "aggressive", "paused": paused})
+                     "profile": "moderate" if ever_reached else "aggressive", "paused": paused,
+                     "goal_paused": goal_paused_on is not None})
+
+        # Weekly goal check (last session of the week): short-term must beat holding the index funds.
+        week_end = n + 1 == len(calendar) or calendar[n + 1].isocalendar()[1] != day.isocalendar()[1]
+        if week_end and goal_paused_on is None and config.goal.pause_short_term_if_behind and not bench.empty:
+            hist = pd.DataFrame(rows).set_index("date")
+            check = risk.short_term_vs_benchmark(hist["st_value"] + hist["cash_st"], pd.Series(st_inflows, dtype=float),
+                                                 bench, config.goal.window_sessions)
+            if check.ready and check.behind:
+                goal_paused_on = day
+                alerts["urgent:goal missed, short-term paused"] += 1
+                notes.append(f"Goal check {day.date()}: short-term {check.short_term_return:+.1%} vs index funds "
+                             f"{check.benchmark_return:+.1%} over {config.goal.window_sessions} sessions; new short-term "
+                             "recommendations paused until you approve a restart.")
 
         # 5a. long-term: spend long-term cash on the core ETF we hold least of (equal spread)
         if cash["long_term"] >= min_order and n + 1 < len(calendar):
@@ -280,6 +299,9 @@ def simulate_portfolio(
                 st = stats[s.id]
                 cands.append((s, sym, st))
         if not cands:
+            continue
+        if goal_paused_on is not None:
+            blocked["goal pause (behind the index funds)"] += len(cands)
             continue
         if paused:
             blocked["drawdown pause"] += len(cands)
@@ -331,4 +353,4 @@ def simulate_portfolio(
             alerts["digest:new recommendation"] += 1
 
     daily = pd.DataFrame(rows).set_index("date")
-    return SimResult(daily, trades, positions, blocked, signals_seen, alerts, deposits)
+    return SimResult(daily, trades, positions, blocked, signals_seen, alerts, deposits, notes)

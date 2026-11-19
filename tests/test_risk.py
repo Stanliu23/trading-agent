@@ -145,3 +145,19 @@ def test_holdings_correlation():
     assert holdings_correlation(base, {"A": base}, {"A": 100}) == pytest.approx(1.0)
     assert abs(holdings_correlation(other, {"A": base}, {"A": 100})) < 0.4
     assert holdings_correlation(base, {}, {}) == 0.0          # nothing held -> best fit
+
+
+def test_short_term_vs_benchmark():
+    from tradeagent.risk import short_term_vs_benchmark
+    idx = pd.bdate_range("2026-01-01", periods=70)
+    bench = pd.DataFrame({"VTI": np.linspace(100, 110, 70), "QQQ": np.linspace(100, 110, 70)}, index=idx)  # +10%
+    flat_bucket = pd.Series(1000.0, index=idx)
+    chk = short_term_vs_benchmark(flat_bucket, pd.Series(dtype=float), bench, 63)
+    assert chk.ready and chk.behind and chk.short_term_return == pytest.approx(0.0)
+    # a deposit must not count as a gain: +250 on day 30 with no trading gain is still 0%
+    dep = flat_bucket.copy(); dep.iloc[30:] += 250
+    chk = short_term_vs_benchmark(dep, pd.Series({idx[30]: 250.0}), bench, 63)
+    assert chk.short_term_return == pytest.approx(0.0) and chk.behind
+    strong = pd.Series(np.linspace(1000, 1200, 70), index=idx)                                        # +~19%
+    assert not short_term_vs_benchmark(strong, pd.Series(dtype=float), bench, 63).behind
+    assert not short_term_vs_benchmark(strong.head(40), pd.Series(dtype=float), bench, 63).ready      # too short
