@@ -56,6 +56,8 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 
 ## Phase 3: email pipeline (needs the Gmail app password)
 
+**Status (2026-11-18):** built and tested (`emailer.py`, `email_samples.py`; 81 tests). `tradeagent email-preview` writes the 4 samples to `data/email_preview/`, `email-check` tests the Gmail login, and `email-test --yes` sends the samples. The urgent daily cap is 5 (my default; change `email.urgent_daily_cap`). Waiting on the agent's Gmail address and app password.
+
 - Gmail sends HTML plus a plain-text copy, using the layouts in EMAILS.md.
 - Source tags are added to numbers.
 - Duplicates are suppressed, and urgent emails have a daily cap.

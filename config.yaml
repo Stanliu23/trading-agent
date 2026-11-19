@@ -82,6 +82,10 @@ setup_switch:
   last_n_trades: 20
   min_avg_r: 0.0
 
+# Emails (layouts: docs/EMAILS.md). Exact duplicates are never sent twice.
+email:
+  urgent_daily_cap: 5             # replays averaged 1-2 urgent emails a week; extra ones roll into the digest
+
 # Paper-only watch (approved 2026-11-18): S2/S4 signals on these stocks are tracked on paper and
 # reported, but never recommended and never counted by the per-setup switch. Once a group has
 # review_after_trades closed paper trades since watch_start, the weekly report asks whether to add it.

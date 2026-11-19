@@ -141,6 +141,10 @@ class Scoring(Strict):
         return self
 
 
+class EmailSettings(Strict):
+    urgent_daily_cap: int = Field(ge=1)
+
+
 class PaperWatch(Strict):
     watch_start: str
     review_after_trades: int = Field(ge=1)
@@ -280,6 +284,7 @@ class Config(Strict):
     scoring: Scoring
     setup_switch: SetupSwitch
     paper_watch: PaperWatch
+    email: EmailSettings
     cash: Cash
     positions: Positions
     tiers: Tiers
