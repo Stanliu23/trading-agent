@@ -222,3 +222,30 @@ Ideas to test (not adopted; each would need design → check → unseen-2026):
 - **S2:** move the stop to breakeven after +1R, which would affect the 12% of losers that were up +1R first. A bigger target is pointless, since only 2% of trades reach +3R.
 - **S3:** moves are small (winners peak at +0.8R), so its 3×ATR stop is wide relative to the gain. Test a 2×ATR stop and a shorter time limit.
 - **S4:** exits already capture most of the move; leave as is.
+
+## Exit changes tested (2026-11-18): none adopted
+
+Decision rule, fixed before looking at results: keep a change only if it raises the average result per trade in the design years (2015–23), AND is not worse in the check years (2024–25), AND is not worse in unseen 2026.
+
+**Per trade, every watchlist signal (average R; win rate):**
+
+| Variant | Design 2015–23 | Check 2024–25 | Unseen 2026 | Verdict |
+|---|---|---|---|---|
+| S2 current | +0.152R, 49% | +0.247R, 54% | +0.213R, 44% | – |
+| S2 + breakeven after +1R | +0.127R, 42% | +0.148R, 43% | +0.118R, 33% | rejected: worse in all 3 |
+| S3 current | +0.193R, 71% | +0.174R, 71% | −0.078R, 54% | – |
+| S3 10-day limit | +0.167R | +0.198R | −0.040R | rejected: worse in design |
+| S3 2×ATR stop | +0.228R | +0.303R | −0.093R | borderline: see account test |
+| S3 2×ATR + 10-day | +0.208R | +0.312R | −0.086R | borderline: see account test |
+
+S3 positions usually hit the 25% size cap, so dollars follow % per trade more than R. By % per trade, the 2×ATR stop was worse in design (0.62% vs 0.75%), better in check (0.95% vs 0.82%) and better in 2026 (−0.24% vs −0.31%). So I ran the account test.
+
+**Simulated account (40/60, current rules), profit vs deposits:**
+
+| S3 variant | 60 mo | 24 mo | 12 mo | 6 mo |
+|---|---|---|---|---|
+| Current (3×ATR, 15 days) | +$6,730 | +$556 | +$52 | −$24 |
+| 2×ATR stop | +$5,639 | +$499 | +$144 | −$22 |
+| 2×ATR + 10 days | +$5,633 | +$472 | −$5 | −$24 |
+
+Result: the 2×ATR stop helps only in the last 12 months and costs over 60 and 24 months, so it's rejected. **The current exits stay.** S3's 2026 problem is the entry signal (dips stopped bouncing back), not the exits, and the per-setup switch is the tool that handles it. The breakeven option stays in the code (`breakeven_after_r`), switched off.

@@ -93,6 +93,8 @@ def simulate_swing(df: pd.DataFrame, setup: Setup, symbol: str, cost: float) -> 
                 exit_px, exit_idx, reason = c[j], j, "time"
             if reason:
                 break
+            if setup.breakeven_after_r is not None and h[j] >= entry + setup.breakeven_after_r * risk:
+                stop = max(stop, entry)  # takes effect from the next session (intraday order is unknown)
             j += 1
         if reason is None:
             exit_px, exit_idx, reason = c[n - 1], n - 1, "end"

@@ -49,6 +49,7 @@ class Setup:
     max_hold_days: Optional[int] = None         # time exit at that day's close
     stop_from_signal_low: bool = False          # stop at the signal day's low instead of ATR
     target_r: Optional[float] = None            # target as a multiple of the entry-to-stop risk
+    breakeven_after_r: Optional[float] = None   # once a day's high reaches entry + this many R, the stop moves up to the entry price (from the next day)
     notes: tuple[str, ...] = field(default_factory=tuple)
 
 

@@ -161,3 +161,15 @@ def test_accumulate_holdout_is_last_two_years_of_entries():
     assert st.holdout_start.startswith("2020-12")
     assert st.out_n == 25 and st.passes_evidence   # Dec 2020 through Dec 2022, both ends included
     assert st.confidence <= 2
+
+
+def test_breakeven_stop_moves_after_plus_1r():
+    # entry 100, stop 95 (1R = 5). Day 2 high 105.5 (+1.1R) -> stop moves to 100 from day 3.
+    s = setup_on_day0(target_r=None, breakeven_after_r=1.0, max_hold_days=10)
+    df = bars([(99, 100, 95, 99), (100, 102, 99, 101), (101, 105.5, 100.5, 104), (103, 103, 99, 99.5), (99, 100, 98, 99)])
+    (t,) = simulate_swing(df, s, "X", COST)
+    assert (t.exit, t.reason) == (100, "stop")
+    assert t.ret == pytest.approx(-COST)
+    # without breakeven the same path does not stop out at 100
+    (u,) = simulate_swing(df, setup_on_day0(target_r=None, max_hold_days=10), "X", COST)
+    assert u.reason != "stop" or u.exit == 95
