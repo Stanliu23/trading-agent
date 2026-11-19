@@ -93,7 +93,7 @@ Vibe-Trading's engine has no per-trade stops, so our own per-trade simulator pro
 
 ## Phase 6: AI analyst
 
-**Status (2026-11-19):** built (`analyst.py`, `facts.py`, `impact.py`, `macro.py`; 108 tests). `tradeagent analyst-demo` replays 5 past alerts (3 buys, 2 sells) into `data/analyst_demo/`: all 5 rendered with 0 unsourced numbers using the template. The Claude path is tested with a stand-in; checking it live waits on `claude auth login` on this Mac (the CLI login had expired).
+**Status: done 2026-11-19.** Built `analyst.py`, `facts.py`, `impact.py` and `macro.py` (111 tests). `tradeagent analyst-demo` replays 5 past alerts (3 buys, 2 sells): after `claude auth login`, Claude wrote all 5 with 0 lines rejected and 0 unsourced numbers, in about 28 s. Lines that only restate the card are skipped.
 
 - Vibe-Trading's local API server runs in the background, using your Claude Code login as the model.
 - Each trigger type has one prompt. The output is structured, every number goes through the evidence check, and there is a daily cap on AI runs.
