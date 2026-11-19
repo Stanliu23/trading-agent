@@ -17,7 +17,7 @@ All defaults were approved on 2026-11-18. Email layouts are agreed in EMAILS.md.
 | News | A news item counts toward a rating only if similar past events moved the price measurably. Otherwise it is labelled "context, no measured impact". |
 | Universe | Liquid US stocks and ETFs. |
 | Check rate | Plain code checks every 15 min while the market is open. AI runs only when a rule fires, plus once after the close. |
-| Tier 1 | Similar setups lost money ≤ 25% of the time, with worst drop ≤ 8% (backtest, 5+ years). |
+| Tier 1 | Similar setups lost money ≤ 25% of the time, and 1 in 20 trades did worse than −8% at most (5th-percentile trade; backtest, 5+ years). |
 | Sender | A new Gmail used only by the agent, sending to your personal inbox. |
 
 ## 2. Account structure
@@ -69,17 +69,30 @@ Account value includes deposits. The switch to moderate happens once and is neve
 
 All tiers obey the active profile's per-trade cap. A setup qualifies only with **≥ 30 historical trades** and a positive after-cost result on data held out from the fit.
 
-| Tier | Loss rate (backtest) | Worst drop | Position size |
+| Tier | Loss rate (backtest) | 5th-percentile trade | Position size |
 |---|---|---|---|
-| 1 Low risk | ≤ 25% | ≤ 8% | normal |
-| 2 Medium | ≤ 40% | ≤ 15% | normal |
-| 3 High | > 40% allowed | > 15% allowed | smaller: loss at the stop ≤ half the per-trade cap |
+| 1 Low risk | ≤ 25% | no worse than −8% | normal |
+| 2 Medium | ≤ 40% | no worse than −15% | normal |
+| 3 High | > 40% allowed | worse than −15% allowed | smaller: loss at the stop ≤ half the per-trade cap |
+
+The tail measure is the 5th-percentile trade, not the single worst trade, because the worst trade gets worse simply as a setup collects more trades (approved 2026-11-18). The worst trade is still shown for information.
 
 **Stars** are the average of three 0–5 sub-scores, rounded to the nearest whole star. Ties are allowed.
 
 - **Edge:** expected return per unit of risk, on held-out data.
 - **Confidence:** sample size, and how consistent the result is across years.
 - **Fit:** low correlation with what you already hold, and room left in the bucket.
+
+Score steps (approved with the setup table) live in `config.yaml` under `scoring`.
+
+## 4a. Setup library and position rules
+
+- Trade ideas come only from the fixed setups in `src/tradeagent/setups/library.py`. Their statistics are in `docs/SETUP_STATS.md`.
+- Short-term setups are tested from 2015 to 2025, with 2024–2025 held out.
+- Long-term setups are tested from 2005 to 2025 on **3-year** forward returns. Their held-out period is the last 2 years of entries that have a complete 3-year result.
+- Vibe-Trading's backtest engine works on portfolio weights and has no per-trade stops. So per-trade results come from our own simulator (`setups/simulate.py`), with prices from Vibe-Trading's Yahoo loader.
+- **Max position:** 25% of account value per position, in both profiles.
+- **Earnings:** no new short-term *stock* entry if the stock's next earnings date falls on or before the planned exit. If the date is unknown, the entry is blocked. ETFs are exempt.
 
 ## 5. Weekly report (Saturday 09:00 ET)
 

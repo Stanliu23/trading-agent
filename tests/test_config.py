@@ -27,8 +27,8 @@ def test_approved_numbers(project):
     assert (mod.buckets.long_term.min, mod.buckets.long_term.max) == (0.30, 0.40)
     assert agg.rank_by == "expected_return" and mod.rank_by == "stars"
     assert c.profiles.switch_to_moderate_at == 1000
-    assert (c.tiers.tier1.max_loss_rate, c.tiers.tier1.max_worst_drop) == (0.25, 0.08)
-    assert (c.tiers.tier2.max_loss_rate, c.tiers.tier2.max_worst_drop) == (0.40, 0.15)
+    assert (c.tiers.tier1.max_loss_rate, c.tiers.tier1.max_tail_loss) == (0.25, 0.08)
+    assert (c.tiers.tier2.max_loss_rate, c.tiers.tier2.max_tail_loss) == (0.40, 0.15)
     assert c.evidence.min_trades == 30
 
 

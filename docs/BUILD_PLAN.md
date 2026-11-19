@@ -72,6 +72,9 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 
 ## Phase 5: setup library and risk engine
 
+**Status (2026-11-18):** built and backtested, 47 tests pass. Waiting for your approval of `docs/SETUP_STATS.md`.
+Vibe-Trading's engine has no per-trade stops, so our own per-trade simulator produces the trade results. Vibe-Trading supplies the price data.
+
 - 4–6 setups:
   - 2 long-term (for example quality/value and broad-market ETF accumulation);
   - 2–4 short-term (for example trend pullback, post-earnings drift and ETF mean reversion).

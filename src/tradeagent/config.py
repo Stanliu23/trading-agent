@@ -90,9 +90,53 @@ class Evidence(Strict):
     require_positive_holdout: bool
 
 
+class Backtest(Strict):
+    history_start: str
+    end: str
+    holdout_start: str
+    round_trip_cost: float = Field(ge=0, le=0.02)
+    long_term_history_start: str
+    long_term_horizon_days: int = Field(ge=20)
+    long_term_holdout_years: float = Field(gt=0)
+
+    @model_validator(mode="after")
+    def _ordered(self) -> "Backtest":
+        if not (self.history_start < self.holdout_start < self.end):
+            raise ValueError("need history_start < holdout_start < end")
+        if not self.long_term_history_start < self.end:
+            raise ValueError("long_term_history_start must be before end")
+        return self
+
+
+def _ascending(values: list[float], name: str) -> list[float]:
+    if any(b <= a for a, b in zip(values, values[1:])):
+        raise ValueError(f"{name} must be strictly ascending")
+    return values
+
+
+class Scoring(Strict):
+    edge_swing_r: list[float] = Field(min_length=5, max_length=5)
+    edge_long_term: list[float] = Field(min_length=5, max_length=5)
+    confidence_trades: list[int] = Field(min_length=3, max_length=3)
+    confidence_years_positive: float = Fraction
+    confidence_holdout_decay: float = Fraction
+
+    @model_validator(mode="after")
+    def _steps_ascending(self) -> "Scoring":
+        _ascending(self.edge_swing_r, "edge_swing_r")
+        _ascending(self.edge_long_term, "edge_long_term")
+        _ascending([float(x) for x in self.confidence_trades], "confidence_trades")
+        return self
+
+
+class Positions(Strict):
+    max_position_pct: float = Field(gt=0, le=1)
+    skip_entries_before_earnings: bool
+
+
 class TierRule(Strict):
     max_loss_rate: float = Fraction
-    max_worst_drop: float = Fraction
+    max_tail_loss: float = Fraction  # 5th-percentile trade loss
 
 
 class Tiers(Strict):
@@ -102,7 +146,7 @@ class Tiers(Strict):
     @model_validator(mode="after")
     def _tier1_stricter(self) -> "Tiers":
         if (self.tier1.max_loss_rate > self.tier2.max_loss_rate
-                or self.tier1.max_worst_drop > self.tier2.max_worst_drop):
+                or self.tier1.max_tail_loss > self.tier2.max_tail_loss):
             raise ValueError("tier1 limits must be at least as strict as tier2")
         return self
 
@@ -193,6 +237,9 @@ class Config(Strict):
     universe: Universe
     profiles: Profiles
     evidence: Evidence
+    backtest: Backtest
+    scoring: Scoring
+    positions: Positions
     tiers: Tiers
     stars: Stars
     triggers: Triggers

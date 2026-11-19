@@ -43,9 +43,31 @@ evidence:
   min_history_years: 5
   require_positive_holdout: true
 
+backtest:
+  history_start: "2015-01-01"
+  end: "2025-12-31"
+  holdout_start: "2024-01-01"     # last 2 years are never used to design setups; they only check them
+  round_trip_cost: 0.001          # 0.1% per round trip (spread + slippage; Schwab commission is $0)
+  long_term_history_start: "2005-01-01"  # long-term setups use more history (includes 2008)
+  long_term_horizon_days: 756     # long-term setups are scored on 3-year forward returns
+  long_term_holdout_years: 2      # held-out = last 2 years of entries that have a full 3 years of data
+
+# Proposed score mappings (awaiting approval). Stars = average of the sub-scores, rounded.
+scoring:
+  edge_swing_r:   [0.0, 0.05, 0.10, 0.20, 0.30]   # held-out expectancy in R; above each step adds 1 point (max 5)
+  edge_long_term: [0.0, 0.10, 0.20, 0.30, 0.40]   # mean 3-year return; same stepping
+  confidence_trades: [30, 100, 300]               # 2 / 3 / 4 points at these trade counts
+  confidence_years_positive: 0.70                 # +1 if at least this share of calendar years were positive
+  confidence_holdout_decay: 0.5                   # -1 if held-out expectancy < half of in-sample
+
+positions:
+  max_position_pct: 0.25          # no single position above 25% of account value
+  skip_entries_before_earnings: true   # no new short-term stock entry if earnings fall before the planned exit
+
 tiers:
-  tier1: {max_loss_rate: 0.25, max_worst_drop: 0.08}
-  tier2: {max_loss_rate: 0.40, max_worst_drop: 0.15}
+  # tail = the 5th-percentile trade (1 in 20 trades did worse)
+  tier1: {max_loss_rate: 0.25, max_tail_loss: 0.08}
+  tier2: {max_loss_rate: 0.40, max_tail_loss: 0.15}
   # tier3: anything else that clears `evidence`, sized at tier3_max_loss_per_trade
 
 stars:

@@ -22,7 +22,7 @@ Every number, ticker and price below is made-up sample data that only shows the 
 Size      $1,200 = 2.4% of account   Entry ≤ $84.50
 Stop      $79.40 (−6.0%)             Target $93.00 (+10.1%)
 Max loss  $72 = 0.14% of account at stop
-Odds      42 past setups: 78% positive after 20 days, median +3.1%, worst −6.2%   [bt run-0412]
+Odds      628 past trades: 71% positive, median +1.4%, 1 in 20 worse than −5.1%   [setup S3]
 Why now   Earnings estimates up 4.2% in 30 days (3rd percentile of revisions)   [estimates 11-17]
 Stars     Edge 4 · Confidence 5 · Fit 3
 ```
