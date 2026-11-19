@@ -78,7 +78,10 @@ Subject: Daily · Tue Nov 18 · $50,240 · +$201 (+0.4%) · SPY +0.2% · 1 actio
    Short-term 59%  (target 60%, band 55–65%)  ✓
    Cash parked in BIL $3,110 (+$11 interest this month) · Drawdown from peak −2.1% (pause at −15%)
 
-2  SELLS FOR TOMORROW (listed first: they free up cash)
+1b SAFEGUARDS (only when one is active)
+   Goal-check pause with its numbers · setups switched off by their own paper record · drawdown pause
+
+2  SELLS FOR THE NEXT SESSION (listed first: they free up cash; the box names the day)
    [box per sell] Exit signals → sell at the open. Time limit ending → sell before tomorrow's close.
    Stops and targets don't wait for the digest: they get an urgent email the moment they're hit.
 

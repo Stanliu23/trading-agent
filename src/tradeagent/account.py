@@ -18,6 +18,10 @@ from tradeagent.setups.library import CORE_ETFS, ETFS, STOCKS, get
 EARNINGS_CACHE = PROJECT_ROOT / "data" / "earnings.json"
 
 
+class NotStarted(Exception):
+    """The shadow run has no trading session yet (start date is in the future or today's close isn't in)."""
+
+
 def earnings_dates(symbols: list[str], max_age_days: int = 7) -> dict[str, list[date]]:
     """Past and next earnings dates per stock (Yahoo), cached and refreshed weekly."""
     cache = {}
@@ -76,7 +80,9 @@ class AccountState:
 
 def load_bars(config: Config, start: str) -> dict[str, pd.DataFrame]:
     """Daily bars for everything the account can touch, fetched once up to today (cached per day)."""
-    fetch_start = (pd.Timestamp(start) - pd.DateOffset(days=420)).date().isoformat()
+    # enough history for 200-day/52-week signals AND the 504-session rate-sensitivity window
+    days_needed = max(420, int(config.macro.rate_sensitivity_lookback * 365 / 252) + 30)
+    fetch_start = (pd.Timestamp(start) - pd.DateOffset(days=days_needed)).date().isoformat()
     symbols = sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS) | set(config.paper_watch.stocks)
                      | ({config.cash.park_idle_in} if config.cash.park_idle_in else set()))
     bars, _ = prices.daily_bars(symbols, fetch_start, date.today().isoformat())
@@ -92,6 +98,8 @@ def build(config: Config, as_of: Optional[date] = None, start: Optional[str] = N
     bars = bars if bars is not None else load_bars(config, start)
     cut = pd.Timestamp(as_of)
     bars = {k: v.loc[:cut] for k, v in bars.items()}
+    if bars.get("SPY") is None or bars["SPY"].loc[start:].empty:
+        raise NotStarted(f"shadow run starts {start}; no closed session yet")
     stats = {d["setup_id"]: d for d in json.loads((PROJECT_ROOT / "data" / "setup_stats.json").read_text())}
     earnings = earnings_dates(list(STOCKS))
     sim = simulate_with_goal_rules(bars, config, stats, start, as_of.isoformat(), config.shadow.start_cash,

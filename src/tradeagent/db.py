@@ -102,6 +102,12 @@ CREATE TABLE IF NOT EXISTS ai_runs (
     status    TEXT NOT NULL CHECK (status IN ('ok','rejected','error','capped','off'))
 );
 
+-- Keys of alerts and macro stories already sent, so nothing is emailed twice.
+CREATE TABLE IF NOT EXISTS sent_keys (
+    key     TEXT PRIMARY KEY,
+    sent_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS review_items (
     id                 INTEGER PRIMARY KEY,
     week_start         TEXT NOT NULL,

@@ -17,6 +17,13 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("set-secret", help="store a secret in the macOS Keychain (prompted, not echoed)")
     s.add_argument("name", choices=sorted(secrets.KNOWN_SECRETS))
     sub.add_parser("backtest-setups", help="backtest the setup library and write docs/SETUP_STATS.md")
+    rk = sub.add_parser("run", help="run one job now: intraday | premarket | close | weekly")
+    rk.add_argument("kind", choices=["intraday", "premarket", "close", "weekly"])
+    rk.add_argument("--dry-run", action="store_true", help="write the email to data/run_preview/ instead of sending")
+    rk.add_argument("--start", help="shadow start date override (previews only)")
+    tk = sub.add_parser("tick", help="what the 15-minute schedule calls: runs whatever is due (New York time)")
+    tk.add_argument("--dry-run", action="store_true")
+    sub.add_parser("launchd-plist", help="print the launchd job file for the always-on Mac")
     sub.add_parser("analyst-demo", help="replay 5 past alerts end to end into data/analyst_demo/ (uses Claude if signed in)")
     ep = sub.add_parser("email-preview", help="write the 4 sample emails as HTML + text to data/email_preview/")
     sub.add_parser("email-check", help="log in to the agent's Gmail without sending anything")
@@ -52,6 +59,21 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         for name, build in email_samples.ALL.items():
             print(f"{name}: {emailer.send(build(shadow), cfg)}")
+        return 0
+    if args.command in ("run", "tick", "launchd-plist"):
+        import os, shutil
+        from tradeagent import scheduler
+        from tradeagent.config import PROJECT_ROOT, load_config
+        if args.command == "launchd-plist":
+            print(scheduler.launchd_plist(shutil.which("uv") or os.path.expanduser("~/.local/bin/uv"), PROJECT_ROOT,
+                                          os.environ.get("PATH", "/usr/bin:/bin")))
+            return 0
+        cfg = load_config()
+        if args.command == "run":
+            print(scheduler.run_kind(args.kind, cfg, dry_run=args.dry_run, start=args.start))
+        else:
+            for line in scheduler.tick(cfg, dry_run=args.dry_run) or ["nothing due"]:
+                print(line)
         return 0
     if args.command == "analyst-demo":
         from tradeagent import analyst_demo

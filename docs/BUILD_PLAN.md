@@ -104,6 +104,14 @@ Vibe-Trading's engine has no per-trade stops, so our own per-trade simulator pro
 
 ## Phase 7: reports
 
+**Status (2026-11-19):** built (`account.py`, `reports.py`, `scheduler.py`; 120 tests).
+- The shadow account replays every rule from `shadow.start` on real prices.
+- Daily digest, premarket, urgent alerts and the weekly report are built from it.
+- `tradeagent tick` runs whatever is due by New York time; launchd calls it every 15 minutes (`tradeagent launchd-plist`).
+- `tradeagent run <kind> --dry-run` writes previews to `data/run_preview/`.
+
+Waiting for your review of the previews.
+
 - The premarket update, daily digest and Saturday report.
 - Each holding's move is split into market, sector and stock-specific parts, using SPY and the sector's ETF as the yardsticks.
 - The scorecard and the cause labels (Calculation, Decision, System, Expected variance).
