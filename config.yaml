@@ -140,6 +140,19 @@ news:
   measured_min_same_sign: 0.65
   pooled_fallback: true           # if a stock has < min_similar_events of its own, use all traded stocks (labelled "pooled")
 
+# Macro watch on holdings (approved 2026-11-19). An item is reported only once confirmed: 2 independent
+# publishers, or 1 official source (Fed, FRED, BLS, SEC) plus 1 matching news report. One-source items are
+# held and re-checked every run; they never reach an email.
+macro:
+  factors: [rates_fed, politics_trade]
+  min_publishers: 2
+  official_counts_as_one: true
+  unconfirmed: hold
+  story_window_hours: 72          # reports of the same story must fall within this window
+  title_match: 0.30               # word overlap needed to treat two headlines as the same story
+  rate_sensitivity_lookback: 504  # sessions (about 2 years) for each holding's sensitivity to the 10-year yield
+  min_abs_t: 2.0                  # sensitivity counts as "measured" only with |t| >= 2
+
 schedule:
   intraday: {every_minutes: 15, start: "09:30", end: "16:00"}
   premarket: "08:00"

@@ -109,6 +109,7 @@ Vibe-Trading's engine has no per-trade stops, so our own per-trade simulator pro
 - The goal check: short-term vs index funds over 63 sessions; pause and email if behind (logic already in `risk.short_term_vs_benchmark`).
 - Sells for tomorrow in the digest: exit signals (sell at the open) and trades whose time limit ends tomorrow (sell before the close); the premarket email repeats them. Stops and targets stay urgent emails. In the 12-month replay 32 of 61 exits were signal or time exits, which had no email before this.
 - Idle cash in BIL: digest shows parked cash; every buy says how much BIL to sell first; entry-day stop on unsettled funds gets a good-faith-violation warning.
+- Macro section in the digest (`macro.run_once` / `email_lines`); store reported story keys so a story is never repeated; refresh each holding's rate sensitivity weekly.
 - Paper-watch section in the weekly report (`paperwatch.compare` / `review_due`).
 - The restart rule live: keep a paper book of recommendations while paused, check it weekly, and email a restart request you approve by reply (simulator version: `papertrade.simulate_with_goal_rules`).
 

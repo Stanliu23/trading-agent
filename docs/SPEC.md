@@ -60,6 +60,19 @@ Account value includes deposits. The switch to moderate happens once and is neve
 - **Restart rule (approved 2026-11-18):** while paused, the agent keeps recording what it would have recommended (a paper book, no money). At each weekly check, once that paper book is no longer behind the index funds over the same 63 sessions, it emails asking to restart. Trading resumes only after you approve. After a restart, the next pause check waits a full 63 sessions, so the restarted trades are judged on their own results. Open short-term trades still follow their exits. Short-term cash waits in the short-term bucket (it never moves to long-term; see §2).
 - No rule can guarantee positive income. This safeguard limits how long losing trading can run.
 
+## 2c. Macro watch on holdings (approved 2026-11-19)
+
+- **Factors:** rates & the Fed, politics & trade. Checked every 15-minute run while you hold anything.
+- **Sources:** Fed press releases and FRED (official); Google News (which names each publisher) and Yahoo headlines (news).
+- **Two-source rule:** a story is reported only when 2 independent publishers carry it, or 1 official source plus 1 news report. One-source items are held and re-checked each run; they never reach an email. A publisher repeating itself doesn't count twice.
+- **Which holdings a story concerns:** rates & Fed stories concern every holding. Politics & trade stories concern holdings they name, or whose sector they mention. Broad funds (VTI, QQQ, SCHD) count only when the story is about the stock market itself.
+- **Shown only with a measured link** (your rule: include it if it influences prices):
+  - each holding's sensitivity to the 10-year yield over the last 2 years, counted only if |t| ≥ 2;
+  - its moves after past Fed hikes and cuts since 2008, under the same measured-impact rule as news.
+
+  At most 3 stories per factor appear, most-reported first. The rest become a one-line count.
+- **Politics & trade** has no historical measure yet, so those stories are counted, not shown.
+
 ## 3. The run cycle
 
 1. **Scheduler (launchd on the Mac):** runs every 15 min from 9:30 to 16:00 ET on trading days, a premarket run at 08:00 ET, a close run at 16:30 ET, and a weekly run on Saturday at 09:00 ET.

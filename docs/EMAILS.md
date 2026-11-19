@@ -90,7 +90,13 @@ Subject: Daily · Tue Nov 18 · $50,240 · +$201 (+0.4%) · SPY +0.2% · 1 actio
 4  LONG-TERM THIS MONTH (deposit days)
    [boxed card]
 
-5  NEWS ON YOUR HOLDINGS
+5  MACRO ON YOUR HOLDINGS (confirmed by 2 sources; only with a measured price link)
+   Rates & Fed: Fed officials expect more rate hikes, minutes show   [CNBC + Bloomberg + TradingView]
+     PG: −0.61% on days the 10-year yield rose 0.10 pt (t = −5.4)   [FRED + prices]
+     NVDA, QQQ, VTI: no measured link to rates; context only.
+   9 more confirmed stories with no measured price link; 73 one-source items held.
+
+5b NEWS ON YOUR HOLDINGS
    Measured impact:  CCCC 8-K, CEO change. Past 14 similar events: median −3.4% over 5 days.   [SEC 8-K]
    Context only (no measured impact): 2 items, one line each.
 

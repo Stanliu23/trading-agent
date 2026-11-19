@@ -141,6 +141,17 @@ class Scoring(Strict):
         return self
 
 
+class Macro(Strict):
+    factors: list[Literal["rates_fed", "politics_trade"]] = Field(min_length=1)
+    min_publishers: int = Field(ge=2)
+    official_counts_as_one: bool
+    unconfirmed: Literal["hold"]
+    story_window_hours: int = Field(ge=1)
+    title_match: float = Field(gt=0, le=1)
+    rate_sensitivity_lookback: int = Field(ge=60)
+    min_abs_t: float = Field(gt=0)
+
+
 class EmailSettings(Strict):
     urgent_daily_cap: int = Field(ge=1)
 
@@ -294,6 +305,7 @@ class Config(Strict):
     setup_switch: SetupSwitch
     paper_watch: PaperWatch
     email: EmailSettings
+    macro: Macro
     cash: Cash
     positions: Positions
     tiers: Tiers
