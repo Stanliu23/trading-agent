@@ -284,3 +284,29 @@ Pass rule, also fixed in advance: (1) the new symbols' trades average above 0R f
 ## Drawdown pause fixed (2026-11-18)
 
 The pause now uses the time-weighted performance index (deposits removed). A test shows investments falling about 20% while deposits push the raw balance up: the new check fires and the old one doesn't. With the current settings (40/60, all safeguards) the worst time-weighted drop was −11.7% (60 months), −11.2% (24), −7.2% (12) and −4.8% (6), so the 15% pause never triggered and results are unchanged. It would have mattered in the higher long-term splits (60/40 and 75/25 reached −19% to −20%).
+
+## Vibe-Trading technical-basic vote tested (2026-11-19)
+
+The vote is Vibe-Trading's own `technical-basic` signal engine with its default settings: EMA(12/26)+ADX(14)>25 trend, Bollinger(20,2)+RSI(14) mean reversion, and OBV vs its 20-day average. Buy, neutral or sell. Rules fixed in advance.
+
+**Test A, the vote as its own setup** (buy when it turns to buy, sell when it stops; plus a 2×ATR stop and a 20-day limit): **fail.**
+
+| | Design 2015–23 | Check 2024–25 | 2026 |
+|---|---|---|---|
+| Trades | 3,366 | 839 | 347 |
+| Average R | +0.04 | −0.01 | +0.19 |
+| Winners | 43% | 42% | 50% |
+
+No edge in the check years (Edge score 0), so it isn't a usable signal on its own. 2026 looks good, but 2026 can't be used to choose rules.
+
+**Test B, the vote as a filter** (skip a trade when the vote says sell), average R:
+
+| Setup | Design: current → filtered | Check | 2026 | Verdict |
+|---|---|---|---|---|
+| S2 | +0.152 → +0.154 | +0.247 → +0.244 | +0.213 → +0.213 | fail (barely any effect) |
+| S3 | +0.192 → +0.191 | +0.174 → +0.142 | −0.078 → −0.067 | fail (worse in check) |
+| S4 | +0.459 → +0.557 | +0.422 → +0.510 | −0.273 → −0.273 | **pass** (removes 7 of 98 trades) |
+
+S4 account test (40/60): +$1,747 over 60 months; identical over 24, 12 and 6 months (no S4 trades were changed there). It passes the rule, but the evidence is thin: few trades, and the only account difference is in the long window.
+
+**Start-date warning:** the same setup's 60-month result was +$6,730 on 2026-11-18 and +$5,029 on 2026-11-19. Starting one day later shifts deposits and safeguard pauses, and the path diverges. Single-window long results are fragile, so decisions should rest on many start dates, not one.
