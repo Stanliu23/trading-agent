@@ -249,3 +249,34 @@ S3 positions usually hit the 25% size cap, so dollars follow % per trade more th
 | 2×ATR + 10 days | +$5,633 | +$472 | −$5 | −$24 |
 
 Result: the 2×ATR stop helps only in the last 12 months and costs over 60 and 24 months, so it's rejected. **The current exits stay.** S3's 2026 problem is the entry signal (dips stopped bouncing back), not the exits, and the per-setup switch is the tool that handles it. The breakeven option stays in the code (`breakeven_after_r`), switched off.
+
+## More symbols tested (2026-11-18): no change adopted yet
+
+Candidate list, fixed before any results:
+- **18 ETFs for S3:** SMH, SOXX, IGV, VGT, XBI, IBB, KRE, XHB, ITB, XRT, IYR, VNQ, EWJ, EWZ, FXI, LQD, HYG, SLV.
+- **37 large-cap stocks for S2/S4:** MU, AMAT, LRCX, KLAC, ADI, MRVL, NXPI, INTU, NOW, IBM, ACN, GS, MS, BLK, AXP, CAT, DE, HON, GE, LMT, RTX, LOW, SBUX, TGT, BKNG, AMGN, GILD, BMY, ISRG, NEE, DUK, COP, SLB, LIN, T, VZ, CMCSA.
+
+Pass rule, also fixed in advance: (1) the new symbols' trades average above 0R for each setup in both the design and check years; AND (2) the account with them is no worse in at least 3 of 4 windows, including 12 months.
+
+**Rule 1, per trade (average R):**
+
+| | Design 2015–23 | Check 2024–25 | 2026 |
+|---|---|---|---|
+| S2 current stocks | +0.15 | +0.25 | +0.21 |
+| S2 new stocks | **−0.01** | +0.12 | +0.16 |
+| S3 current ETFs | +0.19 | +0.17 | −0.08 |
+| S3 new ETFs | +0.13 | +0.11 | −0.16 |
+| S4 current stocks | +0.46 | +0.42 | −0.27 |
+| S4 new stocks | +0.15 | **−0.19** | +0.26 |
+
+**Rule 2, account change vs current watchlist (40/60, current rules):**
+
+| Added | 60 mo | 24 mo | 12 mo | 6 mo | Rule 2 |
+|---|---|---|---|---|---|
+| New ETFs only | −$1,575 | −$186 | +$71 | +$18 | fail |
+| New stocks only | +$794 | +$277 | +$173 | +$9 | pass |
+| Both | +$1,461 | +$493 | +$166 | +$8 | pass |
+
+**Verdict:** nothing passes both rules. The new ETFs pass per trade but hurt the account. The new stocks help the account in all 4 windows, but per trade they showed no edge for S2 in the design years. The account gain probably comes from having more signals to choose from (better spread, less idle cash) rather than from the new names being good trades. That could be real, or it could be path luck.
+
+**Downloader hardened:** Yahoo throttling sank whole batches. `prices.daily_bars` now fetches 6 symbols at a time with up to 3 retries.
