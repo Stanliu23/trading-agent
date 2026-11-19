@@ -328,3 +328,22 @@ Profit = % of money deposited over the 24 months.
 - **S4 vote filter: fails the pre-set rule** (beat current in ≥ 60% of starts with a positive median). It was better in 39% of starts, identical in 56% and worse in 6%; median difference 0.00 points, mean +0.55. It rarely changes anything and almost never hurts, but it doesn't clear the bar. **Not adopted.**
 - **Split:** 60/40 beat 40/60 in 72% of starts (median +2.1 points; range −5.4 to +16.0). 70/30 beat it in 69% (median +2.4; range −8.8 to +14.9). 20/80 beat it in only 17%. The price of more long-term is deeper drops (median worst drop −14.5% at 60/40 vs −11.1%) and slightly more losing windows (11% vs 8%).
 - **By era:** starts in 2022–24 did better across the board (median 40/60 +18.0% vs +8.3% for 2016–21 starts), because 2023–25 was a strong market.
+
+## Scenario map tested (2026-11-19): rejected
+
+Fixed before testing. Measured on SPY at each signal's close: trending = ADX(14) > 25, sideways = ADX < 20 (Vibe-Trading's `compute_adx`); high volatility = 20-day volatility above its trailing 1-year 80th percentile. Map: S2 skipped when sideways, S3 skipped when trending, S4 always on, short-term sizes halved in high volatility.
+
+Share of days: trending 34% / 46% / 26% and sideways 44% / 31% / 53% (design / check / 2026); high volatility about 20%.
+
+**Per trade (average R; current → with the scenario rule):**
+
+| | Design 2015–23 | Check 2024–25 | 2026 | Verdict |
+|---|---|---|---|---|
+| S2, skipped when sideways | +0.152 → +0.120 | +0.247 → +0.139 | +0.213 → +0.565 (28 trades) | fail |
+| S3, skipped when trending | +0.192 → +0.182 | +0.174 → +0.075 | −0.078 → −0.134 | fail |
+
+The textbook intuition didn't hold: breakouts in sideways markets did *better* than breakouts in trends, and ETF dips did no better outside trends.
+
+**Half size in high volatility (36 start dates, 24 months, 40/60):** better in 39% of starts, worse in 56%; median −0.36 points of profit. Worst drops unchanged (median change 0.00; −21.3% vs −22.0% at worst). **Fail.** The account's drops come mostly from the long-term index funds, which this rule doesn't touch.
+
+All three parts are rejected; the simulator keeps an off-by-default `short_term_size_mult` switch.

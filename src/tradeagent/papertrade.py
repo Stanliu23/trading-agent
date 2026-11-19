@@ -11,6 +11,7 @@ Daily bars only. Order of events each session:
 
 from __future__ import annotations
 
+import math
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Optional
@@ -107,6 +108,7 @@ def simulate_portfolio(
     restart_shadow: tuple[pd.Series, dict] | None = None,
     setup_switch_n: int | None = None,
     setup_switch_min_r: float = 0.0,
+    short_term_size_mult: pd.Series | None = None,
 ) -> SimResult:
     """Run the hypothetical account from ``start`` to ``end``. ``stats`` maps setup id -> stats dict.
 
@@ -115,6 +117,7 @@ def simulate_portfolio(
     - ``paused_deposits_to_long_term``: while the goal pause is on, whole deposits go to the long-term funds.
     - ``restart_shadow``: (short-term value series, short-term inflows) of the same account run without
       the pause. At each weekly check the pause lifts once that paper book is no longer behind the index funds.
+    - ``short_term_size_mult``: per-day multiplier on short-term position sizes (e.g. 0.5 on high-volatility days).
     - ``setup_switch_n``: per-setup switch. A setup is skipped while the average R of its last N closed
       paper trades (every watchlist signal, closed before today) is below zero.
     """
@@ -405,6 +408,10 @@ def simulate_portfolio(
             sz = risk.size_position(profile=profile, tier=st["tier"], account_value=value, entry=float(df["close"].iloc[i]),
                                     stop=stop, room_usd=room, cash_usd=cash["short_term"],
                                     position_cap_pct=config.positions.max_position_pct)
+            if short_term_size_mult is not None:
+                m = float(short_term_size_mult.get(day, 1.0))
+                if m < 1.0:
+                    sz = risk.Sizing(math.floor(sz.size_usd * m * 100) / 100, round(sz.max_loss_usd * m, 2), sz.limited_by)
             if sz.size_usd < min_order:
                 blocked[f"below ${min_order:.0f} minimum ({sz.limited_by})"] += 1
                 continue
