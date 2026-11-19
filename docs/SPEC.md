@@ -22,7 +22,7 @@ All defaults were approved on 2026-11-18. Email layouts are agreed in EMAILS.md.
 
 ## 2. Account structure
 
-- **Long-term bucket:** holding period 1–5+ years. Target **40%**, band 35–45% (changed 2026-11-18; was 17.5% and earlier 20–30% / 30–40%).
+- **Long-term bucket:** holding period 1–5+ years. Target **40%**, band 35–45% (kept 2026-11-19 after the 36-start-date check; 60/40 earned more on average but with deeper drops) (changed 2026-11-18; was 17.5% and earlier 20–30% / 30–40%).
 - **Short-term bucket:** holding period 1 week to about 1 month. Target **60%**, band 55–65%.
 - Each bucket keeps its own cash. The agent tags every position to one bucket, and you confirm the tag the first time.
 - **Funding (approved 2026-11-18):** long-term funds are bought only with new money: the starting balance and each monthly deposit. Money from short-term trades (sales, profits, unused cash) stays in the short-term bucket for new short-term trades. Money is never moved between buckets.
