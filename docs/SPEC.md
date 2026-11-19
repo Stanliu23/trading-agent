@@ -110,6 +110,7 @@ Score steps (approved 2026-11-18 with the setup table) live in `config.yaml` und
 - **Min position:** $20. Smaller amounts stay as cash (approved 2026-11-18).
 - **Min edge:** a setup is recommended only if it scores at least 2 of 5 on Edge. Today that rules out S1 (approved 2026-11-18).
 - **Ties:** ideas that rank equal go to the one least correlated with what you hold, never alphabetically (approved 2026-11-18).
+- **Paper-only watch (approved 2026-11-18):** 37 extra large caps (`paper_watch.stocks` in config) are tracked on paper for S2/S4 but never recommended, and never counted by the per-setup switch. Once a setup has 30 closed paper trades on them since 2026-11-19, the weekly report shows watched vs traded and asks whether to add them.
 - **L1 ETFs:** VTI, QQQ and SCHD. Each long-term purchase goes to whichever you hold least of, counting all lots. SPY was dropped as a near-duplicate of VTI (approved 2026-11-18).
 - **Earnings:** no new short-term *stock* entry if the stock's next earnings date falls on or before the planned exit. If the date is unknown, the entry is blocked. ETFs are exempt.
 

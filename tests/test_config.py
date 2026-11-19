@@ -98,3 +98,10 @@ def test_profile_switch_is_one_way(project):
     assert not reached_switch(c, 999.99) and reached_switch(c, 1000)
     assert active_profile_name(c, ever_reached_switch=False) == "aggressive"
     assert active_profile_name(c, ever_reached_switch=True) == "moderate"
+
+
+def test_paper_watch_never_overlaps_traded_list(project):
+    from tradeagent.setups.library import STOCKS
+    c = load_config(project)
+    assert len(c.paper_watch.stocks) == 37 and c.paper_watch.review_after_trades == 30
+    assert not set(c.paper_watch.stocks) & set(STOCKS)

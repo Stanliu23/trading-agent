@@ -141,6 +141,20 @@ class Scoring(Strict):
         return self
 
 
+class PaperWatch(Strict):
+    watch_start: str
+    review_after_trades: int = Field(ge=1)
+    stocks: list[str] = Field(default_factory=list)
+
+    @field_validator("stocks")
+    @classmethod
+    def _upper_unique(cls, v: list[str]) -> list[str]:
+        v = [s.upper() for s in v]
+        if len(v) != len(set(v)):
+            raise ValueError("paper_watch.stocks has duplicates")
+        return v
+
+
 class SetupSwitch(Strict):
     enabled: bool
     last_n_trades: int = Field(ge=5)
@@ -265,6 +279,7 @@ class Config(Strict):
     backtest: Backtest
     scoring: Scoring
     setup_switch: SetupSwitch
+    paper_watch: PaperWatch
     cash: Cash
     positions: Positions
     tiers: Tiers

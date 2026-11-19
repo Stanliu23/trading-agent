@@ -70,11 +70,22 @@ Replay 2025-11-18 to 2026-11-18: 252 trading sessions. Starting cash $300.00, th
 
 ## Watchlist alert rates (if every symbol were held)
 
-61 symbols over 252 sessions.
+98 symbols over 252 sessions.
 
 | Measure | Total | Per symbol per month |
 |---|---|---|
-| 2σ–3σ close-to-close move | 753 | 1.03 |
-| ≥3σ close-to-close move | 235 | 0.32 |
-| 2σ–3σ intraday touch | 1430 | 1.95 |
-| ≥3σ intraday touch | 470 | 0.64 |
+| 2σ–3σ close-to-close move | 1207 | 1.03 |
+| ≥3σ close-to-close move | 378 | 0.32 |
+| 2σ–3σ intraday touch | 2279 | 1.94 |
+| ≥3σ intraday touch | 756 | 0.64 |
+
+## Watched on paper (never recommended), trades entered since 2025-11-18
+
+| Setup | Group | Closed trades | Winners | Avg R | Avg per trade |
+|---|---|---|---|---|---|
+| S2 | watched | 71 | 44% | +0.20 | +1.51% |
+| S2 | traded | 72 | 47% | +0.25 | +1.45% |
+| S4 | watched | 7 | 43% | +0.26 | -2.22% |
+| S4 | traded | 7 | 29% | -0.27 | +0.46% |
+
+Review rule: once the watched stocks have 30 closed paper trades for a setup since 2026-11-19, the weekly report asks whether to add them.

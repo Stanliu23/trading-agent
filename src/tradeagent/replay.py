@@ -61,7 +61,8 @@ def run(config: Config, months: int = 6, starting_cash: float = 300, monthly_dep
     today = date.today()
     start = (pd.Timestamp(today) - pd.DateOffset(months=months)).date()
     fetch_start = (pd.Timestamp(start) - pd.DateOffset(days=420)).date().isoformat()
-    symbols = sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS) | ({config.cash.park_idle_in} if config.cash.park_idle_in else set()))
+    symbols = sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS) | set(config.paper_watch.stocks)
+                     | ({config.cash.park_idle_in} if config.cash.park_idle_in else set()))
     bars, missing = prices.daily_bars(symbols, fetch_start, today.isoformat())
     stats = _stats(root)
 
@@ -84,6 +85,8 @@ def run(config: Config, months: int = 6, starting_cash: float = 300, monthly_dep
     pd.DataFrame([t.__dict__ for t in sim.trades]).to_csv(out_dir / "trades.csv", index=False)
     md = to_markdown(sim, watch, news, config, start, today, starting_cash, monthly_deposit, missing,
                      sorted(set(STOCKS) - set(earnings)), bars["SPY"]["close"])
+    from tradeagent import paperwatch
+    md += "\n" + paperwatch.to_markdown(paperwatch.compare(bars, config, start.isoformat()), start.isoformat(), config)
     path = root / "docs" / "REPLAY.md"
     path.write_text(md, encoding="utf-8")
     (root / "docs" / "TRADE_LOG.md").write_text(trade_log(sim, start, today), encoding="utf-8")

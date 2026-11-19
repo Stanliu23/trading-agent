@@ -203,3 +203,14 @@ def test_setup_switch_skips_a_losing_setup(cfg):
     n_loose = len([t for t in loose.trades if t.bucket == "short_term"])
     assert any("switched off" in k for k in strict.blocked)
     assert n_strict < n_loose      # trades only before a setup has N closed paper trades to judge
+
+
+def test_paper_watch_compares_groups(cfg):
+    from tradeagent import paperwatch
+    syms = list(cfg.paper_watch.stocks[:3]) + ["AAPL", "MSFT"]
+    bars = {s: _walk(i, n=700, drift=0.001) for i, s in enumerate(syms)}
+    stats = paperwatch.compare(bars, cfg, "2025-01-01")
+    groups = {(g.setup_id, g.group) for g in stats}
+    assert groups == {("S2", "watched"), ("S2", "traded"), ("S4", "watched"), ("S4", "traded")}
+    md = paperwatch.to_markdown(stats, "2025-01-01", cfg)
+    assert "never recommended" in md and "Review rule" in md
