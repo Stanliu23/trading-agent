@@ -310,3 +310,21 @@ No edge in the check years (Edge score 0), so it isn't a usable signal on its ow
 S4 account test (40/60): +$1,747 over 60 months; identical over 24, 12 and 6 months (no S4 trades were changed there). It passes the rule, but the evidence is thin: few trades, and the only account difference is in the long window.
 
 **Start-date warning:** the same setup's 60-month result was +$6,730 on 2026-11-18 and +$5,029 on 2026-11-19. Starting one day later shifts deposits and safeguard pauses, and the path diverges. Single-window long results are fragile, so decisions should rest on many start dates, not one.
+
+## Many-start-dates check (2026-11-19)
+
+36 start dates (every 3 months, Jan 2016 to Oct 2024), each run for 24 months with $300 + $250/month and all current rules (goal pause, restart, T-bills, per-setup switch, fixed drawdown pause). 180 simulated accounts. Earnings dates back to 2002, so the earnings rule applies throughout. Starts before 2022 overlap the 2015–23 design years.
+
+| Version | Median profit | Middle half of starts | Worst start | Starts that lost money | Median worst drop | Worst drop (any start) |
+|---|---|---|---|---|---|---|
+| 20/80 | +6.1% | +3.2% to +12.8% | −7.3% | 8% | −8.9% | −19.2% |
+| 40/60 (current) | +11.3% | +5.8% to +14.7% | −3.4% | 8% | −11.1% | −22.0% |
+| 40/60 + S4 vote filter | +11.3% | +6.8% to +15.8% | −3.4% | 6% | −11.1% | −22.0% |
+| 60/40 | +15.6% | +8.3% to +19.1% | −5.7% | 11% | −14.5% | −25.0% |
+| 70/30 | +16.2% | +8.5% to +23.0% | −5.8% | 11% | −16.7% | −27.2% |
+
+Profit = % of money deposited over the 24 months.
+
+- **S4 vote filter: fails the pre-set rule** (beat current in ≥ 60% of starts with a positive median). It was better in 39% of starts, identical in 56% and worse in 6%; median difference 0.00 points, mean +0.55. It rarely changes anything and almost never hurts, but it doesn't clear the bar. **Not adopted.**
+- **Split:** 60/40 beat 40/60 in 72% of starts (median +2.1 points; range −5.4 to +16.0). 70/30 beat it in 69% (median +2.4; range −8.8 to +14.9). 20/80 beat it in only 17%. The price of more long-term is deeper drops (median worst drop −14.5% at 60/40 vs −11.1%) and slightly more losing windows (11% vs 8%).
+- **By era:** starts in 2022–24 did better across the board (median 40/60 +18.0% vs +8.3% for 2016–21 starts), because 2023–25 was a strong market.
