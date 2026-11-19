@@ -280,6 +280,12 @@ class Review(Strict):
     recurrence: Recurrence
 
 
+class Shadow(Strict):
+    start: str
+    start_cash: float = Field(ge=0)
+    monthly_deposit: float = Field(ge=0)
+
+
 class Schwab(Strict):
     login_reminder_day: int = Field(ge=1, le=6)
 
@@ -324,6 +330,7 @@ class Config(Strict):
     schedule: Schedule
     review: Review
     schwab: Schwab
+    shadow: Shadow
     local: LocalConfig = LocalConfig()
 
 

@@ -19,7 +19,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from tradeagent import risk
+from tradeagent import market_calendar, risk
 from tradeagent.config import Config, active_profile, active_profile_name
 from tradeagent.setups import indicators as ind
 from tradeagent.setups.library import CORE_ETFS, ETFS, LIBRARY, Setup
@@ -71,6 +71,10 @@ class SimResult:
     deposits: list[tuple[pd.Timestamp, float, dict]]
     notes: list[str] = field(default_factory=list)
     st_inflows: dict = field(default_factory=dict)     # deposits credited to short-term, by day
+    next_orders: list[dict] = field(default_factory=list)   # buys queued at the last close (live: tomorrow's buys)
+    goal_paused: bool = False
+    drawdown_paused: bool = False
+    switched_off_now: list[str] = field(default_factory=list)   # setups the per-setup switch has off at the last close
 
 
 def _stops(setup: Setup, df: pd.DataFrame, i: int, entry_est: float) -> tuple[Optional[float], Optional[float]]:
@@ -109,6 +113,7 @@ def simulate_portfolio(
     setup_switch_n: int | None = None,
     setup_switch_min_r: float = 0.0,
     short_term_size_mult: pd.Series | None = None,
+    plan_next_day: bool = False,
 ) -> SimResult:
     """Run the hypothetical account from ``start`` to ``end``. ``stats`` maps setup id -> stats dict.
 
@@ -117,6 +122,7 @@ def simulate_portfolio(
     - ``paused_deposits_to_long_term``: while the goal pause is on, whole deposits go to the long-term funds.
     - ``restart_shadow``: (short-term value series, short-term inflows) of the same account run without
       the pause. At each weekly check the pause lifts once that paper book is no longer behind the index funds.
+    - ``plan_next_day``: also plan orders at the last close (live use: these are tomorrow's recommendations).
     - ``short_term_size_mult``: per-day multiplier on short-term position sizes (e.g. 0.5 on high-volatility days).
     - ``setup_switch_n``: per-setup switch. A setup is skipped while the average R of its last N closed
       paper trades (every watchlist signal, closed before today) is below zero.
@@ -314,7 +320,8 @@ def simulate_portfolio(
                              "recommendations paused until you approve a restart.")
 
         # 5a. long-term: spend long-term cash on the core ETF we hold least of (equal spread)
-        if cash["long_term"] >= min_order and n + 1 < len(calendar):
+        last = n + 1 >= len(calendar)
+        if cash["long_term"] >= min_order and (not last or plan_next_day):
             held = Counter()
             for p in positions:  # sum every lot: one symbol can have several purchases
                 if p.bucket == "long_term":
@@ -341,7 +348,7 @@ def simulate_portfolio(
                 blocked[f"long-term cash waiting (below ${min_order:.0f} minimum, {sz.limited_by})"] += 1
 
         # 5b. short-term signals
-        if n + 1 >= len(calendar):
+        if last and not plan_next_day:
             continue
         held_syms = {p.symbol for p in positions} | {q[1] for q in queued}
         cands = []
@@ -388,7 +395,7 @@ def simulate_portfolio(
                 blocked["same symbol, lower-ranked setup"] += 1
                 continue
             if config.positions.skip_entries_before_earnings and sym not in ETFS:
-                next_day = calendar[n + 1].date()
+                next_day = calendar[n + 1].date() if not last else market_calendar.next_session(day.date()).day
                 eds = [d for d in earnings.get(sym, []) if d >= next_day]
                 if sym not in earnings:
                     blocked["earnings date unknown"] += 1
@@ -421,7 +428,19 @@ def simulate_portfolio(
             alerts["digest:new recommendation"] += 1
 
     daily = pd.DataFrame(rows).set_index("date")
-    return SimResult(daily, trades, positions, blocked, signals_seen, alerts, deposits, notes, st_inflows)
+    switched_now = []
+    if setup_switch_n:
+        in_use = {x.id for x in swing}
+        for sid, pb in paper_by_setup.items():
+            if sid not in in_use:
+                continue
+            recent = pb[pb["exit"] <= calendar[-1]]["r"].tail(setup_switch_n)
+            if len(recent) == setup_switch_n and recent.mean() < setup_switch_min_r:
+                switched_now.append(sid)
+    next_orders = [{"setup_id": q[0].id, "symbol": q[1], "dollars": round(q[2], 2), "stop": q[3], "target": q[4],
+                    "bucket": q[5]} for q in queued]
+    return SimResult(daily, trades, positions, blocked, signals_seen, alerts, deposits, notes, st_inflows,
+                     next_orders, goal_paused_on is not None, paused, sorted(switched_now))
 
 
 def simulate_with_goal_rules(bars, config: Config, stats, start, end, starting_cash, monthly_deposit, earnings=None,
@@ -441,6 +460,6 @@ def simulate_with_goal_rules(bars, config: Config, stats, start, end, starting_c
             and kwargs.get("restart_shadow") is None:
         paper_cfg = config.model_copy(update={"goal": config.goal.model_copy(update={"pause_short_term_if_behind": False})})
         paper = simulate_portfolio(bars, paper_cfg, stats, start, end, starting_cash, monthly_deposit, earnings,
-                                   idle_cash_returns=kwargs.get("idle_cash_returns"))
+                                   idle_cash_returns=kwargs.get("idle_cash_returns"))  # as tested: no switch in the paper book
         kwargs["restart_shadow"] = (paper.daily["st_value"] + paper.daily["cash_st"], paper.st_inflows)
     return simulate_portfolio(bars, config, stats, start, end, starting_cash, monthly_deposit, earnings, **kwargs)

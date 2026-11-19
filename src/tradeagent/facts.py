@@ -61,11 +61,14 @@ def earnings_fact(symbol: str, next_date: Optional[date], exit_day: Optional[dat
 
 
 def exit_facts(symbol: str, setup_id: str, reason: str, entry_day, entry: float, exit_day, exit_px: float,
-               stop: Optional[float], target: Optional[float], max_hold: Optional[int]) -> list[Fact]:
+               stop: Optional[float], target: Optional[float], max_hold: Optional[int], pending: bool = False) -> list[Fact]:
+    """``pending``: the sell is still to be done (digest); otherwise it already happened (alerts, reports)."""
     why = {"stop": f"{symbol} traded down to its stop at ${stop:,.2f} on {_d(exit_day)}." if stop else "",
            "target": f"{symbol} reached its target of ${target:,.2f} on {_d(exit_day)}." if target else "",
            "signal": f"{symbol}'s exit rule fired: it closed back above its 20-day average before {_d(exit_day)}.",
            "time": f"{symbol} reached its {max_hold}-trading-day time limit on {_d(exit_day)}."}[reason]
     return [Fact("exit", why, f"setup {setup_id} rules"),
-            Fact("result", f"Bought at ${entry:,.2f} on {_d(entry_day)}; sold at ${exit_px:,.2f}: "
-                           f"{exit_px / entry - 1:+.1%} before costs.", f"prices {pd.Timestamp(exit_day):%m-%d}")]
+            Fact("result", (f"Bought at ${entry:,.2f} on {_d(entry_day)}; now ${exit_px:,.2f}: {exit_px / entry - 1:+.1%} so far."
+                            if pending else
+                            f"Bought at ${entry:,.2f} on {_d(entry_day)}; sold at ${exit_px:,.2f}: "
+                            f"{exit_px / entry - 1:+.1%} before costs."), f"prices {pd.Timestamp(exit_day):%m-%d}")]
