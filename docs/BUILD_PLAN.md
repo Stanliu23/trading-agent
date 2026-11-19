@@ -56,7 +56,7 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 
 ## Phase 3: email pipeline (needs the Gmail app password)
 
-**Status (2026-11-18):** built and tested (`emailer.py`, `email_samples.py`; 81 tests). `tradeagent email-preview` writes the 4 samples to `data/email_preview/`, `email-check` tests the Gmail login, and `email-test --yes` sends the samples. The urgent daily cap is 5 (my default; change `email.urgent_daily_cap`). Gmail connected 2026-11-19 (app password in the Keychain, sender in `config.local.yaml`). The 4 samples were sent to your Outlook; waiting for your OK on how they look on your phone.
+**Status (2026-11-18):** built and tested (`emailer.py`, `email_samples.py`; 81 tests). `tradeagent email-preview` writes the 4 samples to `data/email_preview/`, `email-check` tests the Gmail login, and `email-test --yes` sends the samples. The urgent daily cap is 5 (my default; change `email.urgent_daily_cap`). Gmail connected 2026-11-19 (app password in the Keychain, sender in `config.local.yaml`). The 4 samples were sent to your Outlook and approved on your phone. **Phase 3 done.**
 
 - Gmail sends HTML plus a plain-text copy, using the layouts in EMAILS.md.
 - Source tags are added to numbers.
