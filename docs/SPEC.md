@@ -22,8 +22,8 @@ All defaults were approved on 2026-11-18. Email layouts are agreed in EMAILS.md.
 
 ## 2. Account structure
 
-- **Long-term bucket:** holding period 1–5+ years. Target 17.5%, band 15–20%, in both profiles (changed 2026-11-18 from 20–30% / 30–40%).
-- **Short-term bucket:** holding period 1 week to about 1 month. Target 82.5%, band 80–85%.
+- **Long-term bucket:** holding period 1–5+ years. Target **40%**, band 35–45% (changed 2026-11-18; was 17.5% and earlier 20–30% / 30–40%).
+- **Short-term bucket:** holding period 1 week to about 1 month. Target **60%**, band 55–65%.
 - Each bucket keeps its own cash. The agent tags every position to one bucket, and you confirm the tag the first time.
 - **Funding (approved 2026-11-18):** long-term funds are bought only with new money: the starting balance and each monthly deposit. Money from short-term trades (sales, profits, unused cash) stays in the short-term bucket for new short-term trades. Money is never moved between buckets.
 - **Drift:** if the split leaves its band, the digest says so once and shows how the next deposit will be split to close the gap. It never suggests selling one bucket to buy the other.
@@ -34,13 +34,15 @@ All defaults were approved on 2026-11-18. Email layouts are agreed in EMAILS.md.
 
 ## 2a. Risk profiles
 
+**Start: moderate** (aggressive start skipped 2026-11-18, `profiles.start_profile`). The aggressive column applies only if that is switched back.
+
 | | Aggressive (until the account first reaches $1,000) | Moderate (from then on, even after a dip) |
 |---|---|---|
 | Max loss per trade at the stop | 3% | 2% |
 | Tier 3 max loss | 1.5% | 1% |
 | Pause new short-term trades at a drop from peak of | 25% | 15% |
 | Order ideas by | expected return after costs | stars |
-| Long-term bucket | 15–20% (target 17.5%) | 15–20% (target 17.5%) |
+| Long-term bucket | 35–45% (target 40%) | 35–45% (target 40%) |
 
 The evidence bar is the same in both profiles: at least 30 past trades and a positive result on held-out data.
 Account value includes deposits. The switch to moderate happens once and is never reversed.

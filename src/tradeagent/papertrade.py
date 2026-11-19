@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from tradeagent import risk
-from tradeagent.config import Config, active_profile
+from tradeagent.config import Config, active_profile, active_profile_name
 from tradeagent.setups import indicators as ind
 from tradeagent.setups.library import CORE_ETFS, ETFS, LIBRARY, Setup
 from tradeagent.setups.stats import stars
@@ -67,6 +67,7 @@ class SimResult:
     alerts: Counter                          # urgent/digest alert counts by rule
     deposits: list[tuple[pd.Timestamp, float, dict]]
     notes: list[str] = field(default_factory=list)
+    st_inflows: dict = field(default_factory=dict)     # deposits credited to short-term, by day
 
 
 def _stops(setup: Setup, df: pd.DataFrame, i: int, entry_est: float) -> tuple[Optional[float], Optional[float]]:
@@ -98,8 +99,19 @@ def simulate_portfolio(
     starting_cash: float,
     monthly_deposit: float,
     earnings: dict[str, list] | None = None,
+    *,
+    idle_cash_returns: pd.Series | None = None,
+    paused_deposits_to_long_term: bool = False,
+    restart_shadow: tuple[pd.Series, dict] | None = None,
 ) -> SimResult:
-    """Run the hypothetical account from ``start`` to ``end``. ``stats`` maps setup id -> stats dict."""
+    """Run the hypothetical account from ``start`` to ``end``. ``stats`` maps setup id -> stats dict.
+
+    Experiment switches (off by default = approved behaviour):
+    - ``idle_cash_returns``: daily returns credited to uninvested cash (e.g. a T-bill ETF).
+    - ``paused_deposits_to_long_term``: while the goal pause is on, whole deposits go to the long-term funds.
+    - ``restart_shadow``: (short-term value series, short-term inflows) of the same account run without
+      the pause. At each weekly check the pause lifts once that paper book is no longer behind the index funds.
+    """
     earnings = earnings or {}
     cost_half = config.backtest.round_trip_cost / 2
     calendar = bars["SPY"].loc[start:end].index
@@ -134,6 +146,7 @@ def simulate_portfolio(
     lt_rotation = 0
     drifting: dict[str, bool] = {}
     goal_paused_on = None
+    restarted_at = None
     st_inflows: dict = {}
     bench = pd.DataFrame({b: bars[b]["close"] for b in config.goal.benchmark if b in bars})
 
@@ -148,6 +161,8 @@ def simulate_portfolio(
         st_val = sum(p.qty * (price(p.symbol, day, "open") or p.entry) for p in positions if p.bucket == "short_term")
         profile = active_profile(config, ever_reached_switch=ever_reached)
         split = risk.split_deposit(amount, lt_val + cash["long_term"], st_val + cash["short_term"], profile)
+        if paused_deposits_to_long_term and goal_paused_on is not None:
+            split = {"long_term": round(amount, 2), "short_term": 0.0}
         cash["long_term"] += split["long_term"]
         cash["short_term"] += split["short_term"]
         st_inflows[day] = st_inflows.get(day, 0.0) + split["short_term"]
@@ -239,14 +254,29 @@ def simulate_portfolio(
             alerts["urgent:drawdown pause"] += 1
         if bucket_drift(lt_val + cash["long_term"], st_val + cash["short_term"], profile, day.date(), drifting):
             alerts["digest:bucket drift"] += 1
+        if idle_cash_returns is not None and n > 0:
+            r = float(idle_cash_returns.get(day, 0.0) or 0.0)
+            for b in cash:
+                cash[b] *= 1 + r
+            value = lt_val + st_val + cash["long_term"] + cash["short_term"]
         rows.append({"date": day, "value": value, "cash_lt": cash["long_term"], "cash_st": cash["short_term"],
                      "lt_value": lt_val, "st_value": st_val, "positions": len(positions),
-                     "profile": "moderate" if ever_reached else "aggressive", "paused": paused,
+                     "profile": active_profile_name(config, ever_reached_switch=ever_reached), "paused": paused,
                      "goal_paused": goal_paused_on is not None})
 
         # Weekly goal check (last session of the week): short-term must beat holding the index funds.
         week_end = n + 1 == len(calendar) or calendar[n + 1].isocalendar()[1] != day.isocalendar()[1]
-        if week_end and goal_paused_on is None and config.goal.pause_short_term_if_behind and not bench.empty:
+        if week_end and goal_paused_on is not None and restart_shadow is not None:
+            sv, sf = restart_shadow
+            chk = risk.short_term_vs_benchmark(sv.loc[:day], pd.Series(sf, dtype=float), bench, config.goal.window_sessions)
+            if chk.ready and not chk.behind:
+                notes.append(f"Restart {day.date()}: paper short-term {chk.short_term_return:+.1%} vs index funds "
+                             f"{chk.benchmark_return:+.1%}.")
+                alerts["digest:goal restart"] += 1
+                goal_paused_on = None
+                restarted_at = n  # give the restarted book a full window before judging it again
+        judged = restarted_at is None or n - restarted_at >= config.goal.window_sessions
+        if week_end and judged and goal_paused_on is None and config.goal.pause_short_term_if_behind and not bench.empty:
             hist = pd.DataFrame(rows).set_index("date")
             check = risk.short_term_vs_benchmark(hist["st_value"] + hist["cash_st"], pd.Series(st_inflows, dtype=float),
                                                  bench, config.goal.window_sessions)
@@ -266,6 +296,8 @@ def simulate_portfolio(
             sym = min(CORE_ETFS, key=lambda s: (held.get(s, 0), (CORE_ETFS.index(s) - lt_rotation) % len(CORE_ETFS)))
             lt_rotation += 1
             room = risk.bucket_room(profile, "long_term", value, lt_val)
+            if paused_deposits_to_long_term and goal_paused_on is not None:
+                room = cash["long_term"]  # redirected deposits may exceed the band while paused
             cap_left = config.positions.max_position_pct - held.get(sym, 0) / value
             if cap_left <= 0:
                 blocked["long-term cash idle (every core ETF at the 25% cap)"] += 1
@@ -353,4 +385,4 @@ def simulate_portfolio(
             alerts["digest:new recommendation"] += 1
 
     daily = pd.DataFrame(rows).set_index("date")
-    return SimResult(daily, trades, positions, blocked, signals_seen, alerts, deposits, notes)
+    return SimResult(daily, trades, positions, blocked, signals_seen, alerts, deposits, notes, st_inflows)

@@ -23,7 +23,8 @@ def test_approved_numbers(project):
     agg, mod = c.profiles.aggressive, c.profiles.moderate
     assert (agg.max_loss_per_trade, agg.tier3_max_loss_per_trade, agg.drawdown_pause) == (0.03, 0.015, 0.25)
     assert (mod.max_loss_per_trade, mod.tier3_max_loss_per_trade, mod.drawdown_pause) == (0.02, 0.01, 0.15)
-    assert (agg.buckets.long_term.min, agg.buckets.long_term.max, agg.buckets.long_term.target) == (0.15, 0.20, 0.175)
+    assert (agg.buckets.long_term.min, agg.buckets.long_term.max, agg.buckets.long_term.target) == (0.35, 0.45, 0.40)
+    assert c.profiles.start_profile == "moderate"
     assert mod.buckets == agg.buckets   # same split in both phases
     assert agg.rank_by == "expected_return" and mod.rank_by == "stars"
     assert c.profiles.switch_to_moderate_at == 1000
@@ -52,7 +53,7 @@ def test_orders_can_never_be_enabled(project):
 
 
 def test_bucket_targets_must_sum_to_one(project):
-    _write(project, lambda d: d["profiles"]["moderate"]["buckets"]["long_term"].__setitem__("target", 0.19))  # in band, sum 1.015
+    _write(project, lambda d: d["profiles"]["moderate"]["buckets"]["long_term"].__setitem__("target", 0.44))  # in band, sum 1.04
     with pytest.raises(ValidationError, match="add up to 1"):
         load_config(project)
 
@@ -60,7 +61,7 @@ def test_bucket_targets_must_sum_to_one(project):
 def test_target_must_sit_in_band(project):
     def mutate(d):
         b = d["profiles"]["aggressive"]["buckets"]
-        b["long_term"]["target"], b["short_term"]["target"] = 0.35, 0.65
+        b["long_term"]["target"], b["short_term"]["target"] = 0.30, 0.70
     _write(project, mutate)
     with pytest.raises(ValidationError, match="outside its band"):
         load_config(project)
@@ -86,9 +87,12 @@ def test_unknown_keys_rejected(project):
 
 def test_profile_switch_is_one_way(project):
     c = load_config(project)
-    assert not reached_switch(c, 300)
-    assert not reached_switch(c, 999.99)
-    assert reached_switch(c, 1000)
+    # moderate from the start: the $1,000 switch never matters
+    assert active_profile_name(c, ever_reached_switch=False) == "moderate"
+    assert active_profile(c, ever_reached_switch=False).max_loss_per_trade == 0.02
+    # with an aggressive start, the switch is one-way at $1,000
+    _write(project, lambda d: d["profiles"].__setitem__("start_profile", "aggressive"))
+    c = load_config(project)
+    assert not reached_switch(c, 999.99) and reached_switch(c, 1000)
     assert active_profile_name(c, ever_reached_switch=False) == "aggressive"
     assert active_profile_name(c, ever_reached_switch=True) == "moderate"
-    assert active_profile(c, ever_reached_switch=True).max_loss_per_trade == 0.02

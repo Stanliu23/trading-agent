@@ -57,8 +57,9 @@ def test_bad_inputs(profiles):
 
 def test_bucket_room(profiles):
     agg, mod = profiles
-    assert bucket_room(agg, "short_term", 300, 200) == pytest.approx(55)   # 85% of 300 = 255
-    assert bucket_room(mod, "long_term", 300, 130) == 0                    # already over 20%
+    assert bucket_room(agg, "short_term", 300, 150) == pytest.approx(45)   # 65% of 300 = 195
+    assert bucket_room(mod, "long_term", 300, 130) == pytest.approx(5)     # 45% of 300 = 135
+    assert bucket_room(mod, "long_term", 300, 140) == 0                    # already over 45%
 
 
 def test_drawdown_pause(profiles):
@@ -71,11 +72,11 @@ def test_drawdown_pause(profiles):
 
 def test_split_deposit(profiles):
     agg, mod = profiles
-    assert split_deposit(300, 0, 0, agg) == {"long_term": 52.5, "short_term": 247.5}    # 17.5% of the start
-    assert split_deposit(200, 50, 250, agg) == {"long_term": 37.5, "short_term": 162.5}  # total 500 -> 87.5 / 412.5
+    assert split_deposit(300, 0, 0, agg) == {"long_term": 120, "short_term": 180}        # 40% of the start
+    assert split_deposit(200, 50, 250, agg) == {"long_term": 150, "short_term": 50}      # total 500 -> 200 / 300
     assert split_deposit(100, 200, 100, agg) == {"long_term": 0, "short_term": 100}      # long-term overweight
-    assert split_deposit(100, 0, 900, agg) == {"long_term": 100, "short_term": 0}        # long-term far below (175 wanted)
-    assert split_deposit(250, 150, 600, mod) == {"long_term": 25, "short_term": 225}     # total 1000 -> 175 / 825
+    assert split_deposit(100, 0, 900, agg) == {"long_term": 100, "short_term": 0}        # long-term far below (400 wanted)
+    assert split_deposit(250, 400, 350, mod) == {"long_term": 0, "short_term": 250}      # total 1000 -> 400 / 600
 
 
 def test_rank_by_profile(profiles):

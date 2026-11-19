@@ -79,3 +79,31 @@ Findings:
 - **Aggressive vs moderate makes almost no difference** (−$13 to +$2). At $250 a month, deposits pass $1,000 within about 3 months, so the aggressive phase is short.
 - **Long-term funds produced nearly all of the 24-month gain** (+$184 vs ≈$0 with 0% long-term). Short-term trading netted about $0 over 2 years.
 - **Biggest problem:** the goal safeguard paused short-term trading early (Feb or May 2025) and never restarted, because the replay has no restart rule. So about 82% of each deposit sat in cash earning nothing for most of 2 years. That is why the agent trails index-only by about $850 and even trails T-bills.
+
+## Fixes for idle cash, and the 40/60 split (2026-11-18)
+
+Switches added to the simulator, all off by default: T-bill interest on idle cash; deposits to long-term while paused; restart once the paper book (the same account run without the pause) is no longer behind the index funds over 63 sessions. After a restart, the next pause check waits a full 63 sessions.
+
+**24 months, $6,300 deposited** (index funds only: +$1,038.83; T-bills only: +$254.88):
+
+| Version | vs deposits | Worst drop | Short-term P&L | Pauses/restarts |
+|---|---|---|---|---|
+| Old: 17.5% long-term, aggressive start | +$189.87 | −8.7% | +$0.06 | 1/0 |
+| Old + T-bills on idle cash | +$398.77 | −8.5% | +$0.17 | 1/0 |
+| Old + deposits to long-term while paused | +$594.55 | −8.7% | +$0.06 | 1/0 |
+| Old + restart rule | +$634.31 | −8.7% | +$445.51 | 5/4 |
+| Old + restart + T-bills | +$756.65 | −8.5% | +$449.27 | 5/4 |
+| Old, no safeguard | +$509.28 | −11.0% | +$308.61 | 0/0 |
+| **New: 40/60, moderate from start** | **+$416.88** | −11.3% | +$10.32 | 1/0 |
+| New + T-bills | +$576.80 | −11.2% | +$10.39 | 1/0 |
+| New + restart rule | +$646.73 | −11.3% | +$219.22 | 6/5 |
+| New + restart + T-bills | +$474.53 | −11.2% | −$55.91 | 5/4 |
+| New, no safeguard | +$623.03 | −11.3% | +$167.96 | 0/0 |
+
+**6 months, $1,800 deposited** (index funds only: −$30.31; T-bills only: +$19.76): old −$7.39; new 40/60 −$12.68; new + T-bills −$3.38; the restart rule didn't fire. Without the safeguard: old −$131.44, new −$101.35.
+
+What this shows:
+- **40/60 vs 17.5/82.5:** better over 24 months (+$417 vs +$190), slightly worse over the flat 6 months (−$12.68 vs −$7.39), with a deeper worst drop (−11.3% vs −8.7%). More money in index funds helped while the market rose.
+- **Restart rule:** the most consistent help over 24 months. Over the 6 months it never fired (the paper book stayed behind), which is the point of it.
+- **Results are path-dependent:** adding T-bills to new + restart *lowered* the result by $172, because a slightly different cash balance changed which trades happened and when the restart fired. Differences of a few hundred dollars between versions are partly luck.
+- **Nothing beat holding the index funds over 24 months.** The short-term part is still the drag.

@@ -81,7 +81,7 @@ def test_doctor_reports_without_failing_on_missing_phase_items(project, tmp_path
     by_name = {c.name: c for c in checks}
     assert by_name["Config"].status == "ok"
     assert by_name["Database"].status == "ok"
-    assert by_name["Risk profile"].detail.startswith("aggressive: 3%")
+    assert by_name["Risk profile"].detail.startswith("moderate: 2%")
     assert "Fri Nov 27" in by_name["Market calendar"].detail and "half day" in by_name["Market calendar"].detail
     assert by_name["Keychain: gmail_app_password"].status == "warn"
     assert by_name["Email addresses"].status == "warn"

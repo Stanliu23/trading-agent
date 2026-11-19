@@ -17,25 +17,27 @@ account:
 universe:
   markets: [us_stocks, us_etfs]
 
-# Aggressive until account value first reaches the switch level, then moderate for good.
+# Moderate from the start (aggressive start skipped 2026-11-18). If start_profile is aggressive,
+# it applies until account value first reaches the switch level, then moderate for good.
 profiles:
+  start_profile: moderate
   switch_to_moderate_at: 1000
   aggressive:
     max_loss_per_trade: 0.03
     tier3_max_loss_per_trade: 0.015
     drawdown_pause: 0.25
     rank_by: expected_return
-    buckets:   # long-term 15-20% in both phases (approved 2026-11-18)
-      long_term:  {target: 0.175, min: 0.15, max: 0.20}
-      short_term: {target: 0.825, min: 0.80, max: 0.85}
+    buckets:   # 40% long-term / 60% short-term (approved 2026-11-18)
+      long_term:  {target: 0.40, min: 0.35, max: 0.45}
+      short_term: {target: 0.60, min: 0.55, max: 0.65}
   moderate:
     max_loss_per_trade: 0.02
     tier3_max_loss_per_trade: 0.01
     drawdown_pause: 0.15
     rank_by: stars
-    buckets:   # long-term 15-20% in both phases (approved 2026-11-18)
-      long_term:  {target: 0.175, min: 0.15, max: 0.20}
-      short_term: {target: 0.825, min: 0.80, max: 0.85}
+    buckets:   # 40% long-term / 60% short-term (approved 2026-11-18)
+      long_term:  {target: 0.40, min: 0.35, max: 0.45}
+      short_term: {target: 0.60, min: 0.55, max: 0.65}
 
 # The goal (approved 2026-11-18): short-term trading must earn more than the same money held in the
 # long-term index funds. Checked every weekly review over the last 3 months (63 sessions).

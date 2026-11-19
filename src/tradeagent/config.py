@@ -58,6 +58,7 @@ class Profile(Strict):
 
 
 class Profiles(Strict):
+    start_profile: Literal["aggressive", "moderate"] = "aggressive"
     switch_to_moderate_at: float = Field(gt=0)
     aggressive: Profile
     moderate: Profile
@@ -279,7 +280,10 @@ def load_config(root: Path = PROJECT_ROOT) -> Config:
 
 
 def active_profile_name(config: Config, *, ever_reached_switch: bool) -> Literal["aggressive", "moderate"]:
-    """Aggressive until the account has once reached the switch level; moderate from then on."""
+    """Moderate if the config starts there; otherwise aggressive until the account has once reached the
+    switch level, and moderate from then on."""
+    if config.profiles.start_profile == "moderate":
+        return "moderate"
     return "moderate" if ever_reached_switch else "aggressive"
 
 
