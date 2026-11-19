@@ -108,6 +108,20 @@ def _claude_login(run: Callable[..., subprocess.CompletedProcess] = subprocess.r
     return Check("Claude login", "ok" if ok else "warn", "signed in" if ok else "signed out: run `claude auth login`")
 
 
+def _schwab_login(path: Path) -> Check:
+    from datetime import timezone
+    from tradeagent import schwab
+    db.init_db(path)
+    with db.connect(path) as conn:
+        left = schwab.login_days_left(conn, datetime.now(timezone.utc))
+    if left is None:
+        return Check("Schwab login", "warn", "never logged in on this Mac: run `uv run tradeagent schwab-login`")
+    if left < 0:
+        return Check("Schwab login", "warn", "expired: run `uv run tradeagent schwab-login`")
+    return Check("Schwab login", "ok" if left >= 1 else "warn",
+                 f"expires in {left} day{'s' if left != 1 else ''}" if left >= 1 else "expires within a day: log in again")
+
+
 def _setup_stats(root: Path) -> Check:
     p = root / "data" / "setup_stats.json"
     return Check("Setup statistics", "ok" if p.exists() else "fail",
@@ -164,6 +178,8 @@ def run_checks(root: Path = PROJECT_ROOT, db_path: Path | None = None, today: da
                         else f"{md.primary} only, no cross-check: a bad quote can fire a false alert"))
     if config.account.reader == "undecided":
         checks.append(Check("Account reader", "warn", "undecided: waiting on Schwab API answer (Phase 2)"))
+    elif config.account.reader == "schwab_api":
+        checks.append(_schwab_login(db_path))
     checks.append(_local_email(config))
     checks += _secrets(config)
     db_check = _database(db_path)

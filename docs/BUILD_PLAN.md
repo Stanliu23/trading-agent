@@ -15,7 +15,7 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 
 ## Phase 0: your prerequisites (start now, in parallel)
 
-1. **Ask Schwab whether a Schwab International account can register for the Trader API** (individual access at developer.schwab.com). I couldn't confirm this online. If it can, register an app; I'll give you the exact callback URL in Phase 2.
+1. ~~Ask Schwab about the Trader API~~ **Approved 2026-11-19.** **Ask Schwab whether a Schwab International account can register for the Trader API** (individual access at developer.schwab.com). I couldn't confirm this online. If it can, register an app; I'll give you the exact callback URL in Phase 2.
 2. ~~Check fractional shares~~ **Done 2026-11-18:** the trade ticket offers buying in dollars.
 3. ~~Get a Finnhub API key~~ **Skipped 2026-11-18:** Yahoo only for now.
 4. **Create the agent's Gmail:** a new account with 2-Step Verification turned on, then an app password. It sends to your Outlook address.
@@ -39,6 +39,8 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 **Done when:** tests pass and `doctor` reports what is still missing.
 
 ## Phase 2: account reader (needs the Schwab answer)
+
+**Status (2026-11-19):** Trader API (Individual) approved; app "Trade bot" registered with order limit 0 and callback `https://127.0.0.1:8182`; app key and secret in the Keychain. Plan A built (`schwab.py`): every request passes a guard that allows only reads and the login-token call, and 13 tests prove order/write calls are stopped before the network. Commands: `schwab-login` (every 7 days), `snapshot` (read + save, lists deposits), `tag SYMBOL BUCKET`. Day-6 reminder and an expired notice are sent by `tick`; email footers show days left. Shadow reports still use the hypothetical account. **Next:** your first login and a snapshot that matches the Schwab app to the cent.
 
 - **Plan A, Schwab API:**
   - The HTTP client allows read calls only. A test proves that any order or write call fails before it reaches the network.

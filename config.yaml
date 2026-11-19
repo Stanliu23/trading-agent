@@ -7,7 +7,7 @@ timezone: America/New_York
 
 account:
   broker: schwab_international
-  reader: undecided          # schwab_api | csv | undecided  (decided in Phase 2)
+  reader: schwab_api         # schwab_api | csv | undecided  (Trader API approved 2026-11-19)
   currency: USD
   starting_balance: 300
   fractional_shares: true    # you believe this works; verified in Phase 0

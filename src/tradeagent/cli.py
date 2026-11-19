@@ -1,4 +1,4 @@
-"""Command line: `tradeagent doctor | init-db | set-secret NAME`."""
+"""Command line: `tradeagent --help` lists every command."""
 
 from __future__ import annotations
 
@@ -29,6 +29,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("email-check", help="log in to the agent's Gmail without sending anything")
     et = sub.add_parser("email-test", help="send the 4 sample emails to your inbox")
     et.add_argument("--yes", action="store_true", help="confirm sending")
+    sub.add_parser("schwab-login", help="log in to Schwab (every 7 days): opens the login page, then paste the address it lands on")
+    sn = sub.add_parser("snapshot", help="read the Schwab account now (read only) and save a snapshot")
+    sn.add_argument("--days", type=int, default=90, help="also list deposits/withdrawals from the last N days")
+    tg = sub.add_parser("tag", help="put a holding in a bucket: tag SYMBOL long_term|short_term")
+    tg.add_argument("symbol")
+    tg.add_argument("bucket", choices=["long_term", "short_term"])
     r = sub.add_parser("replay", help="replay recent months with a hypothetical account; writes docs/REPLAY.md")
     r.add_argument("--months", type=int, default=6)
     r.add_argument("--start-cash", type=float, default=300)
@@ -84,6 +90,8 @@ def main(argv: list[str] | None = None) -> int:
             for d in r["dropped"]:
                 print("   dropped:", d)
         return 0
+    if args.command in ("schwab-login", "snapshot", "tag"):
+        return _schwab_command(args)
     if args.command == "replay":
         from tradeagent.config import load_config
         from tradeagent.replay import run
@@ -109,6 +117,62 @@ def main(argv: list[str] | None = None) -> int:
         print(f"stored {args.name} in the Keychain")
         return 0
     return 2
+
+
+def _schwab_command(args) -> int:
+    import webbrowser
+    from datetime import date, timedelta
+    from tradeagent import schwab
+    conn = db.connect(db.init_db())
+    try:
+        if args.command == "tag":
+            schwab.tag(conn, args.symbol, args.bucket)
+            print(f"{args.symbol.upper()} -> {args.bucket}")
+            return 0
+        if args.command == "schwab-login":
+            key = secrets.get_secret("schwab_app_key")
+            if not key:
+                print("schwab_app_key is not in the Keychain: uv run tradeagent set-secret schwab_app_key")
+                return 1
+            url = schwab.authorize_url(key)
+            print("1. A Schwab login page is opening. If it doesn't, open this address:\n   " + url)
+            print("2. Log in, tick your brokerage account, and approve.")
+            print("3. The browser then shows an error page at 127.0.0.1. That is expected.")
+            print("   Copy the WHOLE address from the address bar and paste it below right away (the code expires in ~30 seconds).")
+            webbrowser.open(url)
+            when = schwab.login(input("\naddress: "), conn=conn)
+            client = schwab.Client()
+            rows = client.get("/trader/v1/accounts/accountNumbers")
+            print(f"\nLogged in. Valid for 7 days (until {when + timedelta(days=7):%b %d %H:%M} UTC).")
+            print(f"Linked accounts: {len(rows)} " + " ".join(schwab.masked(r.get('accountNumber', '')) for r in rows))
+            return 0
+        client = schwab.Client()
+        snap = client.snapshot()
+        sid, untagged = schwab.save_snapshot(conn, snap)
+        print(f"Schwab account ({snap.account_type}), read {snap.taken_at:%Y-%m-%d %H:%M} UTC. Read only.\n")
+        print(f"  Account value   ${snap.account_value:>12,.2f}")
+        print(f"  Cash            ${snap.cash:>12,.2f}")
+        if snap.money_market:
+            print(f"  Money market    ${snap.money_market:>12,.2f}")
+        for h in snap.holdings:
+            b = schwab.bucket_of(conn, h.symbol) or "UNTAGGED"
+            print(f"  {h.symbol:<6} {h.quantity:>12,.5f} sh  ${h.market_value:>10,.2f}  (avg cost ${h.avg_price:,.2f}, {b})")
+        print(f"\n  Adds up: {'yes' if snap.unexplained == 0 else f'NO, ${snap.unexplained:,.2f} not explained'}")
+        if untagged:
+            print("  Untagged holdings (tell the agent which bucket): " + ", ".join(untagged))
+            print("    e.g. uv run tradeagent tag " + untagged[0] + " long_term")
+        moves = client.transfers(date.today() - timedelta(days=args.days), date.today())
+        print(f"\nMoney in/out, last {args.days} days: " + ("none" if not moves else ""))
+        for t in moves:
+            note = "" if t.counted else "  (journal: shown, not counted as a deposit)"
+            print(f"  {t.day}  {t.kind:<18} ${t.amount:>10,.2f}{note}")
+        print(f"\nSaved as snapshot #{sid}. Compare these numbers with the Schwab app.")
+        return 0
+    except schwab.SchwabError as exc:
+        print(f"Schwab: {exc}")
+        return 1
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":

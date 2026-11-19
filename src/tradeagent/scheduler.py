@@ -9,17 +9,18 @@ Each run is logged in the `runs` table (also the heartbeat); a kind already done
 
 from __future__ import annotations
 
+import dataclasses
 import traceback
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Optional
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 
-from tradeagent import account, analyst, db, emailer, macro, market, market_calendar, paperwatch, reports
+from tradeagent import account, analyst, db, emailer, macro, market, market_calendar, paperwatch, reports, schwab
 from tradeagent.config import PROJECT_ROOT, Config
-from tradeagent.emailer import Line
+from tradeagent.emailer import Email, Footer, Line, Section, subject_line
 
 NY = ZoneInfo("America/New_York")
 
@@ -62,6 +63,9 @@ def _mark_sent(conn, keys: list[str], now: datetime) -> None:
 
 
 def _deliver(em: emailer.Email, config: Config, conn, dry_run: bool, out_dir: Path) -> str:
+    days = schwab.login_days_left(conn)
+    if days is not None:
+        em = dataclasses.replace(em, footer=dataclasses.replace(em.footer, login_days_left=max(days, 0)))
     if dry_run:
         out_dir.mkdir(parents=True, exist_ok=True)
         stem = f"{em.kind}-{datetime.now():%Y%m%d-%H%M%S}"
@@ -152,13 +156,49 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
     return f"{kind}: {status} ({detail})"
 
 
+def login_reminder_email(days_left: int, login_time: datetime) -> Email:
+    expired = days_left < 0
+    when = f"{login_time.astimezone(NY):%b %d %H:%M} ET"
+    lead = (Line(f"Your Schwab login expired. Account data is frozen at the last read; log in again to resume.", "login log")
+            if expired else
+            Line(f"Your Schwab login expires within {days_left + 1} day{'s' if days_left else ''}. Log in again to keep "
+                 f"account data flowing.", "login log"))
+    steps = [Line("On the always-on Mac, in the trading-agent folder, run: uv run tradeagent schwab-login", None),
+             Line("Log in, tick your account, approve, then paste the address the browser lands on.", None),
+             Line(f"Last login: {when}. Schwab logins last 7 days.", "login log")]
+    return Email("reminder", subject_line("reminder", ["Schwab login " + ("expired" if expired else "expires soon")], False),
+                 lead, [Section("What to do", steps)],
+                 Footer(f"{datetime.now(NY):%H:%M} ET, {datetime.now(NY):%b %d}", max(days_left, 0), "Schwab"))
+
+
+def _login_reminder(config: Config, conn, now: datetime, dry_run: bool) -> Optional[str]:
+    """Day-6 reminder, and one more when the login has expired. Each sent once per login."""
+    at = schwab.login_at(conn)
+    if at is None or now - at < timedelta(days=config.schwab.login_reminder_day):
+        return None
+    left = schwab.login_days_left(conn, now)
+    key = f"schwab-login-{'expired' if left < 0 else 'reminder'}-{at.isoformat(timespec='minutes')}"
+    if key in _sent(conn):
+        return None
+    status = _deliver(login_reminder_email(left, at), config, conn, dry_run, PROJECT_ROOT / "data" / "run_preview")
+    if not dry_run:
+        _mark_sent(conn, [key], now)
+    return f"schwab login reminder: {status}"
+
+
 def tick(config: Config, *, now: Optional[datetime] = None, dry_run: bool = False) -> list[str]:
     """What launchd calls every 15 minutes."""
     now = now or datetime.now(NY)
     conn = db.connect(db.init_db())
     todo = due(config, now, _done_today(conn, now))
+    out = []
+    try:
+        if (r := _login_reminder(config, conn, now, dry_run)):
+            out.append(r)
+    except Exception as exc:
+        out.append(f"schwab login reminder: error ({type(exc).__name__}: {exc})")
     conn.close()
-    return [run_kind(k, config, now=now, dry_run=dry_run) for k in todo]
+    return out + [run_kind(k, config, now=now, dry_run=dry_run) for k in todo]
 
 
 LAUNCHD = """<?xml version="1.0" encoding="UTF-8"?>
