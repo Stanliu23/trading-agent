@@ -183,5 +183,5 @@ paper_broker:
 
 shadow:
   start: "2026-11-19"
-  start_cash: 300
-  monthly_deposit: 250
+  start_cash: 1000          # paper test (2026-11-19): $1,000 to start, no deposits
+  monthly_deposit: 0         # no money added during the test

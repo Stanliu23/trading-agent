@@ -90,7 +90,7 @@ Account value includes deposits. The switch to moderate happens once and is neve
   - a sell you place is never bought back;
   - a buy you place is flagged until you run `tradeagent tag SYMBOL long_term|short_term`. A short-term tag gives it S2's exits (stop 2×ATR, target 4×ATR, 20 sessions); long-term is held.
 - **Emails describe the Alpaca account.** The rules-only pretend account keeps running, and the weekly email compares the two.
-- **Money:** a virtual budget made of the $300 start and the monthly deposits, split by the 40/60 rule. Alpaca's own paper cash is ignored. Idle cash is not parked in BIL during the test.
+- **Money:** Alpaca's real paper balance ($1,000 at the start, nothing added). The plan is sized from the balance recorded at the first run, then split 40/60. Cash is Alpaca's actual cash on every run; anything added or removed later counts as short-term. Idle cash is not parked in BIL during the test.
 
 ## 3. The run cycle
 

@@ -123,7 +123,8 @@ def _recorder(conn, now: datetime):
 def _paper_book(conn, client, shadow: account.AccountState, today) -> paperbroker.Book:
     start = shadow.sim.daily.index[0]
     tags = {r["symbol"]: r["bucket"] for r in conn.execute("SELECT symbol, bucket FROM bucket_tags")}
-    b = paperbroker.book(client.orders(f"{start:%Y-%m-%d}T00:00:00Z"), _intents(conn), shadow.sim.deposits, tags, shadow.bars)
+    b = paperbroker.book(client.orders(f"{start:%Y-%m-%d}T00:00:00Z"), _intents(conn), shadow.sim.deposits, tags, shadow.bars,
+                         actual_cash=float(client.account()["cash"]))
     b.notes += [(today, n) for n in paperbroker.check_positions(b, client.positions())]
     return b
 
@@ -142,6 +143,16 @@ def _paper_state(conn, client, shadow: account.AccountState, today, save_close: 
                       float(r["st_value"])))
         conn.commit()
     return state
+
+
+def paper_start_balance(conn, client) -> float:
+    """Alpaca's balance when the test started: read once, then kept, so the plan is sized from real money."""
+    v = db.get_meta(conn, "paper_start_balance")
+    if v is None:
+        v = str(round(float(client.account()["equity"]), 2))
+        conn.execute("INSERT INTO meta(key, value) VALUES ('paper_start_balance', ?)", (v,))
+        conn.commit()
+    return float(v)
 
 
 def _compare_lines(paper: account.AccountState, shadow: account.AccountState) -> list[Line]:
@@ -171,12 +182,17 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
         sess = market_calendar.session(today)
         # during the session Yahoo already has today's unfinished bar: decide from yesterday's close
         as_of = today - pd.Timedelta(days=1).to_pytimedelta() if kind == "intraday" else None
-        state = account.build(config, as_of=as_of, start=start)
-        shadow = state
-        executed, client = None, None
+        executed, client, start_cash = None, None, None
         if paper_ready(config):
             try:
                 client = alpaca.Client()
+                start_cash = paper_start_balance(conn, client)
+            except alpaca.AlpacaError:
+                client = None
+        state = account.build(config, as_of=as_of, start=start, start_cash=start_cash)
+        shadow = state
+        if client is not None:
+            try:
                 record = _recorder(conn, now)
                 if kind in ("premarket", "intraday") and sess and not dry_run:     # a dry run never places orders
                     b = _paper_book(conn, client, state, today)
@@ -192,7 +208,8 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
             except alpaca.AlpacaError as exc:
                 detail = f"Alpaca unavailable, emails use the pretend account ({exc}); "
         elif config.paper_broker.enabled:
-            detail = "Alpaca keys not saved: emails use the pretend account; "
+            detail = ("Alpaca unavailable: emails use the pretend account; " if paper_ready(config)
+                      else "Alpaca keys not saved: emails use the pretend account; ")
         if kind == "intraday":
             quotes = {p.symbol: q for p in state.sim.open_positions if (q := market.quote(p.symbol))}
             sigmas = {}

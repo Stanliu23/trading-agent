@@ -169,3 +169,9 @@ def test_live_keys_cannot_turn_on_orders_at_schwab():
     """The paper test changes nothing for the real account."""
     cfg = load_config()
     assert cfg.account.allow_orders is False and cfg.paper_broker.provider == "alpaca"
+
+
+def test_cash_is_alpacas_real_cash_with_long_term_kept_at_its_share():
+    dep = [(pd.Timestamp("2026-11-19"), 1000.0, {"long_term": 400.0, "short_term": 600.0})]
+    b = pb.book([order("ta-20261120-entry-VTI-L1", "VTI", "buy", 0.8, 312.5)], ENTRY, dep, {}, actual_cash=1250.0)
+    assert b.cash == {"long_term": 150.0, "short_term": 1100.0}          # $500 added in Alpaca went to short-term

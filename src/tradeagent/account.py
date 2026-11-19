@@ -94,7 +94,7 @@ def load_bars(config: Config, start: str) -> dict[str, pd.DataFrame]:
 
 
 def build(config: Config, as_of: Optional[date] = None, start: Optional[str] = None,
-          bars: Optional[dict[str, pd.DataFrame]] = None) -> AccountState:
+          bars: Optional[dict[str, pd.DataFrame]] = None, start_cash: Optional[float] = None) -> AccountState:
     """The account as of ``as_of``. Pass ``bars`` from ``load_bars`` to reuse one download for many dates;
     data after ``as_of`` is cut off so nothing from the future leaks in."""
     as_of = as_of or date.today()
@@ -106,6 +106,7 @@ def build(config: Config, as_of: Optional[date] = None, start: Optional[str] = N
         raise NotStarted(f"shadow run starts {start}; no closed session yet")
     stats = {d["setup_id"]: d for d in json.loads((PROJECT_ROOT / "data" / "setup_stats.json").read_text())}
     earnings = earnings_dates(list(STOCKS))
-    sim = simulate_with_goal_rules(bars, config, stats, start, as_of.isoformat(), config.shadow.start_cash,
+    start_cash = config.shadow.start_cash if start_cash is None else start_cash
+    sim = simulate_with_goal_rules(bars, config, stats, start, as_of.isoformat(), start_cash,
                                    config.shadow.monthly_deposit, earnings, plan_next_day=True)
     return AccountState(as_of, sim, bars, earnings, stats)

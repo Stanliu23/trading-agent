@@ -386,7 +386,7 @@ def weekly(state: AccountState, config: Config, *, system_lines: Optional[list[L
 
     nxt_lines = []
     nxt_month = (end + pd.offsets.MonthBegin(1)).normalize()
-    if (nxt_month - end).days <= 9:
+    if (nxt_month - end).days <= 9 and config.shadow.monthly_deposit > 0:
         lt_share = active_profile(config, ever_reached_switch=d["profile"].iloc[-1] == "moderate").buckets.long_term.target
         dep = config.shadow.monthly_deposit
         nxt_lines.append(Line(f"Deposit expected around {nxt_month:%b %d}: {usd(dep)}, about {usd(dep * lt_share)} long-term "

@@ -10,8 +10,9 @@ How it works:
     * a sell you place closes lots of that symbol (oldest first) and the agent never buys them back;
     * a buy you place becomes your lot: untagged until you run `tradeagent tag SYMBOL BUCKET`; a short-term
       tag gives it S2's exits (stop 2×ATR below your fill, target 4×ATR above, 20 sessions), long-term is held.
-- Money is a virtual budget: the shadow's $300 start and monthly deposits (Alpaca paper can't receive
-  deposits), minus buys plus sells by bucket. Alpaca's own paper cash is ignored.
+- Money is Alpaca's real paper balance. The plan is sized from the balance at the test start (recorded on the
+  first run); total cash is Alpaca's cash each run. Long-term cash = its 40% share of the start, minus long-term
+  buys; short-term cash is everything else, so money you add or remove in Alpaca lands in short-term.
 """
 
 from __future__ import annotations
@@ -96,7 +97,7 @@ def _your_exits(lot: Lot, bars: Optional[dict]) -> Lot:
 
 
 def book(orders: list[dict], intents: dict[str, dict], deposits: list[tuple], tags: dict[str, str],
-         bars: Optional[dict] = None) -> Book:
+         bars: Optional[dict] = None, actual_cash: Optional[float] = None) -> Book:
     """Rebuild the paper account from Alpaca's orders (oldest first) and the agent's recorded intents."""
     b = Book()
     for _, _, split in deposits:
@@ -153,6 +154,9 @@ def book(orders: list[dict], intents: dict[str, dict], deposits: list[tuple], ta
         b.lots = [l for l in b.lots if l.qty > EPS]
         if left > EPS:
             b.notes.append((day, f"A sell of {left:g} {o['symbol']} had no matching lot in the agent's book."))
+    if actual_cash is not None:                       # Alpaca's real cash; short-term holds whatever isn't long-term
+        b.cash["long_term"] = max(0.0, min(b.cash["long_term"], actual_cash))
+        b.cash["short_term"] = actual_cash - b.cash["long_term"]
     return b
 
 

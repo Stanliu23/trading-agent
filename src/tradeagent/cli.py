@@ -101,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(f"Alpaca PAPER account {a.get('status')} (…{str(a.get('account_number', ''))[-3:]}), "
               f"paper cash ${float(a.get('cash', 0)):,.2f}, {len(pos)} position(s).")
-        print("The agent sizes from its own $300 budget plus deposits; Alpaca's paper cash only needs to cover it.")
+        print("The agent sizes its plan from this balance (recorded at the first scheduled run) and spends Alpaca's real cash.")
         return 0
     if args.command in ("schwab-login", "snapshot", "tag"):
         return _schwab_command(args)
