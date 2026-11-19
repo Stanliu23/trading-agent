@@ -94,7 +94,7 @@ def build(config: Config, as_of: Optional[date] = None, start: Optional[str] = N
     """The account as of ``as_of``. Pass ``bars`` from ``load_bars`` to reuse one download for many dates;
     data after ``as_of`` is cut off so nothing from the future leaks in."""
     as_of = as_of or date.today()
-    start = start or config.shadow.start
+    start = start or config.local.shadow_start or config.shadow.start
     bars = bars if bars is not None else load_bars(config, start)
     cut = pd.Timestamp(as_of)
     bars = {k: v.loc[:cut] for k, v in bars.items()}

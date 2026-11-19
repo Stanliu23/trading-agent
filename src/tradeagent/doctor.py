@@ -95,6 +95,38 @@ def _vibe_trading() -> Check:
                  "installed" if found else "not installed yet (`uv sync --extra analyst`, needed from Phase 5)")
 
 
+def _claude_login(run: Callable[..., subprocess.CompletedProcess] = subprocess.run) -> Check:
+    exe = shutil.which("claude")
+    if not exe:
+        return Check("Claude login", "warn", "claude not found (needed for AI write-ups; template is used without it)")
+    try:
+        out = run([exe, "auth", "status"], capture_output=True, text=True, timeout=20).stdout
+        import json as _json
+        ok = _json.loads(out or "{}").get("loggedIn", False)
+    except Exception as exc:
+        return Check("Claude login", "warn", f"could not check: {exc}")
+    return Check("Claude login", "ok" if ok else "warn", "signed in" if ok else "signed out: run `claude auth login`")
+
+
+def _setup_stats(root: Path) -> Check:
+    p = root / "data" / "setup_stats.json"
+    return Check("Setup statistics", "ok" if p.exists() else "fail",
+                 "present" if p.exists() else "missing: run `uv run tradeagent backtest-setups`")
+
+
+def _schedule(run: Callable[..., subprocess.CompletedProcess] = subprocess.run) -> Check:
+    if sys.platform != "darwin":
+        return Check("15-minute schedule", "warn", "not macOS")
+    import os as _os
+    try:
+        rc = run(["launchctl", "print", f"gui/{_os.getuid()}/com.tradeagent.tick"], capture_output=True, text=True,
+                 timeout=10).returncode
+    except Exception as exc:
+        return Check("15-minute schedule", "warn", f"could not check: {exc}")
+    return Check("15-minute schedule", "ok" if rc == 0 else "warn",
+                 "installed" if rc == 0 else "not installed (only needed on the always-on Mac; see docs/DEPLOY.md)")
+
+
 def _power(run: Callable[..., subprocess.CompletedProcess] = subprocess.run) -> Check:
     if sys.platform != "darwin":
         return Check("Always-on power settings", "warn", "not macOS")
@@ -142,6 +174,9 @@ def run_checks(root: Path = PROJECT_ROOT, db_path: Path | None = None, today: da
     checks.append(_vibe_trading())
     checks.append(_tool("claude", "Claude Code CLI, needed from Phase 6 on the always-on Mac"))
     checks.append(_tool("git", "needed to pull updates"))
+    checks.append(_setup_stats(root))
+    checks.append(_claude_login())
+    checks.append(_schedule())
     checks.append(_power())
     return checks
 

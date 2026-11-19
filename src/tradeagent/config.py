@@ -302,6 +302,7 @@ class SecLocal(Strict):
 class LocalConfig(Strict):
     email: EmailLocal = EmailLocal()
     sec: SecLocal = SecLocal()
+    shadow_start: Optional[str] = None   # the trial's start date on this machine (overrides shadow.start)
 
 
 class Config(Strict):
