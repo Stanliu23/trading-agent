@@ -303,7 +303,7 @@ def send(email: Email, config: Config, *, conn=None, smtp_factory=smtplib.SMTP_S
     if evidence_check(email):
         raise ValueError(f"numbers without a source tag: {evidence_check(email)}")
     own = conn is None
-    conn = conn or db.connect()
+    conn = conn or db.connect(db.init_db())   # init_db is idempotent: adds tables new versions need
     try:
         ok, why = should_send(conn, email, config, now.date())
         status = "sent"

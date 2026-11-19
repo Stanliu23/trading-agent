@@ -73,6 +73,13 @@ Account value includes deposits. The switch to moderate happens once and is neve
   At most 3 stories per factor appear, most-reported first. The rest become a one-line count.
 - **Politics & trade** has no historical measure yet, so those stories are counted, not shown.
 
+## 2d. AI analyst (Phase 6, 2026-11-19)
+
+- **What the AI does:** it only writes the sentences. The code first builds measured facts, each with a source: the signal in numbers, the setup's odds, the plan, the earnings date, the measured impact. Claude (your local Claude Code login, model `claude-sonnet-5-5`, no tools) writes "Why now" plus up to 3 lines, citing fact IDs.
+- **Number check:** any line with a number that isn't in the facts it cites, or that cites an unknown fact, is dropped. If "Why now" fails the check, the fact itself is used word for word.
+- **Fallback:** if the AI is off, over its daily cap (10 runs), or unavailable, a fixed template writes the lines from the facts. Recommendations never depend on the AI.
+- **Why not Vibe-Trading's own Claude provider:** it passes a `--restricted` flag that the installed Claude Code CLI (2.1.236) rejects. The analyst calls `claude -p` directly with the same isolation flags minus that one, and it's lighter on tokens than the full Vibe-Trading agent loop.
+
 ## 3. The run cycle
 
 1. **Scheduler (launchd on the Mac):** runs every 15 min from 9:30 to 16:00 ET on trading days, a premarket run at 08:00 ET, a close run at 16:30 ET, and a weekly run on Saturday at 09:00 ET.

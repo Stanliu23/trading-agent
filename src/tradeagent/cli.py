@@ -17,6 +17,7 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("set-secret", help="store a secret in the macOS Keychain (prompted, not echoed)")
     s.add_argument("name", choices=sorted(secrets.KNOWN_SECRETS))
     sub.add_parser("backtest-setups", help="backtest the setup library and write docs/SETUP_STATS.md")
+    sub.add_parser("analyst-demo", help="replay 5 past alerts end to end into data/analyst_demo/ (uses Claude if signed in)")
     ep = sub.add_parser("email-preview", help="write the 4 sample emails as HTML + text to data/email_preview/")
     sub.add_parser("email-check", help="log in to the agent's Gmail without sending anything")
     et = sub.add_parser("email-test", help="send the 4 sample emails to your inbox")
@@ -51,6 +52,15 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         for name, build in email_samples.ALL.items():
             print(f"{name}: {emailer.send(build(shadow), cfg)}")
+        return 0
+    if args.command == "analyst-demo":
+        from tradeagent import analyst_demo
+        from tradeagent.config import load_config
+        for r in analyst_demo.run(load_config()):
+            print(f"{r['alert']}: {'AI' if r['used_ai'] else 'template'}; dropped {len(r['dropped'])}; "
+                  f"unsourced numbers {len(r['unsourced_numbers'])}")
+            for d in r["dropped"]:
+                print("   dropped:", d)
         return 0
     if args.command == "replay":
         from tradeagent.config import load_config

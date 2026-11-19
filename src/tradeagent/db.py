@@ -95,6 +95,13 @@ CREATE TABLE IF NOT EXISTS emails (
     body_hash  TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS ai_runs (
+    id        INTEGER PRIMARY KEY,
+    run_at    TEXT NOT NULL,
+    purpose   TEXT NOT NULL,
+    status    TEXT NOT NULL CHECK (status IN ('ok','fallback','error','capped'))
+);
+
 CREATE TABLE IF NOT EXISTS review_items (
     id                 INTEGER PRIMARY KEY,
     week_start         TEXT NOT NULL,

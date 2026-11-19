@@ -141,6 +141,13 @@ class Scoring(Strict):
         return self
 
 
+class AI(Strict):
+    enabled: bool
+    model: str
+    max_runs_per_day: int = Field(ge=1)
+    timeout_s: int = Field(ge=10)
+
+
 class Macro(Strict):
     factors: list[Literal["rates_fed", "politics_trade"]] = Field(min_length=1)
     min_publishers: int = Field(ge=2)
@@ -306,6 +313,7 @@ class Config(Strict):
     paper_watch: PaperWatch
     email: EmailSettings
     macro: Macro
+    ai: AI
     cash: Cash
     positions: Positions
     tiers: Tiers
