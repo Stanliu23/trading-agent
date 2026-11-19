@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from datetime import date
 from typing import Literal, Optional
@@ -16,7 +17,7 @@ Bucket = Literal["long_term", "short_term"]
 class Sizing:
     size_usd: float
     max_loss_usd: float
-    limited_by: Literal["risk", "position_cap", "bucket_room", "cash", "none"]
+    limited_by: Literal["risk", "position_cap", "bucket_room", "cash"]
 
 
 def bucket_room(profile: Profile, bucket: Bucket, account_value: float, bucket_value: float) -> float:
@@ -61,7 +62,9 @@ def size_position(
     size, limited_by = min(candidates, key=lambda x: x[0])
     size = max(0.0, size)
     max_loss = size * stop_frac if stop_frac is not None else size
-    return Sizing(round(size, 2), round(max_loss, 2), limited_by if size > 0 else "none")
+    size = math.floor(size * 100 + 1e-9) / 100  # round down to the cent: never more than the cash available
+    max_loss = size * stop_frac if stop_frac is not None else size
+    return Sizing(size, round(max_loss, 2), limited_by)  # always names the binding limit
 
 
 def planned_exit_day(entry_day: date, max_hold_days: int) -> date:

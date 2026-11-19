@@ -35,7 +35,7 @@ def test_room_and_cash_limits(profiles):
     s = size_position(profile=agg, tier=1, account_value=300, entry=100, stop=95, room_usd=300, cash_usd=40, position_cap_pct=1.0)
     assert (s.size_usd, s.limited_by) == (40, "cash")
     s = size_position(profile=agg, tier=1, account_value=300, entry=100, stop=95, room_usd=0, cash_usd=300, position_cap_pct=1.0)
-    assert (s.size_usd, s.limited_by) == (0, "none")
+    assert (s.size_usd, s.limited_by) == (0, "bucket_room")   # the binding limit is always named
 
 
 def test_long_term_has_no_stop(profiles):
@@ -113,3 +113,10 @@ def test_earnings_block():
     assert not earnings_blocks_entry(is_etf=True, next_earnings=None, **kw)[0]
     assert not earnings_blocks_entry(is_etf=False, next_earnings=date(2026, 11, 20), enabled=False,
                                      entry_day=date(2026, 11, 18), max_hold_days=10)[0]
+
+
+def test_size_rounds_down_to_the_cent(profiles):
+    agg, _ = profiles
+    s = size_position(profile=agg, tier=1, account_value=300, entry=100, stop=None, room_usd=1e9,
+                      cash_usd=10.006, position_cap_pct=1.0)
+    assert s.size_usd == 10.0 and s.size_usd <= 10.006

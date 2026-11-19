@@ -64,6 +64,9 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 
 ## Phase 4: trigger rules (no AI)
 
+**Status (2026-11-18):** rules built (`triggers.py`), Yahoo quotes, earnings and RSS headlines (`market.py`), and a hypothetical-account simulator (`papertrade.py`). `uv run tradeagent replay` writes `docs/REPLAY.md`. The SEC filing rule stays off until you choose a contact email. Hidden problems found are listed in `docs/REPLAY_FINDINGS.md`.
+During the 2-week shadow run, the account reader is this hypothetical account: assume every recommendation was taken, with no real money.
+
 - Every rule is set in `config.yaml` with an exact threshold.
 - A price fetcher pulls from Yahoo. The Finnhub cross-check stays off unless you turn it on in `config.yaml`.
 - We replay the last 6 months of prices and count how often each rule would have fired. Rules that fire too often get adjusted.

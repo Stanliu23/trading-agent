@@ -17,7 +17,18 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("set-secret", help="store a secret in the macOS Keychain (prompted, not echoed)")
     s.add_argument("name", choices=sorted(secrets.KNOWN_SECRETS))
     sub.add_parser("backtest-setups", help="backtest the setup library and write docs/SETUP_STATS.md")
+    r = sub.add_parser("replay", help="replay recent months with a hypothetical account; writes docs/REPLAY.md")
+    r.add_argument("--months", type=int, default=6)
+    r.add_argument("--start-cash", type=float, default=300)
+    r.add_argument("--monthly", type=float, default=250)
+    r.add_argument("--no-news", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.command == "replay":
+        from tradeagent.config import load_config
+        from tradeagent.replay import run
+        print(f"wrote {run(load_config(), args.months, args.start_cash, args.monthly, with_news=not args.no_news)}")
+        return 0
 
     if args.command == "backtest-setups":
         from tradeagent.config import load_config
