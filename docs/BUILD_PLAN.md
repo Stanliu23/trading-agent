@@ -127,6 +127,8 @@ Previews emailed and approved on your phone 2026-11-19. **Phase 7 done.**
 
 ## Phase 8: deploy and 2-week shadow run
 
+**Status (2026-11-19):** private repo created at github.com/Stanliu23/trading-agent; setup guide in `docs/DEPLOY.md`; `doctor` checks the Claude login, the setup statistics and the 15-minute schedule. Waiting for you to set up the always-on Mac.
+
 - Push to the repo. On the always-on Mac you pull it, log in to Claude Code and run `doctor`, and then the scheduled jobs are installed.
 - For 2 weeks every email is marked SHADOW. We review the logs together.
 
