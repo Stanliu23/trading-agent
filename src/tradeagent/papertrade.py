@@ -390,9 +390,14 @@ def simulate_portfolio(
 
 def simulate_with_goal_rules(bars, config: Config, stats, start, end, starting_cash, monthly_deposit, earnings=None,
                              **kwargs) -> SimResult:
-    """Run the account with the goal rules from config. If the restart rule is on, first run the same
+    """Run the account with the goal and cash rules from config. Idle cash earns the parking ETF's return.
+    If the restart rule is on, first run the same
     account without the pause to get the paper book, then run the real one with restarts allowed.
     (The simulator assumes you approve each restart the agent asks for.)"""
+    park = config.cash.park_idle_in
+    if park and kwargs.get("idle_cash_returns") is None and park in bars:
+        # Approximation: idle cash earns the T-bill ETF's daily return; the extra buy/sell orders are not modelled.
+        kwargs["idle_cash_returns"] = bars[park]["close"].pct_change()
     if config.goal.pause_short_term_if_behind and config.goal.restart_when_paper_book_recovers \
             and kwargs.get("restart_shadow") is None:
         paper_cfg = config.model_copy(update={"goal": config.goal.model_copy(update={"pause_short_term_if_behind": False})})

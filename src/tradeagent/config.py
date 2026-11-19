@@ -141,6 +141,11 @@ class Scoring(Strict):
         return self
 
 
+class Cash(Strict):
+    park_idle_in: Optional[str] = None
+    min_park_usd: float = Field(ge=0)
+
+
 class Positions(Strict):
     max_position_pct: float = Field(gt=0, le=1)
     min_position_usd: float = Field(ge=0)
@@ -253,6 +258,7 @@ class Config(Strict):
     evidence: Evidence
     backtest: Backtest
     scoring: Scoring
+    cash: Cash
     positions: Positions
     tiers: Tiers
     stars: Stars

@@ -61,7 +61,7 @@ def run(config: Config, months: int = 6, starting_cash: float = 300, monthly_dep
     today = date.today()
     start = (pd.Timestamp(today) - pd.DateOffset(months=months)).date()
     fetch_start = (pd.Timestamp(start) - pd.DateOffset(days=420)).date().isoformat()
-    symbols = sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS))
+    symbols = sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS) | ({config.cash.park_idle_in} if config.cash.park_idle_in else set()))
     bars, missing = prices.daily_bars(symbols, fetch_start, today.isoformat())
     stats = _stats(root)
 

@@ -172,3 +172,18 @@ def test_goal_rules_wrapper_matches_plain_run_when_restart_off(cfg):
 
 def test_config_restart_rule_on(cfg):
     assert cfg.goal.restart_when_paper_book_recovers and cfg.goal.restart_needs_approval
+
+
+def test_idle_cash_earns_parking_return(cfg):
+    from tradeagent.papertrade import simulate_with_goal_rules
+    syms = ["SPY", "QQQ", "VTI", "SCHD", "IWM", "XLK"]
+    bars = {s: _walk(i) for i, s in enumerate(syms)}
+    idx = bars["SPY"].index
+    bars["BIL"] = pd.DataFrame({c: 100 * (1.0002 ** np.arange(len(idx))) for c in ("open", "high", "low", "close")}
+                               | {"volume": 1e6}, index=idx)                     # steady +0.02%/day
+    stats = {s.id: {"passes_evidence": True, "recommendable": False, "tier": 2, "mean_ret": 0.01} for s in LIBRARY}
+    off = cfg.model_copy(update={"cash": cfg.cash.model_copy(update={"park_idle_in": None})})
+    args = (stats, "2025-11-03", str(idx[-1].date()), 300, 250, {})
+    plain = simulate_with_goal_rules(bars, off, *args)
+    parked = simulate_with_goal_rules(bars, cfg, *args)
+    assert parked.daily["value"].iloc[-1] > plain.daily["value"].iloc[-1]   # no trades: only cash yield differs

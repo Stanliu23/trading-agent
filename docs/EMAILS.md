@@ -22,6 +22,7 @@ Every number, ticker and price below is made-up sample data that only shows the 
 Size      $1,200 = 2.4% of account   Entry ≤ $84.50
 Stop      $79.40 (−6.0%)             Target $93.00 (+10.1%)
 Max loss  $72 = 0.14% of account at stop
+Funding   Sell $1,200 of BIL first (short-term bucket's parked cash)
 Odds      628 past trades: 71% positive, median +1.4%, 1 in 20 worse than −5.1%   [setup S3]
 Why now   Earnings estimates up 4.2% in 30 days (3rd percentile of revisions)   [estimates 11-17]
 Stars     Edge 4 · Confidence 5 · Fit 3
@@ -71,7 +72,7 @@ Subject: Daily · Tue Nov 18 · $50,240 · +$201 (+0.4%) · SPY +0.2% · 1 actio
    Value $50,240  (+$201, +0.4%)   SPY +0.2%            [schwab 16:30]
    Long-term  41%  (target 40%, band 35–45%)  ✓
    Short-term 59%  (target 60%, band 55–65%)  ✓
-   Cash $3,110 · Drawdown from peak −2.1% (pause at −15%)
+   Cash parked in BIL $3,110 (+$11 interest this month) · Drawdown from peak −2.1% (pause at −15%)
 
 2  ACTIONS FOR TOMORROW  (1)
    [recommendation card(s)]

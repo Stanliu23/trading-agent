@@ -25,6 +25,7 @@ def test_approved_numbers(project):
     assert (mod.max_loss_per_trade, mod.tier3_max_loss_per_trade, mod.drawdown_pause) == (0.02, 0.01, 0.15)
     assert (agg.buckets.long_term.min, agg.buckets.long_term.max, agg.buckets.long_term.target) == (0.35, 0.45, 0.40)
     assert c.profiles.start_profile == "moderate"
+    assert (c.cash.park_idle_in, c.cash.min_park_usd) == ("BIL", 20)
     assert mod.buckets == agg.buckets   # same split in both phases
     assert agg.rank_by == "expected_return" and mod.rank_by == "stars"
     assert c.profiles.switch_to_moderate_at == 1000

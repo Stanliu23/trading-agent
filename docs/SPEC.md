@@ -27,6 +27,9 @@ All defaults were approved on 2026-11-18. Email layouts are agreed in EMAILS.md.
 - Each bucket keeps its own cash. The agent tags every position to one bucket, and you confirm the tag the first time.
 - **Funding (approved 2026-11-18):** long-term funds are bought only with new money: the starting balance and each monthly deposit. Money from short-term trades (sales, profits, unused cash) stays in the short-term bucket for new short-term trades. Money is never moved between buckets.
 - **Drift:** if the split leaves its band, the digest says so once and shows how the next deposit will be split to close the gap. It never suggests selling one bucket to buy the other.
+- **Idle cash → T-bills (approved 2026-11-18):** uninvested cash in either bucket ($20 or more) is parked in the T-bill ETF BIL, and each bucket's BIL is tracked separately. When a trade needs cash, the recommendation says to sell that amount of BIL first. In replays this helped in 10 of 12 cases.
+  - **Cash-account catch:** a stock bought with money from a same-day BIL sale shouldn't be sold before that sale settles (next business day), or Schwab may flag a good-faith violation. If a stop is hit on such a position's entry day, the alert says so and suggests waiting until the next session.
+  - **Taxes:** withholding on BIL's monthly payouts for a non-US resident isn't modelled. Check with Schwab.
 - If a long-term fund is ever sold on a thesis break, the proceeds stay in the long-term bucket, since they started as deposit money.
 - **Monthly deposit:** when a new deposit shows up in the Schwab transactions, the agent emails a split. The bucket furthest below target is filled first, then the rest follows 35/65.
 - **Long-term sells:** triggered only by a measured thesis break (for example falling earnings estimates, or valuation above its own 10-year range). Price noise alone is never a reason.
