@@ -52,7 +52,7 @@ backtest:
   long_term_horizon_days: 756     # long-term setups are scored on 3-year forward returns
   long_term_holdout_years: 2      # held-out = last 2 years of entries that have a full 3 years of data
 
-# Proposed score mappings (awaiting approval). Stars = average of the sub-scores, rounded.
+# Score mappings (approved 2026-11-18). Stars = average of the sub-scores, rounded half up.
 scoring:
   edge_swing_r:   [0.0, 0.05, 0.10, 0.20, 0.30]   # held-out expectancy in R; above each step adds 1 point (max 5)
   edge_long_term: [0.0, 0.10, 0.20, 0.30, 0.40]   # mean 3-year return; same stepping

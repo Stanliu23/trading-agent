@@ -72,7 +72,7 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 
 ## Phase 5: setup library and risk engine
 
-**Status (2026-11-18):** built and backtested, 47 tests pass. Waiting for your approval of `docs/SETUP_STATS.md`.
+**Status: done 2026-11-18.** Built and backtested, 47 tests pass, and `docs/SETUP_STATS.md` plus the scoring steps are approved.
 Vibe-Trading's engine has no per-trade stops, so our own per-trade simulator produces the trade results. Vibe-Trading supplies the price data.
 
 - 4–6 setups:

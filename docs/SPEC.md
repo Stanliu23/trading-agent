@@ -83,7 +83,7 @@ The tail measure is the 5th-percentile trade, not the single worst trade, becaus
 - **Confidence:** sample size, and how consistent the result is across years.
 - **Fit:** low correlation with what you already hold, and room left in the bucket.
 
-Score steps (approved with the setup table) live in `config.yaml` under `scoring`.
+Score steps (approved 2026-11-18 with the setup table) live in `config.yaml` under `scoring`.
 
 ## 4a. Setup library and position rules
 

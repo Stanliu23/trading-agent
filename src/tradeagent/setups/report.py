@@ -48,7 +48,9 @@ def _num(x, digits=2):
 def to_markdown(results: list[SetupStats], missing: dict[str, list[str]], config: Config) -> str:
     bt = config.backtest
     lines = [
-        "# Setup statistics (for your approval)",
+        "# Setup statistics",
+        "",
+        "Approved by Stanley on 2026-11-18. Any change to a setup rule or a scoring step needs a new backtest and a new approval.",
         "",
         f"Generated {date.today().isoformat()} by `uv run tradeagent backtest-setups`.",
         f"Data: Yahoo daily bars, adjusted for splits and dividends, from {bt.history_start} to {bt.end}, "

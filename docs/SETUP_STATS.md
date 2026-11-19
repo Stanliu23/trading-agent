@@ -1,4 +1,6 @@
-# Setup statistics (for your approval)
+# Setup statistics
+
+Approved by Stanley on 2026-11-18. Any change to a setup rule or a scoring step needs a new backtest and a new approval.
 
 Generated 2026-11-18 by `uv run tradeagent backtest-setups`.
 Data: Yahoo daily bars, adjusted for splits and dividends, from 2015-01-01 to 2025-12-31, fetched through Vibe-Trading's loader.
