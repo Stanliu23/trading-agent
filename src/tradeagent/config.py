@@ -290,6 +290,12 @@ class Schwab(Strict):
     login_reminder_day: int = Field(ge=1, le=6)
 
 
+class PaperBroker(Strict):
+    """2-week test: the agent places the shadow plan in Alpaca's paper account (no real money)."""
+    enabled: bool = False
+    provider: Literal["alpaca"] = "alpaca"
+
+
 class EmailLocal(Strict):
     to: Optional[str] = None
     from_: Optional[str] = Field(default=None, alias="from")
@@ -332,6 +338,7 @@ class Config(Strict):
     review: Review
     schwab: Schwab
     shadow: Shadow
+    paper_broker: PaperBroker = PaperBroker()
     local: LocalConfig = LocalConfig()
 
 

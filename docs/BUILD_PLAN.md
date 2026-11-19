@@ -56,6 +56,8 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 
 **Done when:** the snapshot matches the Schwab app to the cent.
 
+**Paper test (2026-11-19):** you chose to run the 2-week test on an Alpaca paper account, with the agent placing the trades and you free to step in (see SPEC 2e). Built: `alpaca.py` (paper host only), `paperbroker.py` (orders, stops/targets/time limits, your changes respected), and emails from the Alpaca account. `paper-check` tests the connection.
+
 ## Phase 3: email pipeline (needs the Gmail app password)
 
 **Status (2026-11-18):** built and tested (`emailer.py`, `email_samples.py`; 81 tests). `tradeagent email-preview` writes the 4 samples to `data/email_preview/`, `email-check` tests the Gmail login, and `email-test --yes` sends the samples. The urgent daily cap is 5 (my default; change `email.urgent_daily_cap`). Gmail connected 2026-11-19 (app password in the Keychain, sender in `config.local.yaml`). The 4 samples were sent to your Outlook and approved on your phone. **Phase 3 done.**

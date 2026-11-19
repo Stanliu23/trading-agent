@@ -43,7 +43,7 @@ def test_all_samples_render_and_pass_evidence_check():
         assert emailer.evidence_check(em) == [], name
         text, html = emailer.render_text(em, True), emailer.render_html(em, True)
         assert "SHADOW RUN" in text and "SHADOW RUN" in html
-        assert "This agent cannot place trades." in text and "cannot place trades" in html
+        assert "This agent cannot place trades at Schwab." in text and "cannot place trades" in html
         assert em.subject.startswith("[SHADOW] ")
         assert "$" in em.subject                      # dollar amounts in subjects (approved)
 

@@ -47,6 +47,10 @@ class AccountState:
     bars: dict[str, pd.DataFrame]
     earnings: dict[str, list[date]]
     stats: dict[str, dict]
+    label: str = "shadow account"                 # source tag on every number
+    source: str = "hypothetical account"          # footer: where the account data comes from
+    paper_note: Optional[str] = None              # Alpaca paper test: how the agent places the trades
+    paper_events: tuple = ()                      # Alpaca paper test: fills and your changes today
 
     @property
     def day(self) -> pd.Timestamp:

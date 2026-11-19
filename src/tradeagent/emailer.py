@@ -183,7 +183,7 @@ def render_text(email: Email, shadow: bool) -> str:
 def footer_text(f: Footer) -> str:
     login = (f"Schwab login expires in {f.login_days_left} days" if f.login_days_left is not None
              else "no Schwab login in use")
-    return f"Data as of {f.data_as_of} ({f.account_source}) · {login} · This agent cannot place trades."
+    return f"Data as of {f.data_as_of} ({f.account_source}) · {login} · This agent cannot place trades at Schwab."
 
 
 # --- HTML -------------------------------------------------------------------------

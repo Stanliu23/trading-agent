@@ -80,6 +80,18 @@ Account value includes deposits. The switch to moderate happens once and is neve
 - **Fallback:** if the AI is off, over its daily cap (10 runs), or unavailable, a fixed template writes the lines from the facts. Recommendations never depend on the AI.
 - **Why not Vibe-Trading's own Claude provider:** it passes a `--restricted` flag that the installed Claude Code CLI (2.1.236) rejects. The analyst calls `claude -p` directly with the same isolation flags minus that one, and it's lighter on tokens than the full Vibe-Trading agent loop.
 
+## 2e. Two-week test on Alpaca's paper account (approved 2026-11-19)
+
+- **Who trades:** the agent places the pretend account's orders in an **Alpaca paper account** (simulated money). Your Schwab account stays read-only and untouched.
+- **Only paper can be reached:** the Alpaca connection refuses any address except `paper-api.alpaca.markets`. The live host is blocked in code and by tests, and the agent never deletes or replaces orders.
+- **Timing:** buys and exit-signal sells go in at about 08:00 ET, queued for the open. Stops and targets are checked every 15 minutes and sold at market. Time limits sell in the last 20 minutes of the session.
+- **You can step in, and your move is final:**
+  - an agent order you cancel is never re-sent;
+  - a sell you place is never bought back;
+  - a buy you place is flagged until you run `tradeagent tag SYMBOL long_term|short_term`. A short-term tag gives it S2's exits (stop 2×ATR, target 4×ATR, 20 sessions); long-term is held.
+- **Emails describe the Alpaca account.** The rules-only pretend account keeps running, and the weekly email compares the two.
+- **Money:** a virtual budget made of the $300 start and the monthly deposits, split by the 40/60 rule. Alpaca's own paper cash is ignored. Idle cash is not parked in BIL during the test.
+
 ## 3. The run cycle
 
 1. **Scheduler (launchd on the Mac):** runs every 15 min from 9:30 to 16:00 ET on trading days, a premarket run at 08:00 ET, a close run at 16:30 ET, and a weekly run on Saturday at 09:00 ET.

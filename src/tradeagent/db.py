@@ -108,6 +108,36 @@ CREATE TABLE IF NOT EXISTS sent_keys (
     sent_at TEXT NOT NULL
 );
 
+-- Alpaca paper test: why the agent placed each order (Alpaca keeps the order itself).
+CREATE TABLE IF NOT EXISTS paper_intents (
+    client_order_id  TEXT PRIMARY KEY,
+    placed_at        TEXT NOT NULL,
+    session          TEXT NOT NULL,
+    symbol           TEXT NOT NULL,
+    side             TEXT NOT NULL CHECK (side IN ('buy','sell')),
+    purpose          TEXT NOT NULL CHECK (purpose IN ('entry','stop','target','signal','time')),
+    setup_id         TEXT,
+    bucket           TEXT,
+    stop             REAL,
+    target           REAL,
+    max_hold         INTEGER,
+    lot_ref          TEXT,
+    dollars          REAL,
+    qty              REAL,
+    status           TEXT NOT NULL CHECK (status IN ('sent','failed')),
+    detail           TEXT
+);
+
+-- Alpaca paper test: the account at each close (value history for the emails).
+CREATE TABLE IF NOT EXISTS paper_daily (
+    day       TEXT PRIMARY KEY,
+    value     REAL NOT NULL,
+    cash_lt   REAL NOT NULL,
+    cash_st   REAL NOT NULL,
+    lt_value  REAL NOT NULL,
+    st_value  REAL NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS review_items (
     id                 INTEGER PRIMARY KEY,
     week_start         TEXT NOT NULL,

@@ -19,11 +19,11 @@ TIER_LABEL = {1: "Tier 1 (low risk)", 2: "Tier 2 (medium risk)", 3: "Tier 3 (hig
 
 
 def _src(state: AccountState) -> str:
-    return f"shadow account {state.day:%m-%d}"
+    return f"{state.label} {state.day:%m-%d}"
 
 
 def footer(state: AccountState) -> Footer:
-    return Footer(f"close {state.day:%b %d}", None, "hypothetical account")
+    return Footer(f"close {state.day:%b %d}", None, state.source)
 
 
 def _bucket_table(state: AccountState, config: Config) -> Table:
@@ -54,7 +54,8 @@ def account_section(state: AccountState, config: Config) -> Section:
     lines = [Line(f"Value {usd(v)} ({usd(change, True)}, {pct(change / prev if prev else 0)}) · SPY {pct(spy_ret)}",
                   _src(state), "up" if change >= 0 else "down"),
              _bucket_table(state, config),
-             Line(f"Cash parked in {config.cash.park_idle_in or 'cash'} {usd(cash)} · drop from peak {pct(dd)} "
+             Line(f"{'Cash (kept as cash in the paper test)' if state.paper_note else 'Cash parked in ' + (config.cash.park_idle_in or 'cash')} "
+                  f"{usd(cash)} · drop from peak {pct(dd)} "
                   f"(pause at −{profile.drawdown_pause:.0%})", _src(state))]
     if dep_today:
         lines.append(Line(f"Deposit today {usd(dep_today)} was split by the 40/60 rule.", _src(state)))
@@ -155,6 +156,9 @@ def digest(state: AccountState, config: Config, *, macro_lines: Optional[list[Li
     lead = (Line(f"{n_actions} action{'s' if n_actions != 1 else ''} for tomorrow: " + ", ".join(lead_parts) + ".",
                  _src(state), "strong") if n_actions else Line("No actions for tomorrow.", _src(state), "strong"))
     sections = [account_section(state, config)]
+    if state.paper_note:
+        sections.append(Section("Paper trading", [Line(state.paper_note, "agent rules")]
+                                + [Line(e, _src(state)) for e in state.paper_events]))
     guards = safeguard_lines(state)
     if guards:
         sections.append(Section("Safeguards", guards))
@@ -214,7 +218,7 @@ def premarket(state: AccountState, config: Config, *, macro_lines: Optional[list
 
 def urgent(state: AccountState, quotes: dict, config: Config, *, sigmas: Optional[dict[str, float]] = None,
            filing_events: Optional[list[tuple[str, str, object]]] = None, fired: Optional[set[str]] = None,
-           now=None) -> tuple[Optional[Email], list[str]]:
+           now=None, executed: Optional[list] = None) -> tuple[Optional[Email], list[str]]:
     """One email for everything urgent found in this check, or None. Returns (email, keys to record as fired).
 
     quotes: symbol -> market.Quote; sigmas: symbol -> daily sigma; filing_events: (symbol, kind, impact.Impact)."""
@@ -228,7 +232,7 @@ def urgent(state: AccountState, quotes: dict, config: Config, *, sigmas: Optiona
         q = quotes.get(p.symbol)
         if q is None:
             continue
-        hit = tg.stop_or_target(p.symbol, q.price, p.stop, p.target, day)
+        hit = None if executed is not None else tg.stop_or_target(p.symbol, q.price, p.stop, p.target, day)
         if hit and hit.key not in fired:
             word = "stop" if hit.rule == "stop_hit" else "target"
             level = p.stop if word == "stop" else p.target
@@ -254,13 +258,21 @@ def urgent(state: AccountState, quotes: dict, config: Config, *, sigmas: Optiona
             continue
         events.append((key, sym, imp.kind))
         blocks.append(Line(f"New SEC filing for {sym}: {imp.line()}", "SEC 8-K + prices", "strong"))
+    for x in executed or []:
+        key = f"paper:{day}:{x.purpose}:{x.symbol}"
+        if key in fired:
+            continue
+        events.append((key, f"{'SOLD' if x.ok else 'COULD NOT SELL'} {x.symbol}", f"{x.purpose}"))
+        blocks.insert(0, Line(f"The agent {'sold' if x.ok else 'tried to sell'} {x.amount} of {x.symbol} in the Alpaca paper "
+                              f"account: its {x.purpose} rule fired." + ("" if x.ok else f" Alpaca said: {x.detail}"),
+                              f"Alpaca paper {now:%H:%M}", "down" if x.purpose == "stop" else "strong"))
     if not events:
         return None, []
     lead_txt = "; ".join(f"{a} ({b})" for _, a, b in events)
     subj = subject_line("urgent", [lead_txt], config.mode == "shadow")
     em = Email("urgent", subj, Line(f"{len(events)} urgent item{'s' if len(events) != 1 else ''}: {lead_txt}.", tone="heading"),
                [Section("Act now" if any(isinstance(b, ActionBox) for b in blocks) else "Heads-up", blocks)],
-               Footer(f"{now:%H:%M} ET, {now:%b %d}", None, "hypothetical account"))
+               Footer(f"{now:%H:%M} ET, {now:%b %d}", None, state.source))
     return em, [k for k, _, _ in events]
 
 

@@ -29,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("email-check", help="log in to the agent's Gmail without sending anything")
     et = sub.add_parser("email-test", help="send the 4 sample emails to your inbox")
     et.add_argument("--yes", action="store_true", help="confirm sending")
+    sub.add_parser("paper-check", help="connect to the Alpaca PAPER account and show it (places nothing)")
     sub.add_parser("schwab-login", help="log in to Schwab (every 7 days): opens the login page, then paste the address it lands on")
     sn = sub.add_parser("snapshot", help="read the Schwab account now (read only) and save a snapshot")
     sn.add_argument("--days", type=int, default=90, help="also list deposits/withdrawals from the last N days")
@@ -89,6 +90,18 @@ def main(argv: list[str] | None = None) -> int:
                   f"unsourced numbers {len(r['unsourced_numbers'])}")
             for d in r["dropped"]:
                 print("   dropped:", d)
+        return 0
+    if args.command == "paper-check":
+        from tradeagent import alpaca
+        try:
+            c = alpaca.Client()
+            a, pos = c.account(), c.positions()
+        except alpaca.AlpacaError as exc:
+            print(f"Alpaca: {exc}")
+            return 1
+        print(f"Alpaca PAPER account {a.get('status')} (…{str(a.get('account_number', ''))[-3:]}), "
+              f"paper cash ${float(a.get('cash', 0)):,.2f}, {len(pos)} position(s).")
+        print("The agent sizes from its own $300 budget plus deposits; Alpaca's paper cash only needs to cover it.")
         return 0
     if args.command in ("schwab-login", "snapshot", "tag"):
         return _schwab_command(args)

@@ -18,7 +18,8 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
-from tradeagent import account, analyst, db, emailer, macro, market, market_calendar, paperwatch, reports, schwab
+from tradeagent import (account, alpaca, analyst, db, emailer, macro, market, market_calendar, paperbroker, paperwatch,
+                        reports, schwab, secrets)
 from tradeagent.config import PROJECT_ROOT, Config
 from tradeagent.emailer import Email, Footer, Line, Section, subject_line
 
@@ -97,6 +98,63 @@ def _macro_lines(state: account.AccountState, config: Config, conn, now: datetim
     return lines, [macro.story_key(st) for st, _ in rep.confirmed]
 
 
+# --- Alpaca paper test ------------------------------------------------------------------------
+
+def paper_ready(config: Config) -> bool:
+    return config.paper_broker.enabled and secrets.has_secret("alpaca_paper_key") and secrets.has_secret("alpaca_paper_secret")
+
+
+def _intents(conn) -> dict[str, dict]:
+    return {r["client_order_id"]: dict(r) for r in conn.execute("SELECT * FROM paper_intents")}
+
+
+def _recorder(conn, now: datetime):
+    cols = ("client_order_id", "session", "symbol", "side", "purpose", "setup_id", "bucket", "stop", "target", "max_hold",
+            "lot_ref", "dollars", "qty", "status", "detail")
+    def record(row: dict) -> None:
+        conn.execute(f"INSERT INTO paper_intents(placed_at, {', '.join(cols)}) VALUES (?{', ?' * len(cols)}) "
+                     "ON CONFLICT(client_order_id) DO UPDATE SET status=excluded.status, detail=excluded.detail, "
+                     "placed_at=excluded.placed_at",
+                     (now.isoformat(timespec="seconds"), *[row.get(c) for c in cols]))
+        conn.commit()
+    return record
+
+
+def _paper_book(conn, client, shadow: account.AccountState, today) -> paperbroker.Book:
+    start = shadow.sim.daily.index[0]
+    tags = {r["symbol"]: r["bucket"] for r in conn.execute("SELECT symbol, bucket FROM bucket_tags")}
+    b = paperbroker.book(client.orders(f"{start:%Y-%m-%d}T00:00:00Z"), _intents(conn), shadow.sim.deposits, tags, shadow.bars)
+    b.notes += [(today, n) for n in paperbroker.check_positions(b, client.positions())]
+    return b
+
+
+def _paper_state(conn, client, shadow: account.AccountState, today, save_close: bool = False) -> account.AccountState:
+    b = _paper_book(conn, client, shadow, today)
+    hist = [dict(r) for r in conn.execute("SELECT * FROM paper_daily ORDER BY day")]
+    day = shadow.day.date()
+    state = paperbroker.to_state(shadow, b, hist, day, tuple(paperbroker.day_events(b, _intents(conn), today)))
+    if save_close:
+        r = state.sim.daily.iloc[-1]
+        conn.execute("INSERT INTO paper_daily(day, value, cash_lt, cash_st, lt_value, st_value) VALUES (?,?,?,?,?,?) "
+                     "ON CONFLICT(day) DO UPDATE SET value=excluded.value, cash_lt=excluded.cash_lt, cash_st=excluded.cash_st, "
+                     "lt_value=excluded.lt_value, st_value=excluded.st_value",
+                     (day.isoformat(), float(r["value"]), float(r["cash_lt"]), float(r["cash_st"]), float(r["lt_value"]),
+                      float(r["st_value"])))
+        conn.commit()
+    return state
+
+
+def _compare_lines(paper: account.AccountState, shadow: account.AccountState) -> list[Line]:
+    pv, sv = paper.value(), shadow.value()
+    yours = [c for c in paper.sim.trades if c.reason == "you"]
+    out = [Line(f"Alpaca paper ${pv:,.2f} vs rules-only pretend account ${sv:,.2f}: {pv - sv:+,.2f}. The gap is your "
+                f"changes plus real fills vs assumed prices.", f"Alpaca paper + shadow account {shadow.day:%m-%d}")]
+    if yours:
+        out.append(Line(f"Your own sells so far: {len(yours)}, together {sum(c.pnl for c in yours):+,.2f} vs their entry.",
+                        f"Alpaca paper {paper.day:%m-%d}"))
+    return out
+
+
 def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_run: bool = False,
              start: Optional[str] = None) -> str:
     now = now or datetime.now(NY)
@@ -109,37 +167,65 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
     out_dir = PROJECT_ROOT / "data" / "run_preview"
     status, detail = "ok", ""
     try:
-        state = account.build(config, start=start)
+        today = now.astimezone(NY).date()
+        sess = market_calendar.session(today)
+        # during the session Yahoo already has today's unfinished bar: decide from yesterday's close
+        as_of = today - pd.Timedelta(days=1).to_pytimedelta() if kind == "intraday" else None
+        state = account.build(config, as_of=as_of, start=start)
+        shadow = state
+        executed, client = None, None
+        if paper_ready(config):
+            try:
+                client = alpaca.Client()
+                record = _recorder(conn, now)
+                if kind in ("premarket", "intraday") and sess and not dry_run:     # a dry run never places orders
+                    b = _paper_book(conn, client, state, today)
+                    placed = paperbroker.place_open(client, b, state, today, _intents(conn), record, config)
+                    if kind == "intraday":
+                        b = _paper_book(conn, client, state, today)
+                        held = {l.symbol for l in b.lots}
+                        quotes_p = {s_: q for s_ in held if (q := market.quote(s_))}
+                        late = now.astimezone(NY) >= sess.close - pd.Timedelta(minutes=20).to_pytimedelta()
+                        placed += paperbroker.place_watch(client, b, quotes_p, today, now, _intents(conn), record, late)
+                        executed = [p for p in placed if p.side == "sell" and p.purpose in ("stop", "target", "time")]
+                state = _paper_state(conn, client, shadow, today, save_close=(kind == "close"))
+            except alpaca.AlpacaError as exc:
+                detail = f"Alpaca unavailable, emails use the pretend account ({exc}); "
+        elif config.paper_broker.enabled:
+            detail = "Alpaca keys not saved: emails use the pretend account; "
         if kind == "intraday":
             quotes = {p.symbol: q for p in state.sim.open_positions if (q := market.quote(p.symbol))}
             sigmas = {}
             for p in state.sim.open_positions:
                 c = state.bars[p.symbol]["close"]
                 sigmas[p.symbol] = float(c.pct_change().dropna().tail(config.triggers.sigma_lookback_days).std())
-            em, keys = reports.urgent(state, quotes, config, sigmas=sigmas, fired=_sent(conn), now=pd.Timestamp(now))
+            em, keys = reports.urgent(state, quotes, config, sigmas=sigmas, fired=_sent(conn), now=pd.Timestamp(now),
+                                      executed=executed)
             if em is None:
-                status, detail = "quiet", "nothing urgent"
+                status, detail = "quiet", detail + "nothing urgent"
             else:
-                detail = _deliver(em, config, conn, dry_run, out_dir)
+                detail += _deliver(em, config, conn, dry_run, out_dir)
                 if not dry_run:
                     _mark_sent(conn, keys, now)
         elif kind == "premarket":
             lines, keys = _macro_lines(state, config, conn, now)
-            detail = _deliver(reports.premarket(state, config, macro_lines=lines), config, conn, dry_run, out_dir)
+            detail += _deliver(reports.premarket(state, config, macro_lines=lines), config, conn, dry_run, out_dir)
             if not dry_run:
                 _mark_sent(conn, keys, now)
         elif kind == "close":
             lines, keys = _macro_lines(state, config, conn, now)
             em = reports.digest(state, config, macro_lines=lines, conn=conn, system_lines=_system_lines(conn, now))
-            detail = _deliver(em, config, conn, dry_run, out_dir)
+            detail += _deliver(em, config, conn, dry_run, out_dir)
             if not dry_run:
                 _mark_sent(conn, keys, now)
         elif kind == "weekly":
             watch = [Line(f"{g.setup_id} on {g.group} stocks: {g.trades} closed paper trades since "
                           f"{config.paper_watch.watch_start}, avg {g.avg_r:+.2f}R.", "paper watch")
                      for g in paperwatch.compare(state.bars, config, config.paper_watch.watch_start) if g.avg_r is not None]
+            if state is not shadow:
+                watch = _compare_lines(state, shadow) + watch
             em = reports.weekly(state, config, watch_lines=watch, system_lines=_system_lines(conn, now))
-            detail = _deliver(em, config, conn, dry_run, out_dir)
+            detail += _deliver(em, config, conn, dry_run, out_dir)
         else:
             raise ValueError(kind)
     except account.NotStarted as exc:
