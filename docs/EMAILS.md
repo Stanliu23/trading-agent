@@ -127,7 +127,7 @@ SUMMARY (3 lines max)
    ✗ …  cause: Calculation | Decision | System | Expected variance   step: <which step>
 
 6  NEXT WEEK
-   Earnings on holdings · expected deposit and its split · rebalance if a bucket is out of band
+   Earnings on holdings · expected deposit and how it will be split (this is the only way an out-of-band split gets corrected)
 
 7  SYSTEM
    Uptime, missed runs, AI runs and token use this week

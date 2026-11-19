@@ -137,3 +137,20 @@ def test_long_term_spreads_across_core_etfs(cfg):
         held[p.symbol] += p.qty * p.entry
     assert min(held.values()) > 0
     assert max(held.values()) / min(held.values()) < 2.0
+
+
+def test_long_term_funded_only_by_deposits(cfg):
+    """Long-term cash may rise only on deposit days, and by exactly the deposit's long-term share."""
+    syms = ["SPY", "QQQ", "VTI", "SCHD", "IWM", "XLK", "AAPL", "MSFT"]
+    bars = {s: _walk(i) for i, s in enumerate(syms)}
+    stats = {s.id: {"passes_evidence": True, "tier": 2, "mean_ret": 0.01 * (k + 1)} for k, s in enumerate(LIBRARY)}
+    sim = simulate_portfolio(bars, cfg, stats, "2025-11-03", str(bars["SPY"].index[-1].date()), 300, 250,
+                             {"AAPL": [date(2026, 1, 29)], "MSFT": [date(2026, 1, 28)]})
+    assert any(t.bucket == "short_term" for t in sim.trades)            # short-term trades did close
+    lt_in = {day: split["long_term"] for day, _, split in sim.deposits}
+    lt_cash = sim.daily["cash_lt"]
+    prev = 0.0
+    for day, now in lt_cash.items():
+        if now > prev + 1e-6:                                             # long-term cash went up...
+            assert day in lt_in and now - prev <= lt_in[day] + 1e-6       # ...only by a deposit's share
+        prev = now

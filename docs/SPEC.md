@@ -25,7 +25,9 @@ All defaults were approved on 2026-11-18. Email layouts are agreed in EMAILS.md.
 - **Long-term bucket:** holding period 1–5+ years. Moderate profile: target 35%, band 30–40%. Aggressive profile: target 25%, band 20–30%.
 - **Short-term bucket:** holding period 1 week to about 1 month. Moderate: target 65%, band 60–70%. Aggressive: target 75%, band 70–80%.
 - Each bucket keeps its own cash. The agent tags every position to one bucket, and you confirm the tag the first time.
-- **Drift:** if either bucket leaves its band, the daily digest proposes a rebalance in dollars.
+- **Funding (approved 2026-11-18):** long-term funds are bought only with new money: the starting balance and each monthly deposit. Money from short-term trades (sales, profits, unused cash) stays in the short-term bucket for new short-term trades. Money is never moved between buckets.
+- **Drift:** if the split leaves its band, the digest says so once and shows how the next deposit will be split to close the gap. It never suggests selling one bucket to buy the other.
+- If a long-term fund is ever sold on a thesis break, the proceeds stay in the long-term bucket, since they started as deposit money.
 - **Monthly deposit:** when a new deposit shows up in the Schwab transactions, the agent emails a split. The bucket furthest below target is filled first, then the rest follows 35/65.
 - **Long-term sells:** triggered only by a measured thesis break (for example falling earnings estimates, or valuation above its own 10-year range). Price noise alone is never a reason.
 - **Short-term trades:** every one has an entry, a stop and a target before it is recommended.

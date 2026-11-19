@@ -137,6 +137,8 @@ def simulate_portfolio(
         df = bars[sym]
         return float(df.at[day, col]) if day in df.index else None
 
+    # Funding rule: long-term cash comes only from the starting money and monthly deposits.
+    # Short-term sales and profits stay in short-term cash. Nothing moves between buckets.
     def deposit(amount, day):
         lt_val = sum(p.qty * (price(p.symbol, day, "open") or p.entry) for p in positions if p.bucket == "long_term")
         st_val = sum(p.qty * (price(p.symbol, day, "open") or p.entry) for p in positions if p.bucket == "short_term")

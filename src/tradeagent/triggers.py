@@ -81,7 +81,8 @@ def bucket_drift(long_term_value: float, short_term_value: float, profile: Profi
     events = []
     if out_of_band and not drifting.get("split", False):
         events.append(Event("bucket_drift", None, False, "close", f"drift:{day}",
-                            {"long_term_share": round(share, 4), "long_term_band": [band.min, band.max]}))
+                            {"long_term_share": round(share, 4), "long_term_band": [band.min, band.max],
+                             "fix": "next deposit split; no money moves between buckets"}))
     drifting["split"] = out_of_band
     return events
 
