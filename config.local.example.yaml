@@ -2,3 +2,5 @@
 email:
   to: you@example.com            # where alerts go
   from: agent-gmail@gmail.com    # the agent's dedicated Gmail (Phase 0)
+sec:
+  contact: agent-gmail@gmail.com # SEC EDGAR requires a contact email; use the agent's Gmail

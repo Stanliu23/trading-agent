@@ -226,6 +226,10 @@ class MarketData(Strict):
 class News(Strict):
     sources: list[Literal["yahoo_finance", "sec_edgar"]] = Field(min_length=1)
     min_similar_events: int = Field(ge=1)
+    impact_horizon_days: int = Field(ge=1, le=60)
+    measured_min_abs_median: float = Field(ge=0, le=0.2)
+    measured_min_same_sign: float = Field(ge=0.5, le=1)
+    pooled_fallback: bool
 
 
 HHMM = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
@@ -267,8 +271,13 @@ class EmailLocal(Strict):
     from_: Optional[str] = Field(default=None, alias="from")
 
 
+class SecLocal(Strict):
+    contact: Optional[str] = None
+
+
 class LocalConfig(Strict):
     email: EmailLocal = EmailLocal()
+    sec: SecLocal = SecLocal()
 
 
 class Config(Strict):

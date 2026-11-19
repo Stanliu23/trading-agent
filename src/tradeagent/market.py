@@ -111,8 +111,10 @@ class SecClient:
             return []
         recent = self._get(SEC_SUBMISSIONS.format(cik=cik)).get("filings", {}).get("recent", {})
         out = []
-        for acc, form, filed in zip(recent.get("accessionNumber", []), recent.get("form", []),
-                                    recent.get("filingDate", [])):
+        for acc, form, filed, accepted, items in zip(recent.get("accessionNumber", []), recent.get("form", []),
+                                                     recent.get("filingDate", []), recent.get("acceptanceDateTime", []),
+                                                     recent.get("items", [])):
             if form in forms:
-                out.append({"id": acc, "form": form, "published": filed, "title": f"{form} filed {filed}"})
+                out.append({"id": acc, "form": form, "published": filed, "accepted": accepted, "items": items or "",
+                            "title": f"{form} filed {filed}" + (f" (items {items})" if items else "")})
         return out

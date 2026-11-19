@@ -133,6 +133,12 @@ market_data:
 news:
   sources: [yahoo_finance, sec_edgar]
   min_similar_events: 10
+  # "Measured impact" (my defaults, 2026-11-19): typical move beyond SPY over impact_horizon_days must be
+  # at least measured_min_abs_median, with at least measured_min_same_sign of past events in that direction.
+  impact_horizon_days: 5
+  measured_min_abs_median: 0.01
+  measured_min_same_sign: 0.65
+  pooled_fallback: true           # if a stock has < min_similar_events of its own, use all traded stocks (labelled "pooled")
 
 schedule:
   intraday: {every_minutes: 15, start: "09:30", end: "16:00"}
