@@ -44,7 +44,11 @@ profiles:
 goal:
   benchmark: [VTI, QQQ, SCHD]      # equal-weight
   window_sessions: 63
-  pause_short_term_if_behind: true  # stop new short-term recommendations; restart only with your OK
+  pause_short_term_if_behind: true  # stop new short-term recommendations
+  # While paused, recommendations keep being tracked on paper. When that paper book is no longer behind
+  # the index funds over the same window, the agent asks to restart; you approve (approved 2026-11-18).
+  restart_when_paper_book_recovers: true
+  restart_needs_approval: true
 
 # A setup is rated only if it clears all of these.
 evidence:

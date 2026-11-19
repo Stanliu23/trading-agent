@@ -51,7 +51,8 @@ Account value includes deposits. The switch to moderate happens once and is neve
 
 - Short-term trading succeeds only if it earns more than the same money held in VTI, QQQ and SCHD (equal-weight). Otherwise it adds risk without adding income.
 - **Weekly check** (last session of the week): compare the short-term bucket's time-weighted return over the last 63 sessions (about 3 months; deposits removed) with the index funds.
-- **If it's behind:** stop new short-term recommendations, send one urgent email explaining the numbers, and restart only with your OK. Open short-term trades still follow their exits. Short-term cash waits in the short-term bucket (it never moves to long-term; see §2).
+- **If it's behind:** stop new short-term recommendations and send one urgent email explaining the numbers.
+- **Restart rule (approved 2026-11-18):** while paused, the agent keeps recording what it would have recommended (a paper book, no money). At each weekly check, once that paper book is no longer behind the index funds over the same 63 sessions, it emails asking to restart. Trading resumes only after you approve. After a restart, the next pause check waits a full 63 sessions, so the restarted trades are judged on their own results. Open short-term trades still follow their exits. Short-term cash waits in the short-term bucket (it never moves to long-term; see §2).
 - No rule can guarantee positive income. This safeguard limits how long losing trading can run.
 
 ## 3. The run cycle

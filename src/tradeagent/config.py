@@ -89,6 +89,8 @@ class Goal(Strict):
     benchmark: list[str] = Field(min_length=1)
     window_sessions: int = Field(ge=20)
     pause_short_term_if_behind: bool
+    restart_when_paper_book_recovers: bool = False
+    restart_needs_approval: bool = True
 
 
 class Evidence(Strict):

@@ -386,3 +386,17 @@ def simulate_portfolio(
 
     daily = pd.DataFrame(rows).set_index("date")
     return SimResult(daily, trades, positions, blocked, signals_seen, alerts, deposits, notes, st_inflows)
+
+
+def simulate_with_goal_rules(bars, config: Config, stats, start, end, starting_cash, monthly_deposit, earnings=None,
+                             **kwargs) -> SimResult:
+    """Run the account with the goal rules from config. If the restart rule is on, first run the same
+    account without the pause to get the paper book, then run the real one with restarts allowed.
+    (The simulator assumes you approve each restart the agent asks for.)"""
+    if config.goal.pause_short_term_if_behind and config.goal.restart_when_paper_book_recovers \
+            and kwargs.get("restart_shadow") is None:
+        paper_cfg = config.model_copy(update={"goal": config.goal.model_copy(update={"pause_short_term_if_behind": False})})
+        paper = simulate_portfolio(bars, paper_cfg, stats, start, end, starting_cash, monthly_deposit, earnings,
+                                   idle_cash_returns=kwargs.get("idle_cash_returns"))
+        kwargs["restart_shadow"] = (paper.daily["st_value"] + paper.daily["cash_st"], paper.st_inflows)
+    return simulate_portfolio(bars, config, stats, start, end, starting_cash, monthly_deposit, earnings, **kwargs)

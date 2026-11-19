@@ -15,7 +15,7 @@ import pandas as pd
 
 from tradeagent import market, prices
 from tradeagent.config import PROJECT_ROOT, Config
-from tradeagent.papertrade import SimResult, simulate_portfolio
+from tradeagent.papertrade import SimResult, simulate_with_goal_rules
 from tradeagent.setups.library import CORE_ETFS, ETFS, LIBRARY, STOCKS
 
 
@@ -73,8 +73,8 @@ def run(config: Config, months: int = 6, starting_cash: float = 300, monthly_dep
                 earnings[s] = got
             time.sleep(0.2)
 
-    sim = simulate_portfolio(bars, config, stats, start.isoformat(), today.isoformat(),
-                             starting_cash, monthly_deposit, earnings)
+    sim = simulate_with_goal_rules(bars, config, stats, start.isoformat(), today.isoformat(),
+                                   starting_cash, monthly_deposit, earnings)
     watch = _watchlist_alerts(bars, pd.Timestamp(start), config)
     news = _headline_volume(symbols) if with_news else pd.Series(dtype="float")
 
@@ -124,8 +124,9 @@ def to_markdown(sim: SimResult, watch, news, config, start, end, starting_cash, 
         f"({_usd(final - deposited)}, {final / deposited - 1:+.1%} on money put in).",
         f"- **Time-weighted return** (deposits removed): {twr:+.1%}, vs SPY {spy_ret:+.1%} over the same sessions.",
         f"- Largest drop from a peak, time-weighted: {twr_dd:.1%}. (Raw account value: {max_dd:.1%}, softened by deposits.)",
-        f"- Switched from aggressive to moderate on {switch_day.date() if switch_day is not None else 'never'}.",
-        "- Goal (short-term must beat holding VTI/QQQ/SCHD over 3 months): "
+        ("- Moderate rules from the start." if config.profiles.start_profile == "moderate" else
+         f"- Switched from aggressive to moderate on {switch_day.date() if switch_day is not None else 'never'}."),
+        "- Goal (short-term must beat holding VTI/QQQ/SCHD over 3 months; restart when the paper book recovers): "
         + ("; ".join(sim.notes) if sim.notes else "never fell behind at a weekly check."),
         f"- Profile at the end: {d['profile'].iloc[-1]}. Drawdown pause active on {int(d['paused'].sum())} sessions.",
         f"- Cash sitting idle: {idle.mean():.0%} of the account on average; {idle.iloc[-1]:.0%} at the end.",

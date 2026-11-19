@@ -154,3 +154,21 @@ def test_long_term_funded_only_by_deposits(cfg):
         if now > prev + 1e-6:                                             # long-term cash went up...
             assert day in lt_in and now - prev <= lt_in[day] + 1e-6       # ...only by a deposit's share
         prev = now
+
+
+def test_goal_rules_wrapper_matches_plain_run_when_restart_off(cfg):
+    from tradeagent.papertrade import simulate_with_goal_rules
+    syms = ["SPY", "QQQ", "VTI", "SCHD", "IWM", "XLK", "AAPL", "MSFT"]
+    bars = {s: _walk(i) for i, s in enumerate(syms)}
+    stats = {s.id: {"passes_evidence": True, "tier": 2, "mean_ret": 0.01 * (k + 1)} for k, s in enumerate(LIBRARY)}
+    args = (bars, cfg, stats, "2025-11-03", str(bars["SPY"].index[-1].date()), 300, 250, {})
+    off = cfg.model_copy(update={"goal": cfg.goal.model_copy(update={"restart_when_paper_book_recovers": False})})
+    plain = simulate_portfolio(*((bars, off) + args[2:]))
+    wrapped = simulate_with_goal_rules(*((bars, off) + args[2:]))
+    assert plain.daily["value"].iloc[-1] == pytest.approx(wrapped.daily["value"].iloc[-1])
+    on = simulate_with_goal_rules(*args)                      # restart on: runs, never spends money it lacks
+    assert (on.daily[["cash_lt", "cash_st"]] >= -1e-6).all().all()
+
+
+def test_config_restart_rule_on(cfg):
+    assert cfg.goal.restart_when_paper_book_recovers and cfg.goal.restart_needs_approval

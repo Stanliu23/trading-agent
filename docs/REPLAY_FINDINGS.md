@@ -107,3 +107,27 @@ What this shows:
 - **Restart rule:** the most consistent help over 24 months. Over the 6 months it never fired (the paper book stayed behind), which is the point of it.
 - **Results are path-dependent:** adding T-bills to new + restart *lowered* the result by $172, because a slightly different cash balance changed which trades happened and when the restart fired. Differences of a few hundred dollars between versions are partly luck.
 - **Nothing beat holding the index funds over 24 months.** The short-term part is still the drag.
+
+## Long/short splits compared, restart rule adopted (2026-11-18)
+
+Moderate rules from the start, $300 + $250 per month, every recommendation taken. Split = long-term/short-term with a ±5-point band. "Restart" = restart rule on (the simulator assumes you approve each restart).
+
+| Split | 60 months ($15,300 in) | 24 months ($6,300 in) | 6 months ($1,800 in) | Worst drop (60 mo) |
+|---|---|---|---|---|
+| 100/0 | +$5,563 | +$781 | −$29 | −19.5% |
+| 20/80 | +$1,260 | +$215 | +$3 | −8.5% |
+| 20/80 + restart | +$4,286 | +$390 | +$3 | −10.2% |
+| 40/60 | +$2,639 | +$417 | −$13 | −12.7% |
+| **40/60 + restart (current)** | **+$5,888** | **+$647** | **−$13** | −14.4% |
+| 60/40 | +$4,108 | +$677 | −$46 | −18.5% |
+| 60/40 + restart | +$9,194 | +$1,097 | −$46 | −20.0% |
+| *Index funds only (no position cap)* | *+$7,516* | *+$1,039* | *−$30* | – |
+| *SPY only* | *+$7,303* | *+$812* | *−$50* | – |
+| *T-bills only* | *+$1,722* | *+$255* | *+$20* | – |
+
+What this shows:
+- **More long-term = more gain in rising periods and deeper drops.** The ranking flips over the flat last 6 months, where 20/80 did best.
+- **The restart rule helps every split over 60 and 24 months.** In 60 months it paused and restarted 10–13 times, so expect several pause/restart emails a year.
+- **60/40 + restart is the only version that beat index funds only** (60 months +$9,194 vs +$7,516; 24 months +$1,097 vs +$1,039). It also had the deepest drop (−20%).
+- **Hidden problem: 100/0 can't actually reach 100%.** The 25% per-position cap with only 3 long-term ETFs limits long-term holdings to 75%, so about 25% sat idle. That is why 100/0 trails "index funds only".
+- **Caveat on the 60-month window:** it overlaps 2021–2023, which the setups were designed on, so it flatters short-term trading. The 6-month window (2026) is the only fully unseen period, and there no version beat T-bills.
