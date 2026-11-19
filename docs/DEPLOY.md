@@ -55,7 +55,14 @@ claude auth login
    uv run tradeagent set-secret alpaca_paper_key        # 2-week paper test: the PAPER key from alpaca.markets
    uv run tradeagent set-secret alpaca_paper_secret
    uv run tradeagent paper-check                        # shows the paper account; places nothing
+   uv run tradeagent set-secret schwab_app_key          # Schwab app "Trade bot": Client ID
+   uv run tradeagent set-secret schwab_app_secret       # Schwab app "Trade bot": Client Secret
+   uv run tradeagent schwab-login                       # log in, tick your account, paste the 127.0.0.1 address within ~30 s
    ```
+
+   Keychains are per Mac, so these are saved again here even though your main Mac has them.
+   Before starting the schedule, check Alpaca still shows only the starting cash and no positions: the first
+   scheduled run records that balance as the test's start, and the first orders go in at 08:00 ET on the next trading day.
 
 ## 5. Build local data and check everything
 
@@ -64,7 +71,7 @@ cd ~/trading-agent && uv run tradeagent init-db && uv run tradeagent backtest-se
 ```
 
 - **Expected result:** 0 failing.
-- **Fine to leave as "still to do":** the Schwab items (Phase 2), the Finnhub key (off), and the 15-minute schedule (the next step).
+- **Fine to leave as "still to do":** the Finnhub key (off), the always-on power settings if you skipped them, and the 15-minute schedule (the next step).
 
 Optional preview, which writes files only and sends nothing:
 
