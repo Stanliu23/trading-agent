@@ -1,0 +1,21 @@
+# Personal settings and secrets: never committed
+config.local.yaml
+*.env
+.env
+
+# Runtime data
+data/
+*.db
+*.db-journal
+logs/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+*.egg-info/
+
+# macOS
+.DS_Store

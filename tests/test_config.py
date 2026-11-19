@@ -1,0 +1,81 @@
+import pytest
+import yaml
+from pydantic import ValidationError
+
+from tradeagent.config import active_profile, active_profile_name, load_config, reached_switch
+
+
+def _write(project, mutate):
+    data = yaml.safe_load((project / "config.yaml").read_text())
+    mutate(data)
+    (project / "config.yaml").write_text(yaml.safe_dump(data))
+
+
+def test_repo_config_is_valid(project):
+    config = load_config(project)
+    assert config.mode == "shadow"
+    assert config.account.allow_orders is False
+    assert config.local.email.to == "you@example.com"
+
+
+def test_approved_numbers(project):
+    c = load_config(project)
+    agg, mod = c.profiles.aggressive, c.profiles.moderate
+    assert (agg.max_loss_per_trade, agg.tier3_max_loss_per_trade, agg.drawdown_pause) == (0.03, 0.015, 0.25)
+    assert (mod.max_loss_per_trade, mod.tier3_max_loss_per_trade, mod.drawdown_pause) == (0.02, 0.01, 0.15)
+    assert (agg.buckets.long_term.min, agg.buckets.long_term.max) == (0.20, 0.30)
+    assert (mod.buckets.long_term.min, mod.buckets.long_term.max) == (0.30, 0.40)
+    assert agg.rank_by == "expected_return" and mod.rank_by == "stars"
+    assert c.profiles.switch_to_moderate_at == 1000
+    assert (c.tiers.tier1.max_loss_rate, c.tiers.tier1.max_worst_drop) == (0.25, 0.08)
+    assert (c.tiers.tier2.max_loss_rate, c.tiers.tier2.max_worst_drop) == (0.40, 0.15)
+    assert c.evidence.min_trades == 30
+
+
+def test_orders_can_never_be_enabled(project):
+    _write(project, lambda d: d["account"].__setitem__("allow_orders", True))
+    with pytest.raises(ValidationError, match="never places trades"):
+        load_config(project)
+
+
+def test_bucket_targets_must_sum_to_one(project):
+    _write(project, lambda d: d["profiles"]["moderate"]["buckets"]["long_term"].__setitem__("target", 0.40))
+    with pytest.raises(ValidationError, match="add up to 1"):
+        load_config(project)
+
+
+def test_target_must_sit_in_band(project):
+    def mutate(d):
+        b = d["profiles"]["aggressive"]["buckets"]
+        b["long_term"]["target"], b["short_term"]["target"] = 0.35, 0.65
+    _write(project, mutate)
+    with pytest.raises(ValidationError, match="outside its band"):
+        load_config(project)
+
+
+def test_tier3_cap_cannot_exceed_trade_cap(project):
+    _write(project, lambda d: d["profiles"]["moderate"].__setitem__("tier3_max_loss_per_trade", 0.05))
+    with pytest.raises(ValidationError, match="tier3"):
+        load_config(project)
+
+
+def test_tier1_must_be_stricter(project):
+    _write(project, lambda d: d["tiers"]["tier1"].__setitem__("max_loss_rate", 0.5))
+    with pytest.raises(ValidationError, match="strict"):
+        load_config(project)
+
+
+def test_unknown_keys_rejected(project):
+    _write(project, lambda d: d.__setitem__("typo_key", 1))
+    with pytest.raises(ValidationError):
+        load_config(project)
+
+
+def test_profile_switch_is_one_way(project):
+    c = load_config(project)
+    assert not reached_switch(c, 300)
+    assert not reached_switch(c, 999.99)
+    assert reached_switch(c, 1000)
+    assert active_profile_name(c, ever_reached_switch=False) == "aggressive"
+    assert active_profile_name(c, ever_reached_switch=True) == "moderate"
+    assert active_profile(c, ever_reached_switch=True).max_loss_per_trade == 0.02

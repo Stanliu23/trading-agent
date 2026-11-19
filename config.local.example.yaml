@@ -1,0 +1,4 @@
+# Copy to config.local.yaml (never committed) and fill in.
+email:
+  to: you@example.com            # where alerts go
+  from: agent-gmail@gmail.com    # the agent's dedicated Gmail (Phase 0)

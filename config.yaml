@@ -1,0 +1,75 @@
+# Every approved number lives here. Source of truth: docs/SPEC.md.
+# Personal details (email addresses) go in config.local.yaml, which is never committed.
+
+version: 1
+mode: shadow                 # shadow = emails marked SHADOW, you don't act. Switch to live after the 2-week run.
+timezone: America/New_York
+
+account:
+  broker: schwab_international
+  reader: undecided          # schwab_api | csv | undecided  (decided in Phase 2)
+  currency: USD
+  starting_balance: 300
+  fractional_shares: true    # you believe this works; verified in Phase 0
+  allow_orders: false        # hard rule: the agent never places orders
+  allow_shorts: false
+
+universe:
+  markets: [us_stocks, us_etfs]
+
+# Aggressive until account value first reaches the switch level, then moderate for good.
+profiles:
+  switch_to_moderate_at: 1000
+  aggressive:
+    max_loss_per_trade: 0.03
+    tier3_max_loss_per_trade: 0.015
+    drawdown_pause: 0.25
+    rank_by: expected_return
+    buckets:
+      long_term:  {target: 0.25, min: 0.20, max: 0.30}
+      short_term: {target: 0.75, min: 0.70, max: 0.80}
+  moderate:
+    max_loss_per_trade: 0.02
+    tier3_max_loss_per_trade: 0.01
+    drawdown_pause: 0.15
+    rank_by: stars
+    buckets:
+      long_term:  {target: 0.35, min: 0.30, max: 0.40}
+      short_term: {target: 0.65, min: 0.60, max: 0.70}
+
+# A setup is rated only if it clears all of these.
+evidence:
+  min_trades: 30
+  min_history_years: 5
+  require_positive_holdout: true
+
+tiers:
+  tier1: {max_loss_rate: 0.25, max_worst_drop: 0.08}
+  tier2: {max_loss_rate: 0.40, max_worst_drop: 0.15}
+  # tier3: anything else that clears `evidence`, sized at tier3_max_loss_per_trade
+
+stars:
+  components: [edge, confidence, fit]   # each 0-5, stars = average rounded to nearest whole star
+  scale: 5
+
+triggers:
+  move_sigma: 2.0
+  urgent_move_sigma: 3.0
+  sigma_lookback_days: 60    # tuned in Phase 4 replay
+  earnings_within_days: 3
+
+news:
+  sources: [yahoo_finance, sec_edgar]
+  min_similar_events: 10
+
+schedule:
+  intraday: {every_minutes: 15, start: "09:30", end: "16:00"}
+  premarket: "08:00"
+  close: "16:30"
+  weekly: {day: saturday, time: "09:00"}
+
+review:
+  recurrence: {count: 3, weeks: 4}
+
+schwab:
+  login_reminder_day: 6
