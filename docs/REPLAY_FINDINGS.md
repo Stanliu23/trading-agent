@@ -410,3 +410,53 @@ You asked whether statistics set the best place to sell. Plan, written before an
   - **Current exits stay.**
 - **S4: not testable.** At most 81 trades in 2015–23, below the 100 needed to choose fairly. **Current exits stay.**
 - **Verdict:** the current exits hold up. The per-trade gains from the menu didn't survive data the choice never saw. That's the over-fitting the plan was built to catch.
+
+## Macro signals as trade inputs (2026-11-20): rules fixed before testing
+
+Your choices:
+- macro may only **reduce** risk: skip or halve a buy, never start one;
+- trust is re-scored **automatically** every week with these fixed rules;
+- inputs are **market stress** and **news stories**.
+
+**Market-stress conditions**, read at the signal close (known when the decision is made). Thresholds are trailing percentiles, not tuned:
+
+| Condition | On when |
+|---|---|
+| VIX high | VIX close above its trailing 252-day 80th percentile |
+| VIX spike | VIX up 25% or more over 5 sessions |
+| Dollar surge | UUP's 20-day return above its trailing 252-day 90th percentile |
+| Oil shock | USO's absolute 20-day return above its trailing 252-day 90th percentile |
+
+**Trust rule** for a condition acting on a setup (S2, S3, S4; current exits; current 60 symbols):
+1. Enough cases: at least 30 trades with the condition on in the design years and at least 10 in the check years.
+2. It actually hurts: average R with the condition on is at least 0.10R below average R with it off, in both periods.
+3. Action:
+   - **skip** the buy if average R with the condition on is at or below 0 in both periods;
+   - otherwise **halve** the size.
+4. Account check (36 starts, 24 months, 40/60, $300 + $250/mo): with the gate, the account beats no gate in at least 60% of starts, with a positive median and a median worst drop no more than 1 point deeper.
+
+**Design and check periods:**
+- **Today:** design = 2015–23, check = 2024–25.
+- **Each weekly re-score:** design = 2015 up to 2 years ago, check = the last 2 years. A condition switches **on** only after passing rules 1–4. It switches **off** as soon as rule 1 or 2 fails, which takes it back to the tested rules with no macro gate.
+
+**News stories** (no usable history, so trust starts at zero and is earned going forward):
+- Every confirmed story (2 publishers, or 1 official + 1 news) is logged, with the symbols it touches: holdings and watchlist names it mentions, and all of them for rates/Fed stories.
+- Five sessions later the agent records each symbol's return vs SPY.
+- A factor (rates/Fed, politics/trade) becomes trusted once it has at least 20 logged stories, a median 5-day return vs SPY at or below −1%, and at least 65% negative (the same bar as the measured-impact rule).
+- When trusted, a new confirmed story of that factor **skips new buys** in the symbols it touches for 5 sessions.
+- If a factor turns out to be bad news for your holdings rather than for new buys, it is reported but changes nothing, because macro only reduces risk on new buys.
+
+**Results (2026-11-20):**
+
+| Setup | Passes rules 1–2 (hurts per trade) | Account check (rule 4) | Status |
+|---|---|---|---|
+| S2 | VIX high (−0.14R design, −0.18R check) → halve | better in 17% of starts, same in 22%, worse in 61%; median −0.05 pts | **off** |
+| S2 | Dollar surge (−0.13R, −0.66R) → halve | better 39%, same 25%, worse 36%; median 0.00 | **off** |
+| S2 | both together | better 42%, worse 53%; median −0.03 | **off** |
+| S2 | VIX spike, Oil shock | too few cases in the check years | off |
+| S3 | all four | no consistent harm (VIX high and spike *helped* dips in the design years) | off |
+| S4 | all four | too few cases (79 design trades in total) | off |
+
+- **Verdict:** none of the stress conditions is trusted to change trades today. The two that hurt S2 trades on paper made no difference to the account once sized in: they halve only about 4–10 buys per 2 years, and those buys carry other trades' cash.
+- The weekly re-score repeats this every Saturday on rolling periods and switches a condition on by itself if it passes all four rules.
+- **News stories:** logging starts now. No factor is trusted yet; each needs at least 20 logged stories first.

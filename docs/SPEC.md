@@ -73,6 +73,15 @@ Account value includes deposits. The switch to moderate happens once and is neve
   At most 3 stories per factor appear, most-reported first. The rest become a one-line count.
 - **Politics & trade** has no historical measure yet, so those stories are counted, not shown.
 
+## 2c-2. Macro as a trade input (approved 2026-11-20)
+
+- **Your choices:**
+  - macro may only reduce risk (halve or skip a buy, never start one);
+  - trust is re-scored automatically every Saturday with fixed rules;
+  - the inputs are market stress (VIX, the dollar via UUP, oil via USO) and the confirmed news stories.
+- **Rules:** see REPLAY_FINDINGS, "Macro signals as trade inputs". Every score is kept in `macro_scores`, every news story and its 5-session result in `macro_news`, and the Saturday email lists every change.
+- **Status 2026-11-20:** nothing is trusted. VIX-high and dollar-surge hurt S2 trades on paper but failed the account check. News logging has started (20 stories per factor needed).
+
 ## 2d. AI analyst (Phase 6, 2026-11-19)
 
 - **What the AI does:** it only writes the sentences. The code first builds measured facts, each with a source: the signal in numbers, the setup's odds, the plan, the earnings date, the measured impact. Claude (your local Claude Code login, model `claude-sonnet-5-5`, no tools) writes "Why now" plus up to 3 lines, citing fact IDs.

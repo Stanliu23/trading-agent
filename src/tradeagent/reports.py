@@ -129,6 +129,8 @@ def safeguard_lines(state: AccountState) -> list[Line]:
                         _src(state), "down"))
     if state.sim.drawdown_paused:
         out.append(Line("New short-term trades are paused: the account is 15% or more below its peak.", _src(state), "down"))
+    for n in state.macro_notes:
+        out.append(Line(n, "macro trust score", "muted"))
     switched = state.sim.switched_off_now
     if switched:
         out.append(Line(f"Switched off by their own paper record: {', '.join(switched)}.", _src(state), "muted"))

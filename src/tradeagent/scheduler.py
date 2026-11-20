@@ -89,10 +89,20 @@ def _system_lines(conn, now: datetime) -> list[Line]:
 
 
 def _macro_lines(state: account.AccountState, config: Config, conn, now: datetime) -> tuple[list[Line], list[str]]:
+    from tradeagent import macro_trust
+    from tradeagent.setups.library import ETFS, STOCKS
     holdings = sorted({p.symbol for p in state.sim.open_positions})
+    items = macro.fetch_items(config, yahoo_symbols=holdings)
+    # news ledger: every confirmed story and the holdings/watchlist names it touches, scored 5 sessions later
+    try:
+        for st, who in macro.run_once(items, sorted(set(holdings) | set(STOCKS) | set(ETFS)), config,
+                                      now.astimezone(ZoneInfo("UTC"))).confirmed:
+            macro_trust.log_story(conn, macro.story_key(st), now.astimezone(NY).date(), st.factor, who, sorted(st.publishers))
+        macro_trust.fill_outcomes(conn, state.bars)
+    except Exception:
+        pass                                   # the ledger never blocks an email
     if not holdings:
         return [], []
-    items = macro.fetch_items(config, yahoo_symbols=holdings)
     rep = macro.run_once(items, holdings, config, now.astimezone(ZoneInfo("UTC")), already_reported=_sent(conn))
     y10 = macro.fred_series("DGS10")
     fed = macro.fed_change_days(macro.fred_series("DFEDTARU"))
@@ -157,6 +167,23 @@ def paper_start_balance(conn, client) -> float:
         conn.execute("INSERT INTO meta(key, value) VALUES ('paper_start_balance', ?)", (v,))
         conn.commit()
     return float(v)
+
+
+def _macro_trust_lines(config: Config, conn, now: datetime, dry_run: bool) -> list[Line]:
+    """Saturday: re-score the macro conditions (fixed rules), report changes and the news record so far."""
+    from tradeagent import macro_rescore, macro_trust
+    try:
+        changes = macro_rescore.rescore(config, conn, now) if not dry_run else []
+    except Exception as exc:
+        changes = [f"Macro re-score failed this week ({type(exc).__name__}); last week's statuses stay."]
+    act = macro_trust.active(conn)
+    out = [Line(c, "macro trust score") for c in changes]
+    out.append(Line("Macro conditions trusted to change trades: " + (", ".join(f"{k} → {s} ({a})" for (s, k), a in act.items())
+                    if act else "none."), "macro trust score"))
+    for f, v in macro_trust.news_trust(conn).items():
+        out.append(Line(f"News ({f}): {v['stories']} scored stories, median {v['median']:+.1%} vs SPY over 5 sessions, "
+                        f"{v['negative']:.0%} negative: {'trusted' if v['trusted'] else 'not trusted yet'}.", "news ledger"))
+    return out
 
 
 def _compare_lines(paper: account.AccountState, shadow: account.AccountState) -> list[Line]:
@@ -245,6 +272,7 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
                      for g in paperwatch.compare(state.bars, config, config.paper_watch.watch_start) if g.avg_r is not None]
             if state is not shadow:
                 watch = _compare_lines(state, shadow) + watch
+            watch += _macro_trust_lines(config, conn, now, dry_run)
             em = reports.weekly(state, config, watch_lines=watch, system_lines=_system_lines(conn, now))
             detail += _deliver(em, config, conn, dry_run, out_dir)
         else:

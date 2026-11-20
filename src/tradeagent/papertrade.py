@@ -114,6 +114,7 @@ def simulate_portfolio(
     setup_switch_min_r: float = 0.0,
     short_term_size_mult: pd.Series | None = None,
     plan_next_day: bool = False,
+    macro_mult: dict[str, pd.Series] | None = None,
 ) -> SimResult:
     """Run the hypothetical account from ``start`` to ``end``. ``stats`` maps setup id -> stats dict.
 
@@ -124,6 +125,8 @@ def simulate_portfolio(
       the pause. At each weekly check the pause lifts once that paper book is no longer behind the index funds.
     - ``plan_next_day``: also plan orders at the last close (live use: these are tomorrow's recommendations).
     - ``short_term_size_mult``: per-day multiplier on short-term position sizes (e.g. 0.5 on high-volatility days).
+    - ``macro_mult``: setup id -> daily size multiplier from trusted macro conditions (1 = no change, 0.5 = half,
+      0 = skip). Read at the signal close. Macro can only shrink a buy, never create one.
     - ``setup_switch_n``: per-setup switch. A setup is skipped while the average R of its last N closed
       paper trades (every watchlist signal, closed before today) is below zero.
     """
@@ -418,6 +421,14 @@ def simulate_portfolio(
             if short_term_size_mult is not None:
                 m = float(short_term_size_mult.get(day, 1.0))
                 if m < 1.0:
+                    sz = risk.Sizing(math.floor(sz.size_usd * m * 100) / 100, round(sz.max_loss_usd * m, 2), sz.limited_by)
+            if macro_mult and s.id in macro_mult:
+                m = min(1.0, float(macro_mult[s.id].get(day, 1.0)))
+                if m <= 0:
+                    blocked[f"{s.id} skipped by a trusted macro condition"] += 1
+                    continue
+                if m < 1.0:
+                    blocked[f"{s.id} halved by a trusted macro condition"] += 1
                     sz = risk.Sizing(math.floor(sz.size_usd * m * 100) / 100, round(sz.max_loss_usd * m, 2), sz.limited_by)
             if sz.size_usd < min_order:
                 blocked[f"below ${min_order:.0f} minimum ({sz.limited_by})"] += 1

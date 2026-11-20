@@ -51,6 +51,7 @@ class AccountState:
     source: str = "hypothetical account"          # footer: where the account data comes from
     paper_note: Optional[str] = None              # Alpaca paper test: how the agent places the trades
     paper_events: tuple = ()                      # Alpaca paper test: fills and your changes today
+    macro_notes: tuple = ()                       # trusted macro conditions acting today
 
     @property
     def day(self) -> pd.Timestamp:
@@ -87,7 +88,8 @@ def load_bars(config: Config, start: str) -> dict[str, pd.DataFrame]:
     # enough history for 200-day/52-week signals AND the 504-session rate-sensitivity window
     days_needed = max(420, int(config.macro.rate_sensitivity_lookback * 365 / 252) + 30)
     fetch_start = (pd.Timestamp(start) - pd.DateOffset(days=days_needed)).date().isoformat()
-    symbols = sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS) | set(config.paper_watch.stocks)
+    from tradeagent.macro_trust import STRESS_SYMBOLS
+    symbols = sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS) | set(config.paper_watch.stocks) | set(STRESS_SYMBOLS)
                      | ({config.cash.park_idle_in} if config.cash.park_idle_in else set()))
     bars, _ = prices.daily_bars(symbols, fetch_start, date.today().isoformat())
     return bars
@@ -107,6 +109,34 @@ def build(config: Config, as_of: Optional[date] = None, start: Optional[str] = N
     stats = {d["setup_id"]: d for d in json.loads((PROJECT_ROOT / "data" / "setup_stats.json").read_text())}
     earnings = earnings_dates(list(STOCKS))
     start_cash = config.shadow.start_cash if start_cash is None else start_cash
+    mm, notes = _macro_gate(bars, as_of)
     sim = simulate_with_goal_rules(bars, config, stats, start, as_of.isoformat(), start_cash,
-                                   config.shadow.monthly_deposit, earnings, plan_next_day=True)
-    return AccountState(as_of, sim, bars, earnings, stats)
+                                   config.shadow.monthly_deposit, earnings, plan_next_day=True, macro_mult=mm)
+    blocked = _news_blocked(as_of, bars)
+    if blocked:
+        kept = [o for o in sim.next_orders if o["bucket"] == "long_term" or o["symbol"] not in blocked]
+        notes += tuple(f"{o['symbol']} buy skipped: trusted {blocked[o['symbol']]}." for o in sim.next_orders if o not in kept)
+        sim.next_orders = kept
+    return AccountState(as_of, sim, bars, earnings, stats, macro_notes=notes)
+
+
+def _macro_gate(bars, as_of: date):
+    """Trusted stress conditions (re-scored weekly) as per-setup size multipliers, plus today's notes."""
+    from tradeagent import db, macro_trust
+    if not all(s in bars for s in macro_trust.STRESS_SYMBOLS):
+        return None, ()
+    with db.connect(db.init_db()) as conn:
+        act = macro_trust.active(conn)
+    if not act:
+        return None, ()
+    cond = macro_trust.conditions(bars)
+    today = cond.iloc[-1]
+    notes = tuple(f"{k} is on: {sid} buys {'halved' if a == 'half' else 'skipped'} (trusted by the weekly macro score)."
+                  for (sid, k), a in act.items() if bool(today.get(k, False)))
+    return macro_trust.multipliers(act, cond), notes
+
+
+def _news_blocked(as_of: date, bars) -> dict[str, str]:
+    from tradeagent import db, macro_trust
+    with db.connect(db.init_db()) as conn:
+        return macro_trust.news_blocked(conn, as_of, list(bars["SPY"].index[-5:].date))
