@@ -339,6 +339,7 @@ class Config(Strict):
     schwab: Schwab
     shadow: Shadow
     paper_broker: PaperBroker = PaperBroker()
+    auto_update: bool = False          # pull new code from GitHub by itself (always-on Mac)
     local: LocalConfig = LocalConfig()
 
 

@@ -347,3 +347,66 @@ The textbook intuition didn't hold: breakouts in sideways markets did *better* t
 **Half size in high volatility (36 start dates, 24 months, 40/60):** better in 39% of starts, worse in 56%; median −0.36 points of profit. Worst drops unchanged (median change 0.00; −21.3% vs −22.0% at worst). **Fail.** The account's drops come mostly from the long-term index funds, which this rule doesn't touch.
 
 All three parts are rejected; the simulator keeps an off-by-default `short_term_size_mult` switch.
+
+## 97 short-term symbols, 36 start dates (2026-11-20): rule fixed before running
+
+You asked to test about 100 short-term candidates. The test: the current 60 (40 stocks + 20 ETFs) vs 97 (adding the 37 stocks from the Nov 18 list; the 18 extra ETFs are left out because they already hurt the account). Same 36 start dates (every 3 months, Jan 2016 to Oct 2024), 24 months each, 40/60 split, every current rule. Two money settings: $300 + $250/month (as in every earlier check) and $1,000 with no deposits (the paper test).
+
+**Pass rule, fixed before any result:** in BOTH money settings, 97 symbols must
+1. beat 60 in at least 60% of the start dates;
+2. have a positive median profit difference; and
+3. have a median worst drop no more than 1 point deeper.
+
+**Result: passes all three parts in both money settings.**
+
+| | Median profit | Middle half of starts | Worst start | Starts that lost money | Median worst drop | Worst drop (any start) | Short-term trades (median) |
+|---|---|---|---|---|---|---|---|
+| $300 + $250/mo, 60 symbols | +10.6% | +5.8% to +14.7% | −1.8% | 6% | −11.1% | −22.0% | 65 |
+| $300 + $250/mo, 97 symbols | +12.7% | +6.2% to +18.7% | +0.7% | 0% | −12.6% | −20.9% | 66 |
+| $1,000 no deposits, 60 symbols | +21.5% | +13.7% to +41.0% | +2.1% | 0% | −12.7% | −22.8% | 64 |
+| $1,000 no deposits, 97 symbols | +29.8% | +14.1% to +40.8% | +1.9% | 0% | −13.7% | −21.6% | 67 |
+
+- **Part 1, beats 60 in ≥ 60% of starts:** 61% ($300 + $250) and 64% ($1,000). Pass, but only just.
+- **Part 2, median difference > 0:** +3.4 and +2.9 points. Pass. The spread is wide: −9.7 to +8.6 and −18.2 to +23.5 points.
+- **Part 3, median drop no more than 1 point deeper:** +0.1 and +0.2 points (slightly shallower). Pass.
+- **Where the gain comes from:** better picks, not more trades. Short-term trades barely change (65 → 66), and idle short-term cash is about the same (37% → 38%). Median short-term profit rose from $176 to $329. With more candidates on a signal day, the ranking can pick better ones.
+- **Caveats:**
+  - starts before 2022 overlap the 2015–23 design years;
+  - on Nov 18, S2's trades on the new stocks averaged −0.01R in the design years, so the per-trade case for those names is weak;
+  - it wouldn't change today's switch: with 97 stocks S2 is still off (last 20 trades −0.53R) and S4 still on. S4 signals roughly double (7 → 15 in the last 12 months).
+- **Status:** passed the pre-set rule; waiting for your approval. Adopting it means adding the 37 stocks to S2 and S4, re-running `backtest-setups` (tiers and stars may change), and a new stats approval.
+
+## Exit study (2026-11-20): plan fixed before running
+
+You asked whether statistics set the best place to sell. Plan, written before any result:
+
+- **Data:** the current 60 symbols. Exits are chosen on 2015–23 only, checked on 2024–25, and 2026 is reported but never used to choose.
+- **Step 1, describe:** for every S2/S3/S4 signal, follow the price for 40 sessions with no exits. Record how far it went up (best point) and down (worst point), in ATR, and on which day it peaked. This shows where winners typically top out and how deep eventual winners dip first.
+- **Step 2, small fixed menu per setup.** Each setup is scored on 2015–23 average R (at least 100 trades), and the best combination is the candidate:
+  - **S2:** stop 1.5 / 2 / 2.5 / 3 ATR × target 3 / 4 / 6 ATR / none × time limit 10 / 20 / 30 days (48 combinations).
+  - **S3:** stop 2 / 3 / 4 ATR × exit on the 20-day-average rule, or a target of 2 / 3 ATR × time limit 10 / 15 / 20 days (27).
+  - **S4:** stop at the signal-day low, or 1.5 / 2 ATR × target 1.5 / 2 / 3R / none × time limit 10 / 20 / 30 days (36).
+- **Step 3, pass rule** (all must hold, per setup):
+  1. on 2024–25 the candidate beats the current exits by at least +0.05R per trade;
+  2. on the 36-start account check (40/60, $300 + $250/mo, 24 months) it beats the current exits in at least 60% of starts, with a positive median and a median worst drop no more than 1 point deeper.
+
+  Picking the best of up to 48 combinations on 2015–23 flatters the winner by luck, which is why steps 3.1 and 3.2 use data the choice never saw.
+
+**Results:**
+
+*Step 1 (2015–23, following each signal 40 sessions with no exits):*
+
+| Setup | Signals | Best point, median (middle half) | Day of best point, median | Up after 20 days | Dip before the best point, eventual winners (80th percentile) |
+|---|---|---|---|---|---|
+| S2 | 1,111 | 3.5 ATR (1.7–6.3) | 24 | 59% | 2.1 ATR |
+| S3 | 1,121 | 4.3 ATR (2.6–6.6) | 30 | 69% | 2.1 ATR |
+| S4 | 82 | 3.0 ATR (1.8–5.1) | 24 | 63% | 1.5 ATR |
+
+*Steps 2 and 3:*
+- **S2: fail.** The best menu choice (stop 2 ATR, no target, 30 days) was +0.250R vs +0.140R in 2015–23, but only +0.039R better in 2024–25, short of the +0.05R bar. **Current exits stay.**
+- **S3: passed step 3.1, failed step 3.2.**
+  - **Step 3.1:** the candidate (stop 2 ATR, target 3 ATR, 15 days) beat the current exits by +0.22R per trade in 2024–25. It was worse in 2026 (−0.19R vs −0.12R).
+  - **Step 3.2, the 36-start account check:** better in 50% of starts, worse in 50%, median −0.13 points. That's a fail. It helped starts in 2016–21 (+0.55) and hurt 2022–24 (−2.08). Its worst start (−4.2%) and the share of losing starts (11% vs 6%) were also worse.
+  - **Current exits stay.**
+- **S4: not testable.** At most 81 trades in 2015–23, below the 100 needed to choose fairly. **Current exits stay.**
+- **Verdict:** the current exits hold up. The per-trade gains from the menu didn't survive data the choice never saw. That's the over-fitting the plan was built to catch.

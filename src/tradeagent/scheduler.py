@@ -81,7 +81,11 @@ def _system_lines(conn, now: datetime) -> list[Line]:
     n_ok = conn.execute("SELECT COUNT(*) FROM runs WHERE substr(started_at,1,10)=? AND status IN ('ok','quiet')", (day,)).fetchone()[0]
     n_err = conn.execute("SELECT COUNT(*) FROM runs WHERE substr(started_at,1,10)=? AND status='error'", (day,)).fetchone()[0]
     ai = analyst.runs_today(conn, day)
-    return [Line(f"Runs today: {n_ok} OK, {n_err} errors · AI write-ups today: {ai}", "run log")]
+    out = [Line(f"Runs today: {n_ok} OK, {n_err} errors · AI write-ups today: {ai}", "run log")]
+    upd = db.get_meta(conn, "last_update")
+    if upd and upd[:10] == day:
+        out.append(Line("Code: " + upd[11:], "auto-update log"))
+    return out
 
 
 def _macro_lines(state: account.AccountState, config: Config, conn, now: datetime) -> tuple[list[Line], list[str]]:
@@ -293,8 +297,12 @@ def tick(config: Config, *, now: Optional[datetime] = None, dry_run: bool = Fals
     """What launchd calls every 15 minutes."""
     now = now or datetime.now(NY)
     conn = db.connect(db.init_db())
-    todo = due(config, now, _done_today(conn, now))
     out = []
+    if config.auto_update and not dry_run:
+        from tradeagent import selfupdate
+        if (u := selfupdate.maybe_update(conn, now)):
+            out.append(u)
+    todo = due(config, now, _done_today(conn, now))
     try:
         if (r := _login_reminder(config, conn, now, dry_run)):
             out.append(r)
