@@ -99,13 +99,14 @@ uv run tradeagent doctor | grep schedule && tail -5 logs/tick.log
 
 ## Day to day
 
-- **Get an update:**
+- **Get an update:** this happens by itself on the first run after 06:00 ET each day. To get one right away:
 
   ```bash
-  cd ~/trading-agent && git pull && uv sync --extra analyst
+  cd ~/trading-agent && git checkout docs/SETUP_STATS.md && git pull && uv sync --extra analyst
   ```
 
-  The next 15-minute run picks it up.
+  `backtest-setups` rewrites `docs/SETUP_STATS.md`, so the `checkout` puts GitHub's copy back before pulling.
+  The next 15-minute run picks up the new code.
 - **Pause everything:**
 
   ```bash

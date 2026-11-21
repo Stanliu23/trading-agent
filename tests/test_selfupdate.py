@@ -23,6 +23,8 @@ def fake_git(state):
             out = state["head"]
         elif args[:2] == ["rev-parse", "origin/main"]:
             out = state["remote"]
+        elif args[:2] == ["checkout", "--"]:              # restores the named files: no longer dirty
+            state["dirty"] = "\n".join(l for l in state.get("dirty", "").splitlines() if l[3:] not in args[2:])
         elif args[:1] == ["status"]:
             out = state.get("dirty", "")
         elif args[:2] == ["diff", "--name-only"]:
@@ -65,3 +67,28 @@ def test_local_edits_stop_the_update(conn, tmp_path):
     st = {"calls": [], "head": "a", "remote": "b", "changed": ["x"], "dirty": " M config.yaml"}
     msg = selfupdate.maybe_update(conn, datetime(2026, 11, 21, 9, 0, tzinfo=NY), root=tmp_path, run=fake_git(st))
     assert "paused" in msg and not any(c[3:4] == ["merge"] for c in st["calls"] if c[0] == "git")
+
+
+def test_rebuilt_stats_doc_does_not_block_the_next_update(conn, tmp_path):
+    # backtest-setups (run by the previous update, or by hand) rewrote the tracked stats doc
+    (tmp_path / ".git").mkdir()
+    st = {"calls": [], "head": "a", "remote": "b", "changed": ["x"], "dirty": " M docs/SETUP_STATS.md"}
+    msg = selfupdate.maybe_update(conn, datetime(2026, 11, 21, 9, 0, tzinfo=NY), root=tmp_path, run=fake_git(st))
+    assert msg.startswith("Updated to abc123")
+    git = [c[3:] for c in st["calls"] if c[0] == "git"]
+    assert ["checkout", "--", "docs/SETUP_STATS.md"] in git
+    assert git.index(["checkout", "--", "docs/SETUP_STATS.md"]) < next(i for i, a in enumerate(git) if a[:1] == ["merge"])
+
+
+def test_real_edits_still_stop_the_update_alongside_the_stats_doc(conn, tmp_path):
+    (tmp_path / ".git").mkdir()
+    st = {"calls": [], "head": "a", "remote": "b", "changed": ["x"], "dirty": " M docs/SETUP_STATS.md\n M config.yaml"}
+    msg = selfupdate.maybe_update(conn, datetime(2026, 11, 21, 9, 0, tzinfo=NY), root=tmp_path, run=fake_git(st))
+    assert "paused" in msg and not any(c[3:4] == ["merge"] for c in st["calls"] if c[0] == "git")
+
+
+def test_no_restore_when_already_up_to_date(conn, tmp_path):
+    (tmp_path / ".git").mkdir()
+    st = {"calls": [], "head": "a", "remote": "a", "changed": [], "dirty": " M docs/SETUP_STATS.md"}
+    assert selfupdate.maybe_update(conn, datetime(2026, 11, 21, 9, 0, tzinfo=NY), root=tmp_path, run=fake_git(st)) is None
+    assert not any(c[3:4] == ["checkout"] for c in st["calls"] if c[0] == "git")

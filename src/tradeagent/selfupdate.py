@@ -4,6 +4,7 @@ Rules:
 - once a day: the first run at or after 06:00 New York time (before the 08:00 premarket job), so each trading day
   starts on the newest code and nothing changes mid-session;
 - fast-forward only from origin/main, and only if nothing was edited locally (otherwise it stops and says so);
+  files that commands on this Mac rewrite (``GENERATED_FILES``) are not edits: GitHub's copy replaces them first;
 - if the dependencies changed, ``uv sync --extra analyst``; if the setup rules changed, rebuild the setup statistics;
 - the result is kept in the database and shown in the next email's System section.
 This Mac never pushes anything.
@@ -26,6 +27,8 @@ NY = ZoneInfo("America/New_York")
 DAILY_AT = time(6, 0)                         # New York time
 DEPENDENCY_FILES = ("pyproject.toml", "uv.lock")
 SETUP_FILES = ("src/tradeagent/setups/", "config.yaml")
+# rewritten by `backtest-setups`, which this module itself runs; the agent reads data/setup_stats.json instead
+GENERATED_FILES = ("docs/SETUP_STATS.md",)
 
 Run = Callable[..., subprocess.CompletedProcess]
 
@@ -64,6 +67,7 @@ def maybe_update(conn, now: datetime, *, root: Path = PROJECT_ROOT, run: Run = s
         head, remote = _git(["rev-parse", "HEAD"], root, run), _git(["rev-parse", "origin/main"], root, run)
         if head == remote:
             return None
+        _git(["checkout", "--", *GENERATED_FILES], root, run)
         if _git(["status", "--porcelain", "--untracked-files=no"], root, run):
             msg = "Auto-update paused: files were edited on this Mac. Nothing was changed."
             _set(conn, "last_update", f"{now:%Y-%m-%d %H:%M} {msg}")
