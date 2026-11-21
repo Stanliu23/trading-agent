@@ -50,7 +50,7 @@ def to_markdown(results: list[SetupStats], missing: dict[str, list[str]], config
     lines = [
         "# Setup statistics",
         "",
-        "Approved by Stanley on 2026-11-18. Any change to a setup rule or a scoring step needs a new backtest and a new approval.",
+        "Approved by Stanley on 2026-11-18; re-approved 2026-11-20 after S2 and S4 grew to 77 stocks. Any change to a setup rule or a scoring step needs a new backtest and a new approval.",
         "",
         f"Generated {date.today().isoformat()} by `uv run tradeagent backtest-setups`.",
         f"Data: Yahoo daily bars, adjusted for splits and dividends, from {bt.history_start} to {bt.end}, "

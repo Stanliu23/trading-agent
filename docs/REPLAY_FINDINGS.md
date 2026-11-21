@@ -473,3 +473,4 @@ Setup statistics rebuilt on the 77 stocks (`docs/SETUP_STATS.md`):
 - Per trade the setups look weaker, as the Nov 18 test showed; the account-level gain comes from having more candidates to pick from.
 - Both still pass the evidence bar (Edge ≥ 2), so nothing switches off.
 - The order between setups when both signal is unchanged (S4 ranks above S2). So the agent behaves as in the 36-start check, which used the old statistics; only the stars shown change.
+- **Statistics approved by you on 2026-11-20.**
