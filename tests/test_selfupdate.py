@@ -33,22 +33,31 @@ def fake_git(state):
     return run
 
 
-def test_never_during_market_hours(conn, tmp_path):
+def test_once_a_day_from_six_am(conn, tmp_path):
     (tmp_path / ".git").mkdir()
-    st = {"calls": [], "head": "a", "remote": "b", "changed": []}
-    noon = datetime(2026, 11, 20, 12, 0, tzinfo=NY)                     # a Friday session
-    assert selfupdate.maybe_update(conn, noon, root=tmp_path, run=fake_git(st)) is None and st["calls"] == []
+    st = {"calls": [], "head": "a", "remote": "a", "changed": []}
+    run = fake_git(st)
+    assert selfupdate.maybe_update(conn, datetime(2026, 11, 23, 5, 45, tzinfo=NY), root=tmp_path, run=run) is None
+    assert st["calls"] == []                                             # before 06:00: nothing
+    selfupdate.maybe_update(conn, datetime(2026, 11, 23, 6, 5, tzinfo=NY), root=tmp_path, run=run)
+    n = len(st["calls"])
+    assert n > 0                                                         # first run after 06:00 checks
+    for h in (6, 9, 12, 17, 23):
+        selfupdate.maybe_update(conn, datetime(2026, 11, 23, h, 50, tzinfo=NY), root=tmp_path, run=run)
+    assert len(st["calls"]) == n                                         # not again that day
+    selfupdate.maybe_update(conn, datetime(2026, 11, 24, 6, 1, tzinfo=NY), root=tmp_path, run=run)
+    assert len(st["calls"]) > n                                          # next day: checks again
 
 
 def test_pulls_and_rebuilds_when_setups_change(conn, tmp_path):
     (tmp_path / ".git").mkdir()
     st = {"calls": [], "head": "a", "remote": "b", "changed": ["src/tradeagent/setups/library.py", "uv.lock"]}
-    evening = datetime(2026, 11, 20, 19, 0, tzinfo=NY)
-    msg = selfupdate.maybe_update(conn, evening, root=tmp_path, run=fake_git(st))
+    morning = datetime(2026, 11, 23, 6, 15, tzinfo=NY)
+    msg = selfupdate.maybe_update(conn, morning, root=tmp_path, run=fake_git(st))
     assert "abc123" in msg and "packages updated" in msg and "setup statistics rebuilt" in msg
     assert any(c[3:5] == ["merge", "--ff-only"] for c in st["calls"] if c[0] == "git")
     assert not any("push" in c for c in st["calls"])
-    assert selfupdate.maybe_update(conn, evening, root=tmp_path, run=fake_git(st)) is None   # hourly at most
+    assert selfupdate.maybe_update(conn, morning.replace(hour=20), root=tmp_path, run=fake_git(st)) is None  # once a day
 
 
 def test_local_edits_stop_the_update(conn, tmp_path):

@@ -1,7 +1,8 @@
 """Auto-sync on the always-on Mac: pull new code from GitHub by itself, outside market hours.
 
 Rules:
-- at most once an hour, and never between 09:15 and 16:15 New York time on a trading day;
+- once a day: the first run at or after 06:00 New York time (before the 08:00 premarket job), so each trading day
+  starts on the newest code and nothing changes mid-session;
 - fast-forward only from origin/main, and only if nothing was edited locally (otherwise it stops and says so);
 - if the dependencies changed, ``uv sync --extra analyst``; if the setup rules changed, rebuild the setup statistics;
 - the result is kept in the database and shown in the next email's System section.
@@ -13,17 +14,16 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 from pathlib import Path
 from typing import Callable, Optional
 from zoneinfo import ZoneInfo
 
-from tradeagent import db, market_calendar
+from tradeagent import db
 from tradeagent.config import PROJECT_ROOT
 
 NY = ZoneInfo("America/New_York")
-CHECK_EVERY = timedelta(hours=1)
-QUIET_FROM, QUIET_TO = time(9, 15), time(16, 15)
+DAILY_AT = time(6, 0)                         # New York time
 DEPENDENCY_FILES = ("pyproject.toml", "uv.lock")
 SETUP_FILES = ("src/tradeagent/setups/", "config.yaml")
 
@@ -37,9 +37,12 @@ def _git(args: list[str], root: Path, run: Run) -> str:
     return out.stdout.strip()
 
 
-def in_quiet_hours(now: datetime) -> bool:
+def due_today(conn, now: datetime) -> bool:
+    """True for the first check at or after 06:00 New York time each day."""
     local = now.astimezone(NY)
-    return market_calendar.session(local.date()) is not None and QUIET_FROM <= local.time() < QUIET_TO
+    last = db.get_meta(conn, "update_checked_at")
+    done_today = last is not None and datetime.fromisoformat(last).astimezone(NY).date() == local.date()
+    return local.time() >= DAILY_AT and not done_today
 
 
 def _set(conn, key: str, value: str) -> None:
@@ -51,12 +54,8 @@ def _set(conn, key: str, value: str) -> None:
 def maybe_update(conn, now: datetime, *, root: Path = PROJECT_ROOT, run: Run = subprocess.run,
                  force: bool = False) -> Optional[str]:
     """Returns a one-line result when it did something worth reporting, else None."""
-    if not force:
-        if in_quiet_hours(now):
-            return None
-        last = db.get_meta(conn, "update_checked_at")
-        if last and now - datetime.fromisoformat(last) < CHECK_EVERY:
-            return None
+    if not force and not due_today(conn, now):
+        return None
     _set(conn, "update_checked_at", now.isoformat(timespec="seconds"))
     if not (root / ".git").exists():
         return None

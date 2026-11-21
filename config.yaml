@@ -174,8 +174,8 @@ schwab:
 # Deposits follow the same assumption as the replays until the Schwab connection exists.
 # 2-week test on Alpaca's PAPER account (approved 2026-11-19): the agent places the shadow plan's orders there,
 # you may cancel, sell or buy yourself and the agent respects it. Only Alpaca's paper host can be reached.
-# Always-on Mac pulls new code from GitHub by itself: hourly, never 09:15-16:15 ET on trading days,
-# fast-forward only, stops if anything was edited locally (approved 2026-11-20).
+# Always-on Mac pulls new code from GitHub by itself once a day, at the first run after 06:00 ET (before
+# premarket), fast-forward only, stops if anything was edited locally (approved 2026-11-20; daily 2026-11-20).
 auto_update: true
 
 paper_broker:
