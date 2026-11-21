@@ -90,12 +90,12 @@ def _system_lines(conn, now: datetime) -> list[Line]:
 
 def _macro_lines(state: account.AccountState, config: Config, conn, now: datetime) -> tuple[list[Line], list[str]]:
     from tradeagent import macro_trust
-    from tradeagent.setups.library import ETFS, STOCKS
+    from tradeagent.setups.library import ETFS, TRADED_STOCKS
     holdings = sorted({p.symbol for p in state.sim.open_positions})
     items = macro.fetch_items(config, yahoo_symbols=holdings)
     # news ledger: every confirmed story and the holdings/watchlist names it touches, scored 5 sessions later
     try:
-        for st, who in macro.run_once(items, sorted(set(holdings) | set(STOCKS) | set(ETFS)), config,
+        for st, who in macro.run_once(items, sorted(set(holdings) | set(TRADED_STOCKS) | set(ETFS)), config,
                                       now.astimezone(ZoneInfo("UTC"))).confirmed:
             macro_trust.log_story(conn, macro.story_key(st), now.astimezone(NY).date(), st.factor, who, sorted(st.publishers))
         macro_trust.fill_outcomes(conn, state.bars)

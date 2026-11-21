@@ -18,7 +18,7 @@ import pandas as pd
 from tradeagent import account, macro_trust, prices
 from tradeagent.config import Config
 from tradeagent.papertrade import simulate_with_goal_rules
-from tradeagent.setups.library import CORE_ETFS, ETFS, LIBRARY, STOCKS
+from tradeagent.setups.library import CORE_ETFS, ETFS, LIBRARY, TRADED_STOCKS
 from tradeagent.setups.simulate import simulate_swing
 
 
@@ -64,7 +64,7 @@ def rescore(config: Config, conn, now: Optional[datetime] = None,
             check: Optional[Callable[..., tuple[bool, str]]] = None) -> list[str]:
     now = now or datetime.now()
     today = now.date()
-    bars, _ = prices.daily_bars(sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS) | {"BIL", *macro_trust.STRESS_SYMBOLS}),
+    bars, _ = prices.daily_bars(sorted(set(TRADED_STOCKS) | set(ETFS) | set(CORE_ETFS) | {"BIL", *macro_trust.STRESS_SYMBOLS}),
                                 "2013-01-01", today.isoformat())
     cond = macro_trust.conditions(bars)
     scores = macro_trust.score(past_trades({k: v.loc["2014-01-01":] for k, v in bars.items()}, config), cond, today)
@@ -75,7 +75,7 @@ def rescore(config: Config, conn, now: Optional[datetime] = None,
         import json
         from tradeagent.config import PROJECT_ROOT
         stats = {d["setup_id"]: d for d in json.loads((PROJECT_ROOT / "data" / "setup_stats.json").read_text())}
-        earnings = account.earnings_dates(list(STOCKS), max_age_days=30)
+        earnings = account.earnings_dates(list(TRADED_STOCKS), max_age_days=30)
         check = check or account_check
         from tradeagent import db
         for s in need:

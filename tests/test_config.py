@@ -101,7 +101,8 @@ def test_profile_switch_is_one_way(project):
 
 
 def test_paper_watch_never_overlaps_traded_list(project):
-    from tradeagent.setups.library import STOCKS
+    from tradeagent.setups.library import ADDED_STOCKS, TRADED_STOCKS, get
     c = load_config(project)
-    assert len(c.paper_watch.stocks) == 37 and c.paper_watch.review_after_trades == 30
-    assert not set(c.paper_watch.stocks) & set(STOCKS)
+    assert not set(c.paper_watch.stocks) & set(TRADED_STOCKS)
+    assert len(TRADED_STOCKS) == 77 == len(set(TRADED_STOCKS)) and len(ADDED_STOCKS) == 37
+    assert len(get("S2").universe) == len(get("S4").universe) == 77 and len(get("S3").universe) == 20

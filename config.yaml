@@ -92,10 +92,7 @@ email:
 paper_watch:
   watch_start: "2026-11-19"
   review_after_trades: 30
-  stocks: [MU, AMAT, LRCX, KLAC, ADI, MRVL, NXPI, INTU, NOW, IBM, ACN,
-           GS, MS, BLK, AXP, CAT, DE, HON, GE, LMT, RTX,
-           LOW, SBUX, TGT, BKNG, AMGN, GILD, BMY, ISRG,
-           NEE, DUK, COP, SLB, LIN, T, VZ, CMCSA]
+  stocks: []                # the 37 watched stocks became traded on 2026-11-20 (S2, S4)
 
 # Idle cash (approved 2026-11-18): uninvested cash in either bucket is parked in a T-bill ETF and sold
 # first when a trade needs it. Amounts under min_park_usd stay as plain cash.

@@ -16,7 +16,7 @@ import pandas as pd
 from tradeagent import market, prices
 from tradeagent.config import PROJECT_ROOT, Config
 from tradeagent.papertrade import SimResult, simulate_with_goal_rules
-from tradeagent.setups.library import CORE_ETFS, ETFS, LIBRARY, STOCKS
+from tradeagent.setups.library import CORE_ETFS, ETFS, LIBRARY, TRADED_STOCKS
 
 
 def _stats(root: Path) -> dict[str, dict]:
@@ -61,13 +61,13 @@ def run(config: Config, months: int = 6, starting_cash: float = 300, monthly_dep
     today = date.today()
     start = (pd.Timestamp(today) - pd.DateOffset(months=months)).date()
     fetch_start = (pd.Timestamp(start) - pd.DateOffset(days=420)).date().isoformat()
-    symbols = sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS) | set(config.paper_watch.stocks)
+    symbols = sorted(set(TRADED_STOCKS) | set(ETFS) | set(CORE_ETFS) | set(config.paper_watch.stocks)
                      | ({config.cash.park_idle_in} if config.cash.park_idle_in else set()))
     bars, missing = prices.daily_bars(symbols, fetch_start, today.isoformat())
     stats = _stats(root)
 
     earnings = {}
-    for s in STOCKS:
+    for s in TRADED_STOCKS:
         if s in bars:
             got = market.past_earnings(s, limit=12)
             if got:
@@ -84,7 +84,7 @@ def run(config: Config, months: int = 6, starting_cash: float = 300, monthly_dep
     sim.daily.to_csv(out_dir / "daily.csv")
     pd.DataFrame([t.__dict__ for t in sim.trades]).to_csv(out_dir / "trades.csv", index=False)
     md = to_markdown(sim, watch, news, config, start, today, starting_cash, monthly_deposit, missing,
-                     sorted(set(STOCKS) - set(earnings)), bars["SPY"]["close"])
+                     sorted(set(TRADED_STOCKS) - set(earnings)), bars["SPY"]["close"])
     from tradeagent import paperwatch
     md += "\n" + paperwatch.to_markdown(paperwatch.compare(bars, config, start.isoformat()), start.isoformat(), config)
     path = root / "docs" / "REPLAY.md"

@@ -28,6 +28,14 @@ STOCKS = ["AAPL", "MSFT", "AMZN", "GOOGL", "META", "NVDA", "JPM", "V", "MA", "UN
           "ADBE", "CRM", "INTC", "AMD", "QCOM", "TXN", "AVGO", "NFLX", "DIS", "MCD", "NKE",
           "BAC", "WFC", "LLY", "TMO", "UNP"]
 
+# Added to S2 and S4 on 2026-11-20 (you approved; 36-start check passed, see REPLAY_FINDINGS "97 short-term symbols").
+# Chosen 2026-11-18 before any results.
+ADDED_STOCKS = ["MU", "AMAT", "LRCX", "KLAC", "ADI", "MRVL", "NXPI", "INTU", "NOW", "IBM", "ACN",
+                "GS", "MS", "BLK", "AXP", "CAT", "DE", "HON", "GE", "LMT", "RTX",
+                "LOW", "SBUX", "TGT", "BKNG", "AMGN", "GILD", "BMY", "ISRG",
+                "NEE", "DUK", "COP", "SLB", "LIN", "T", "VZ", "CMCSA"]
+TRADED_STOCKS = STOCKS + ADDED_STOCKS          # every stock a short-term setup can buy
+
 # SPY dropped 2026-11-18: near-duplicate of VTI.
 CORE_ETFS = ["VTI", "QQQ", "SCHD"]
 
@@ -109,7 +117,7 @@ LIBRARY: tuple[Setup, ...] = (
     ),
     Setup(
         id="S2", name="52-week-high breakout", bucket="short_term", kind="swing",
-        universe=tuple(STOCKS),
+        universe=tuple(TRADED_STOCKS),
         rule="Close at a 52-week high on volume 1.5× its 50-day average, above the 200-day average. "
              "Stop 2×ATR, target 4×ATR, exit after 20 days.",
         logic="Stocks breaking to a 1-year high on heavy buying have tended to keep rising for weeks (momentum); "
@@ -127,7 +135,7 @@ LIBRARY: tuple[Setup, ...] = (
     ),
     Setup(
         id="S4", name="Big gap-up continuation", bucket="short_term", kind="swing",
-        universe=tuple(STOCKS),
+        universe=tuple(TRADED_STOCKS),
         rule="Opens ≥4% above the prior close on 3× average volume and closes in the top half of its range "
              "(usually earnings). Stop at that day's low, target 2× the risk, exit after 20 days.",
         logic="After a strong earnings surprise, big investors have tended to keep buying for weeks "

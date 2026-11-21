@@ -13,7 +13,7 @@ import pandas as pd
 from tradeagent import market, prices
 from tradeagent.config import PROJECT_ROOT, Config
 from tradeagent.papertrade import Position, SimResult, simulate_with_goal_rules
-from tradeagent.setups.library import CORE_ETFS, ETFS, STOCKS, get
+from tradeagent.setups.library import CORE_ETFS, ETFS, TRADED_STOCKS, get
 
 EARNINGS_CACHE = PROJECT_ROOT / "data" / "earnings.json"
 
@@ -89,7 +89,7 @@ def load_bars(config: Config, start: str) -> dict[str, pd.DataFrame]:
     days_needed = max(420, int(config.macro.rate_sensitivity_lookback * 365 / 252) + 30)
     fetch_start = (pd.Timestamp(start) - pd.DateOffset(days=days_needed)).date().isoformat()
     from tradeagent.macro_trust import STRESS_SYMBOLS
-    symbols = sorted(set(STOCKS) | set(ETFS) | set(CORE_ETFS) | set(config.paper_watch.stocks) | set(STRESS_SYMBOLS)
+    symbols = sorted(set(TRADED_STOCKS) | set(ETFS) | set(CORE_ETFS) | set(config.paper_watch.stocks) | set(STRESS_SYMBOLS)
                      | ({config.cash.park_idle_in} if config.cash.park_idle_in else set()))
     bars, _ = prices.daily_bars(symbols, fetch_start, date.today().isoformat())
     return bars
@@ -107,7 +107,7 @@ def build(config: Config, as_of: Optional[date] = None, start: Optional[str] = N
     if bars.get("SPY") is None or bars["SPY"].loc[start:].empty:
         raise NotStarted(f"shadow run starts {start}; no closed session yet")
     stats = {d["setup_id"]: d for d in json.loads((PROJECT_ROOT / "data" / "setup_stats.json").read_text())}
-    earnings = earnings_dates(list(STOCKS))
+    earnings = earnings_dates(list(TRADED_STOCKS))
     start_cash = config.shadow.start_cash if start_cash is None else start_cash
     mm, notes = _macro_gate(bars, as_of)
     sim = simulate_with_goal_rules(bars, config, stats, start, as_of.isoformat(), start_cash,

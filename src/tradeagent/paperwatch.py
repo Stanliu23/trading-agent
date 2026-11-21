@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 from tradeagent.config import Config
-from tradeagent.setups.library import LIBRARY, STOCKS
+from tradeagent.setups.library import LIBRARY, TRADED_STOCKS
 from tradeagent.setups.simulate import simulate
 
 WATCH_SETUPS = ("S2", "S4")  # stock setups; ETFs were not added to the watch
@@ -40,7 +40,7 @@ def compare(bars: dict[str, pd.DataFrame], config: Config, since: str) -> list[G
     cost = config.backtest.round_trip_cost
     out = []
     for setup in (s for s in LIBRARY if s.id in WATCH_SETUPS):
-        for group, symbols in (("watched", config.paper_watch.stocks), ("traded", STOCKS)):
+        for group, symbols in (("watched", config.paper_watch.stocks), ("traded", TRADED_STOCKS)):
             df = _closed_trades(bars, symbols, setup, pd.Timestamp(since), cost)
             if df.empty:
                 out.append(GroupStats(setup.id, group, 0, None, None, None))

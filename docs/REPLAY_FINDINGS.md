@@ -460,3 +460,16 @@ Your choices:
 - **Verdict:** none of the stress conditions is trusted to change trades today. The two that hurt S2 trades on paper made no difference to the account once sized in: they halve only about 4–10 buys per 2 years, and those buys carry other trades' cash.
 - The weekly re-score repeats this every Saturday on rolling periods and switches a condition on by itself if it passes all four rules.
 - **News stories:** logging starts now. No factor is trusted yet; each needs at least 20 logged stories first.
+
+**Adopted 2026-11-20 (you approved):** S2 and S4 now scan 77 stocks (the 40 plus the 37), and S3 keeps its 20 ETFs. The paper watch list is now empty, because its stocks are traded.
+
+Setup statistics rebuilt on the 77 stocks (`docs/SETUP_STATS.md`):
+
+| | Trades | Positive | Average per trade | 1 in 20 worse than | Edge | Confidence | Tier | Best stars (Fit 5) |
+|---|---|---|---|---|---|---|---|---|
+| S2 before → after | 741 → 1,389 | 50% → 47% | +0.98% → +0.52% | −6.3% → −6.4% | 4 → 3 | 5 → 5 | 3 → 3 | 5 → 4 |
+| S4 before → after | 90 → 174 | 56% → 50% | +1.41% → +0.87% | −7.1% → −6.5% | 5 → 3 | 2 → 3 | 3 → 3 | 4 → 4 |
+
+- Per trade the setups look weaker, as the Nov 18 test showed; the account-level gain comes from having more candidates to pick from.
+- Both still pass the evidence bar (Edge ≥ 2), so nothing switches off.
+- The order between setups when both signal is unchanged (S4 ranks above S2). So the agent behaves as in the 36-start check, which used the old statistics; only the stars shown change.
