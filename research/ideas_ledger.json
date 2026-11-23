@@ -30,6 +30,27 @@
    "check": null,
    "backtest_result": null,
    "decisions": []
+  },
+  {
+   "id": "2026-11-23-3",
+   "title": "Scale in on confirmation (all short-term rules)",
+   "source": "Stanley's idea (2026-11-23): buy a small part first, add if the move continues; known as pyramiding / scaling in (e.g. the Turtle rules add units as a trade moves in its favour)",
+   "proposed": "2026-11-23",
+   "status": "approved",
+   "review": "Adding only on confirmation (price moves our way), never averaging down. The stop never moves (moving it to breakeven was rejected in the exit study), and the add is sized so the most a trade can lose stays exactly the normal 1R of a full position. Trade-off: smaller losses on false starts vs smaller, later-bought winners and more orders.",
+   "where": "Backtest first. If it passes and you approve: S2, S3 and S4 in the main paper account (not long-term L1, not the monthly experiments).",
+   "backtest_rule": "Menu fixed 2026-11-23 before any result: start with fraction f of the normal size, f in {1/3, 1/2, 2/3}; add once at the next open after a close at or above entry + k x R (R = entry - first stop), k in {0.5, 1.0, 1.5}, only while the trade is open, not on a day the trade exits at the open, and not if that open is at or below the stop; the add's size a = (1 - f) / (1 + k) of the normal size, so the most the trade can lose stays 1R; stop, target, time limit and exit signal unchanged; 0.1% round-trip cost on each part. Profit per trade is measured in R of a full-size position. Step 1: on S2+S3+S4 signals 2015-2023 (design), pick the variant with the highest average profit per trade. Step 2: on 2024-2025 (check) it must beat buying the full size at once by at least +0.05R per trade; otherwise rejected. Step 3: 36 quarterly starts Apr 2015 - Jan 2024, 24 months, $300 + $250/month, 40/60, today's rules otherwise: better in >= 60% of starts, median gain > 0, median worst drop no more than 1 point deeper. Step 4: 2026 reported, and must not trail today's rules by more than 1 point.",
+   "live_check": "Every S2/S3/S4 paper trade from the day it is switched on is followed both ways on the same signal: scaled in and all at once.",
+   "removal_rule": "After 30 closed trades: removed if scaled-minus-all-at-once profit per trade (in full-size R) has its 90% range entirely below 0. Early removal after 10 closed trades if the average is below -0.25R and its 90% range is entirely below 0.",
+   "check": null,
+   "backtest_result": null,
+   "decisions": [
+    {
+     "date": "2026-11-23",
+     "what": "approved for testing",
+     "by": "Stanley: 'It adds risks, but it also has rewards, we just have to find the balance'"
+    }
+   ]
   }
  ]
 }
