@@ -1,0 +1,35 @@
+{
+ "about": "Every idea from the weekly GitHub search, from proposal to kept or removed (docs/LEARNING.md, part 3). Test and removal rules are written here BEFORE any test is run and are not changed after seeing results.",
+ "ideas": [
+  {
+   "id": "2026-11-23-1",
+   "title": "Volatility-scaled share of the long-term bucket",
+   "source": "pysystemtrade (GPL-3.0, idea only); Moreira & Muir 2017 J. Finance; critique Cederburg et al. 2020 J. Financial Economics",
+   "proposed": "2026-11-23",
+   "status": "proposed",
+   "review": "Claims check out. Conflicts with an approved rule: long-term funds are sold only on a measured thesis break, never on price moves; adopting this needs that rule changed first. The proposal had no trading frequency; fixed below. Likely to cut drops and returns together, so it may fail the gain part of the bar.",
+   "where": "Backtest first (36-start account test). If it passes and you approve: the main paper account's long-term bucket, the only account with one.",
+   "backtest_rule": "Long-term share of what L1 holds = min(1, 15% / SPY 20-day realised volatility, annualised), read at each close. Trade only when the held share is 10 points or more away from it (next open). The rest of the bucket is idle cash (BIL in backtests, as config). 36 quarterly starts Apr 2015 - Jan 2024, 24 months, $300 + $250/month, 40/60: beats today's rules in >= 60% of starts, median gain > 0, median worst drop no more than 1 point deeper; then 2026 must not lose to today's rules by more than 1 point.",
+   "live_check": "Every session, the long-term bucket is compared with the same bucket unscaled (same deposits, no scaling).",
+   "removal_rule": "After 63 sessions or more: removed if the scaled bucket trails the unscaled one by more than the 5th percentile of same-length gaps in the 2015-2025 backtest. Early removal after 21 sessions if it trails by more than the 1st percentile.",
+   "check": null,
+   "backtest_result": null,
+   "decisions": []
+  },
+  {
+   "id": "2026-11-23-2",
+   "title": "Trailing stop for the 52-week-high breakout (S2)",
+   "source": "freqtrade custom_stoploss (GPL-3.0, idea only); chandelier exit (LeBeau, textbook); Kaminski & Lo 2014 J. Financial Markets",
+   "proposed": "2026-11-23",
+   "status": "proposed",
+   "review": "Claims match our exit study (winners peak +1.92R and close +1.53R, only 2% reach +3R; breakeven-after-1R was rejected). The proposal did not say which ATR; fixed below as the ATR(14) at the signal close, the same one our stops use. S2 is switched off in the main account now, but its paper record (every signal) measures the new exit either way.",
+   "where": "Backtest first (exit-study rule, then the 36-start account test). If it passes and you approve: S2 in the main paper account; the live check uses S2's paper record of every signal, so it does not wait for the account to take trades.",
+   "backtest_rule": "S2 keeps its entry, its 2xATR first stop and its 20-session limit; the 4xATR target is removed. Trail = max(first stop, highest close since entry - 3 x ATR(14) at the signal close), updated at each close and used from the next session (live: the 15-minute checks sell at market at or below it). Pass: on 2024-2025 at least +0.05R per trade better than the current S2 exits, then 36 starts (40/60, $300 + $250/month, 24 months) better in >= 60% of starts, median gain > 0, median worst drop no more than 1 point deeper; 2026 reported.",
+   "live_check": "Every S2 paper trade from the day it is switched on is followed both ways on the same signal: new trailing exit and old target exit.",
+   "removal_rule": "After 30 closed trades: removed if new-minus-old R per trade has its 90% range entirely below 0. Early removal after 10 closed trades if the average is below -0.25R and its 90% range is entirely below 0.",
+   "check": null,
+   "backtest_result": null,
+   "decisions": []
+  }
+ ]
+}

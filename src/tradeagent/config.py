@@ -347,6 +347,7 @@ class Config(Strict):
     shadow: Shadow
     paper_broker: PaperBroker = PaperBroker()
     experiments: tuple[Experiment, ...] = ()
+    trials: dict[str, bool] = {}       # approved ideas on trial (research/ideas_ledger.json); off = previous rule
     auto_update: bool = False          # pull new code from GitHub by itself (always-on Mac)
     local: LocalConfig = LocalConfig()
 

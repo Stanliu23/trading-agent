@@ -82,9 +82,10 @@ def weekly_lines(now: datetime, root: Path = PROJECT_ROOT, run: Run = subprocess
         return [Line("The weekly GitHub search found nothing worth changing this week.", src, "muted")]
     out = []
     for i, it in enumerate(items, 1):
-        out.append(Line(f"{i}. {it['title']}. {it['What']} Better than ours because: {it['Better than ours because']} "
-                        f"Would change: {it['Would change']}. Tested by: {it['How it would be tested']}. "
-                        f"Source: {it['Source']} ({it['License'] or 'license unknown'}). Verdict: {it['Verdict']}.", src))
+        e = {k: (v[:-1] if isinstance(v, str) and v.endswith(".") else v) for k, v in it.items()}   # no ".."
+        out.append(Line(f"{i}. {e['title']}. {e['What']}. Better than ours because: {e['Better than ours because']}. "
+                        f"Would change: {e['Would change']}. Tested by: {e['How it would be tested']}. "
+                        f"Source: {e['Source']} ({e['License'] or 'license unknown'}). Verdict: {e['Verdict']}.", src))
     out.append(Line(f"Nothing above is built. To go ahead, tell Claude Code on the MacBook: \"approve idea N from the "
                     f"week of {week}\". It is then built, put through the same pass bar, and reaches main only if it "
                     f"passes and you push it.", None, "muted"))

@@ -388,6 +388,7 @@ def weekly_lines(conn, bars: dict, config, now: datetime, book=None, intents: Op
         out = answers(conn, bars, config, today, now, book, intents, exps)
         if save:
             store(conn, out, now)
-        return [a.line() for a in out]
+        from tradeagent import trials                  # ideas ledger: status, trial checks, automatic removal
+        return [a.line() for a in out] + trials.weekly_lines(conn, bars, config, now, save=save)
     except Exception as exc:
         return [Line(f"Learning questions could not be scored this week ({type(exc).__name__}: {exc}).", SRC, "down")]

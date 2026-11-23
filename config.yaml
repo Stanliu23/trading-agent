@@ -190,6 +190,10 @@ experiments:
   - {id: MOM, enabled: true}     # stock momentum: top 10 of 77 by 12-month return skipping the last month
   - {id: LOWV, enabled: true}    # low volatility: the 10 of 77 with the calmest daily moves over the last year
 
+# Ideas on trial (research/ideas_ledger.json, docs/LEARNING.md part 3). An idea is listed here only after you approve
+# it and it passes its backtest. Off (or removed by its own removal rule) = the previous approved rule is used.
+trials: {}
+
 shadow:
   start: "2026-11-19"
   start_cash: 1000          # paper test (2026-11-19): $1,000 to start, no deposits

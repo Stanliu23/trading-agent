@@ -58,6 +58,30 @@ its range) replaces 0.1% in `backtest.round_trip_cost`, the setup statistics are
 - it is reported in the Saturday email with the before/after numbers, and re-checked every Saturday.
 Lower measured costs change nothing. It is not built yet: it will be built only after you approve this rule.
 
+## Part 3: ideas from GitHub, from proposal to kept or removed (added 2026-11-23)
+
+Every proposal from the weekly GitHub search enters `research/ideas_ledger.json` and is reported every Saturday in
+this same learning section. Each entry carries, written BEFORE any test: where it would run, its backtest pass rule,
+how it is watched live, and the rule that removes it.
+
+| Step | What happens | Who decides |
+|---|---|---|
+| proposed | Listed in the Saturday report with my review | you: "approve idea N from the week of D" |
+| approved | I build it here and run its backtest with the fixed rule | the rule |
+| backtest_failed / backtest_passed | Result recorded in the ledger | the rule |
+| trial | Switched on behind `trials:` in config.yaml (pushed only with your OK); the old rule keeps being followed on paper next to it | you switch it on |
+| removed | Its removal rule fired: the agent switches it off by itself (a database flag, no file edited on the always-on Mac); the previous approved rule is back from the next run; the Saturday report says why | the rule (automatic) |
+| kept | Trial long enough and the removal rule never fired | you, at a review |
+
+How a bad rule is found and taken out:
+- **Same data, both ways.** During a trial the old rule is followed on paper on the same signals or the same money,
+  so the comparison is new vs old on identical cases, not new vs a different market.
+- **Removal rule fixed in advance**, with a normal threshold and an early one for clear harm (see each ledger entry).
+- **Automatic switch-back.** When it fires, the agent returns to the previous rule by itself and keeps it that way;
+  turning the idea back on needs your approval.
+- **Manual switch-back any time:** set the idea to false under `trials:` and push, or tell me.
+- **Nothing on trial without a check.** A trial whose removal check is not built is flagged every Saturday.
+
 ## January review
 
 Go through every question with its answer, plus the Saturday reports since the start. Anything worth changing goes
