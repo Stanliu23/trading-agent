@@ -547,3 +547,13 @@ rule that long-term funds are sold only on a thesis break.
 +0.081R vs +0.059R, 2024-2025 +0.195R vs +0.177R (+0.017R, needed +0.05R),
 2026 +0.176R vs +0.195R. Too small to tell from luck: rejected, account test not run. The option
 stays in the code (`trail_atr`), switched off.
+
+## Big-dip D2: quick profit, one at a time, no goal-pause effect (2026-11-23): rejected (commit 1dc4cf7)
+
+Stanley's version of D1: sell the morning after the first close 3% above the buy price; at most one dip position; left
+out of the goal check. As a setup it is safer than D1: 344 trades, +0.14R per trade (held-out +0.28R),
+75% win, tier 2, average hold 5.7 days. In the account it still fails: better than today in 22% of
+36 starts, median -1.30 pts, worst drop 1.86 pts deeper; 2026 +0.50 pts. The goal-pause fix
+worked, but the single dip the account takes is the first of a crash cluster (the worst), and D2 ranks above S2 and
+takes its cash. Designed after D1's result on the same data, so less clean than a first test. Next, as Stanley chose
+before the result: a labelled paper experiment.

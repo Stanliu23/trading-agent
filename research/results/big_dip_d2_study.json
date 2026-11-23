@@ -1,0 +1,52 @@
+{
+ "step1": {
+  "setup_id": "D2",
+  "name": "Big-dip rebound, quick profit",
+  "bucket": "short_term",
+  "kind": "swing",
+  "symbols_tested": 77,
+  "n": 344,
+  "first_entry": "2015-04-23",
+  "loss_rate": 0.25,
+  "mean_ret": 0.022982782165022524,
+  "median_ret": 0.04210028030854851,
+  "tail_ret": -0.14566827201721616,
+  "worst_ret": -0.3292191655407213,
+  "best_ret": 0.20211480088506983,
+  "exp_r": 0.1443885818984323,
+  "stop_rate": 0.11337209302325581,
+  "avg_hold_days": 5.659883720930233,
+  "years_positive": 1.0,
+  "holdout_start": "2024-01-01",
+  "in_n": 274,
+  "in_metric": 0.11086322938136826,
+  "out_n": 70,
+  "out_metric": 0.27561639032236873,
+  "passes_evidence": true,
+  "evidence_note": "passes",
+  "tier": 2,
+  "edge": 4,
+  "confidence": 5,
+  "recommendable": true,
+  "exits": {
+   "profit": 286,
+   "stop": 39,
+   "time": 19
+  },
+  "avg_hold": 5.659883720930233
+ },
+ "step2": {
+  "better_share": 0.2222222222222222,
+  "median_gain_pts": -1.297002499852388,
+  "median_drop_pts": -1.859749302465863,
+  "passed": false,
+  "dip_trades_median": 6.0,
+  "dip_pnl_median": -17.16,
+  "dip_pnl_positive_share": 0.2777777777777778
+ },
+ "step3": {
+  "gain_2026_pts": 0.49520547543381466,
+  "passed": true
+ },
+ "result": "FAILED step 2"
+}

@@ -142,19 +142,24 @@
    "title": "Big-dip rebound D2: take profit early, one at a time, no goal-pause effect",
    "source": "Stanley (2026-11-23): 'I like the big dip rule ... just sell the stock when we are earning money'; his choices: take profit early, fix the crash problem too, and run it as a paper experiment if it fails",
    "proposed": "2026-11-23",
-   "status": "approved",
+   "status": "backtest_failed",
    "review": "A second version of D1 (idea 2026-11-23-4), designed after D1's result on the same data: its fixes target the two reasons D1 failed (early entries in crash clusters; losses switching on the goal pause). So the 2015-2025 test is less clean than a first test; Jan-Nov 2026 is the clean check. The 3% profit level was chosen by Stanley before any D2 result.",
    "where": "Backtest first. If it passes and you approve: a new setup D2 in the main paper account. If it fails: its own Alpaca paper account as a labelled experiment (Stanley's choice).",
    "backtest_rule": "Fixed 2026-11-23 before any result. Signal as D1: a stock's first close at or below 70% of its highest close of the last 60 sessions (77 traded stocks). Entry next open. Exits: stop 2.5 x ATR(14) at the signal close (intraday, as all stops); sell at the next open after the first close at or above entry x 1.03; time exit at the close of the 20th session. Account rules: at most 1 D2 position open or queued at a time; D2's profit and loss are left out of the goal check (it cannot switch the goal pause on or keep it on), but D2 obeys the pauses like every rule. Everything else as today (sizing by tier, earnings skip, per-setup switch). Step 1: the standard setup evidence bar (2015-2025, held-out from 2024: >= 30 trades, >= 5 years, positive held-out, Edge >= 2). Step 2: 36 quarterly starts Apr 2015 - Jan 2024, 24 months, $300 + $250/month, 40/60: today's rules + D2 vs today's rules: better in >= 60% of starts, median gain > 0, median worst drop no more than 1 point deeper. Step 3: Jan-Nov 2026 must not trail today's rules by more than 1 point.",
    "live_check": "Every D2 paper signal from the day it is switched on, followed with its own exits; compared with its backtest average R.",
    "removal_rule": "After 30 closed D2 paper trades: removed if its average R is more than 2 standard errors below its backtest average. Early removal after 10 if the average is below -0.5R. The per-setup switch also pauses it whenever its last 20 average below 0R.",
    "check": null,
-   "backtest_result": null,
+   "backtest_result": "Step 1 PASSED: 344 trades 2015-2025, +0.14R per trade, held-out +0.28R, 25% lose, tier 2, Edge 4, Confidence 5; exits: {'profit': 286, 'stop': 39, 'time': 19}; average hold 5.7 days. Step 2 FAILED: better than today in 22% of 36 starts, median -1.30 pts, worst drop -1.86 pts deeper; in the accounts D2 made a median 6 trades per 24 months, median $-17.16, profitable in 28% of runs. 2026: +0.50 pts. Why: the fixes worked (goal pause no longer lengthened), but one-at-a-time takes the first dip of a crash cluster (the worst), and as a tier-2 setup D2 ranks above S2 and takes its cash (example 2019-10: S2 35 -> 30 trades, $612 -> $523). Files: research/big_dip_d2_study.py, results/big_dip_d2_*.",
    "decisions": [
     {
      "date": "2026-11-23",
      "what": "approved for testing; if it fails, run as a paper experiment",
      "by": "Stanley (choices: take profit early, fix it too, paper experiment)"
+    },
+    {
+     "date": "2026-11-23",
+     "what": "rejected by its fixed rule (step 2); per Stanley's earlier choice it goes to a paper experiment",
+     "by": "the rule"
     }
    ]
   }

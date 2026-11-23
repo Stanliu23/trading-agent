@@ -59,6 +59,9 @@ class Setup:
     target_r: Optional[float] = None            # target as a multiple of the entry-to-stop risk
     breakeven_after_r: Optional[float] = None   # once a day's high reaches entry + this many R, the stop moves up to the entry price (from the next day)
     trail_atr: Optional[float] = None           # trailing stop: max(stop, highest close since entry - this x ATR(14) at the signal close), from the next day
+    profit_close_pct: Optional[float] = None    # sell at the next open after the first close at or above entry x (1 + this)
+    max_open: Optional[int] = None              # at most this many positions of this setup open or queued at once (account)
+    goal_exempt: bool = False                   # its profit/loss is left out of the goal check (it cannot cause a goal pause)
     notes: tuple[str, ...] = field(default_factory=tuple)
     logic: str = ""                             # why the setup should work, shown as 'Why buy' in emails
 

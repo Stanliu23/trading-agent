@@ -92,6 +92,11 @@ def simulate_swing(df: pd.DataFrame, setup: Setup, symbol: str, cost: float) -> 
                     exit_px, exit_idx, reason = c[j], j, "end"
             elif setup.max_hold_days and (j - e_idx + 1) >= setup.max_hold_days:
                 exit_px, exit_idx, reason = c[j], j, "time"
+            elif setup.profit_close_pct is not None and c[j] >= entry * (1 + setup.profit_close_pct):
+                if j + 1 < n:
+                    exit_px, exit_idx, reason = o[j + 1], j + 1, "profit"
+                else:
+                    exit_px, exit_idx, reason = c[j], j, "end"
             if reason:
                 break
             if setup.breakeven_after_r is not None and h[j] >= entry + setup.breakeven_after_r * risk:

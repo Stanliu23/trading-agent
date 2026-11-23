@@ -70,7 +70,7 @@ def one(job):
     dep = sum(a for _, a, _ in sim.deposits)
     dp = pd.Series({x: a for x, a, _ in sim.deposits[1:]}, dtype=float).reindex(d.index, fill_value=0)
     idx = (1 + ((d.value - dp) / d.value.shift(1) - 1).iloc[1:]).cumprod()
-    d1 = [t for t in sim.trades if t.setup_id == "D1"]
+    d1 = [t for t in sim.trades if t.setup_id in ("D1", "D2")]
     return {"variant": variant, "start": start, "gain": (d.value.iloc[-1] - dep) / dep * 100,
             "worst": float((idx / idx.cummax() - 1).min()) * 100, "d1_trades": len(d1), "d1_pnl": sum(t.pnl for t in d1)}
 

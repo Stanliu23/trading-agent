@@ -42,6 +42,7 @@ class Position:
     max_hold: Optional[int]
     sessions_held: int = 0
     pending_exit: bool = False
+    exit_reason: str = "signal"        # why a pending exit fills at the next open (signal | profit)
     trail: Optional[float] = None      # trailing-stop distance in dollars (setups with trail_atr)
     best: Optional[float] = None       # highest close since entry
 
@@ -151,6 +152,8 @@ def simulate_portfolio(
             if tr:
                 paper_by_setup[s.id] = pd.DataFrame({"exit": [t.exit_date for t in tr], "r": [t.r for t in tr]}).sort_values("exit")
     swing = [s for s in LIBRARY if s.kind == "swing" and usable(s.id)]
+    profit_pct = {s.id: s.profit_close_pct for s in LIBRARY if s.profit_close_pct is not None}
+    exempt_ids = {s.id for s in LIBRARY if s.goal_exempt}
     # Precompute signals, exit signals once per symbol.
     sig, exs = {}, {}
     for s in swing:
@@ -220,7 +223,7 @@ def simulate_portfolio(
 
         # 2. open: exits then entries
         for p in [p for p in positions if p.pending_exit]:
-            close_position(p, price(p.symbol, day, "open"), day, "signal")
+            close_position(p, price(p.symbol, day, "open"), day, p.exit_reason)
         for setup, sym, dollars, stop, target, bucket in queued:
             o = price(sym, day, "open")
             if o is None:
@@ -282,6 +285,8 @@ def simulate_portfolio(
                 close_position(p, c, day, "time")
             elif exs.get((p.setup_id, p.symbol)) is not None and bool(exs[(p.setup_id, p.symbol)].get(day, False)):
                 p.pending_exit = True
+            elif profit_pct.get(p.setup_id) is not None and c >= p.entry * (1 + profit_pct[p.setup_id]):
+                p.pending_exit, p.exit_reason = True, "profit"
 
         lt_val = sum(p.qty * (price(p.symbol, day) or p.entry) for p in positions if p.bucket == "long_term")
         st_val = sum(p.qty * (price(p.symbol, day) or p.entry) for p in positions if p.bucket == "short_term")
@@ -307,7 +312,10 @@ def simulate_portfolio(
         rows.append({"date": day, "value": value, "cash_lt": cash["long_term"], "cash_st": cash["short_term"],
                      "lt_value": lt_val, "st_value": st_val, "positions": len(positions),
                      "profile": active_profile_name(config, ever_reached_switch=ever_reached), "paused": paused,
-                     "goal_paused": goal_paused_on is not None, "perf_index": perf})
+                     "goal_paused": goal_paused_on is not None, "perf_index": perf,
+                     "exempt_pnl": sum(t.pnl for t in trades if t.setup_id in exempt_ids)
+                                   + sum(p.qty * ((price(p.symbol, day) or p.entry) - p.entry) for p in positions
+                                         if p.setup_id in exempt_ids)})
         prev_value = value  # final value of the day (after any T-bill interest)
 
         # Weekly goal check (last session of the week): short-term must beat holding the index funds.
@@ -324,7 +332,8 @@ def simulate_portfolio(
         judged = restarted_at is None or n - restarted_at >= config.goal.window_sessions
         if week_end and judged and goal_paused_on is None and config.goal.pause_short_term_if_behind and not bench.empty:
             hist = pd.DataFrame(rows).set_index("date")
-            check = risk.short_term_vs_benchmark(hist["st_value"] + hist["cash_st"], pd.Series(st_inflows, dtype=float),
+            check = risk.short_term_vs_benchmark(hist["st_value"] + hist["cash_st"] - hist["exempt_pnl"],
+                                                 pd.Series(st_inflows, dtype=float),
                                                  bench, config.goal.window_sessions)
             if check.ready and check.behind:
                 goal_paused_on = day
@@ -405,6 +414,10 @@ def simulate_portfolio(
         by_key = {(s.id, sym): (s, sym, st) for s, sym, st in cands}
         for idea in order:
             s, sym, st = by_key[(idea.setup_id, idea.symbol)]
+            if s.max_open is not None and (sum(p.setup_id == s.id for p in positions)
+                                           + sum(q[0].id == s.id for q in queued)) >= s.max_open:
+                blocked[f"{s.id} already has {s.max_open} open"] += 1
+                continue
             if sym in held_syms:
                 blocked["same symbol, lower-ranked setup"] += 1
                 continue
@@ -483,5 +496,6 @@ def simulate_with_goal_rules(bars, config: Config, stats, start, end, starting_c
         paper_cfg = config.model_copy(update={"goal": config.goal.model_copy(update={"pause_short_term_if_behind": False})})
         paper = simulate_portfolio(bars, paper_cfg, stats, start, end, starting_cash, monthly_deposit, earnings,
                                    idle_cash_returns=kwargs.get("idle_cash_returns"))  # as tested: no switch in the paper book
-        kwargs["restart_shadow"] = (paper.daily["st_value"] + paper.daily["cash_st"], paper.st_inflows)
+        kwargs["restart_shadow"] = (paper.daily["st_value"] + paper.daily["cash_st"] - paper.daily["exempt_pnl"],
+                                    paper.st_inflows)
     return simulate_portfolio(bars, config, stats, start, end, starting_cash, monthly_deposit, earnings, **kwargs)

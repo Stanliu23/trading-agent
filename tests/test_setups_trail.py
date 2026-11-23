@@ -20,3 +20,16 @@ def test_trailing_stop_follows_the_best_close_and_exits_on_the_way_down():
     assert t.exit > t.entry                                          # locked in part of the gain
     plain = [x for x in simulate_swing(df, get("S2"), "X", 0.0) if x.entry_date == idx[301]][0]
     assert plain.reason in ("target", "stop", "time")
+
+
+def test_profit_exit_sells_the_morning_after_a_close_3pct_up():
+    from tradeagent.setups.library import Setup
+    idx = pd.bdate_range("2025-01-01", periods=100)
+    close = np.r_[np.full(80, 100.0), [69, 70, 71, 72, 73], np.full(15, 73.0)]
+    df = pd.DataFrame({"open": close, "high": close + 0.2, "low": close - 0.2, "close": close, "volume": 1e6}, index=idx)
+    sig = pd.Series(False, idx)
+    sig.iloc[80] = True
+    s = Setup(id="DX", name="t", bucket="short_term", kind="swing", universe=("X",), rule="", signal=lambda d: sig,
+              stop_atr=2.5, max_hold_days=20, profit_close_pct=0.03)
+    t = simulate_swing(df, s, "X", 0.0)[0]
+    assert t.entry == 70 and t.reason == "profit" and t.exit_date == idx[85] and t.exit == 73   # 73 >= 72.10, sold next open
