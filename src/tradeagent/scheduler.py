@@ -159,6 +159,16 @@ def _paper_state(conn, client, shadow: account.AccountState, today, save_close: 
     return state
 
 
+def _main_since(conn, start: str) -> Optional[float]:
+    """The main paper account's change from the close before ``start`` to its latest close (no deposits in the test)."""
+    rows = conn.execute("SELECT day, value FROM paper_daily ORDER BY day").fetchall()
+    before = [r for r in rows if r[0] < start]
+    if not rows:
+        return None
+    base = before[-1][1] if before else rows[0][1]
+    return rows[-1][1] / base - 1 if base else None
+
+
 def paper_start_balance(conn, client) -> float:
     """Alpaca's balance when the test started: read once, then kept, so the plan is sized from real money."""
     v = db.get_meta(conn, "paper_start_balance")
@@ -241,6 +251,9 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
         elif config.paper_broker.enabled:
             detail = ("Alpaca unavailable: emails use the pretend account; " if paper_ready(config)
                       else "Alpaca keys not saved: emails use the pretend account; ")
+        if config.experiments and sess and kind in ("premarket", "intraday", "close"):
+            from tradeagent import experiments          # own paper accounts; never raises
+            detail += experiments.run_all(config, conn, state.bars, today, now, kind, dry_run, main_client=client)
         if kind == "intraday":
             quotes = {p.symbol: q for p in state.sim.open_positions if (q := market.quote(p.symbol))}
             sigmas = {}
@@ -273,6 +286,9 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
             if state is not shadow:
                 watch = _compare_lines(state, shadow) + watch
             watch += _macro_trust_lines(config, conn, now, dry_run)
+            if config.experiments:
+                from tradeagent import experiments
+                watch += experiments.weekly_lines(config, conn, state.bars, now, main_since=lambda d: _main_since(conn, d))
             em = reports.weekly(state, config, watch_lines=watch, system_lines=_system_lines(conn, now))
             detail += _deliver(em, config, conn, dry_run, out_dir)
         else:

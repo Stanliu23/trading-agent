@@ -31,6 +31,7 @@ def main(argv: list[str] | None = None) -> int:
     et.add_argument("--yes", action="store_true", help="confirm sending")
     sub.add_parser("macro-rescore", help="re-score the macro stress conditions now (normally every Saturday)")
     sub.add_parser("paper-check", help="connect to the Alpaca PAPER account and show it (places nothing)")
+    sub.add_parser("exp-check", help="connect to each experiment's own Alpaca PAPER account and show it (places nothing)")
     sub.add_parser("schwab-login", help="log in to Schwab (every 7 days): opens the login page, then paste the address it lands on")
     sn = sub.add_parser("snapshot", help="read the Schwab account now (read only) and save a snapshot")
     sn.add_argument("--days", type=int, default=90, help="also list deposits/withdrawals from the last N days")
@@ -112,6 +113,34 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Alpaca PAPER account {a.get('status')} (…{str(a.get('account_number', ''))[-3:]}), "
               f"paper cash ${float(a.get('cash', 0)):,.2f}, {len(pos)} position(s).")
         print("The agent sizes its plan from this balance (recorded at the first scheduled run) and spends Alpaca's real cash.")
+        return 0
+    if args.command == "exp-check":
+        from tradeagent import alpaca, experiments, strategies
+        from tradeagent.config import load_config
+        cfg = load_config()
+        main = alpaca.Client() if all(experiments.secrets.has_secret(n) for n in ("alpaca_paper_key", "alpaca_paper_secret")) else None
+        seen = {}
+        if main is not None:
+            try:
+                seen[str(main.account().get("account_number"))] = "the main paper test"
+            except alpaca.AlpacaError:
+                pass
+        for e in cfg.experiments:
+            k, s = experiments.key_names(e.id)
+            if not experiments.ready(e):
+                print(f"{e.id} ({strategies.NAMES[e.id]}): keys not saved. Run: uv run tradeagent set-secret {k}  "
+                      f"and  uv run tradeagent set-secret {s}")
+                continue
+            try:
+                a, pos = experiments.client_for(e.id).account(), experiments.client_for(e.id).positions()
+            except alpaca.AlpacaError as exc:
+                print(f"{e.id}: {exc}")
+                continue
+            no = str(a.get("account_number"))
+            clash = f"  PROBLEM: same account as {seen[no]}; the agent will not trade it." if no in seen else ""
+            seen.setdefault(no, f"the {e.id} experiment")
+            print(f"{e.id} ({strategies.NAMES[e.id]}): Alpaca PAPER account {a.get('status')} (…{no[-3:]}), "
+                  f"cash ${float(a.get('cash', 0)):,.2f}, {len(pos)} position(s).{clash}")
         return 0
     if args.command in ("schwab-login", "snapshot", "tag"):
         return _schwab_command(args)

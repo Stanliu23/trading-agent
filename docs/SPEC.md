@@ -103,6 +103,28 @@ Account value includes deposits. The switch to moderate happens once and is neve
 - **Length:** originally 2 weeks; on 2026-11-23 you extended it with no end date. It runs until you stop it. Nothing in the code ends it.
 - **To stop:** set `paper_broker.enabled: false` in `config.yaml` on the MacBook and push; the always-on Mac picks it up at its next daily update (after 06:00 ET). From then on the agent places no Alpaca orders and emails go back to the rules-only pretend account. Anything still held in Alpaca stays there; the agent does not sell it.
 
+## 2f. Strategy experiments in their own Alpaca paper accounts (approved 2026-11-23)
+
+Both strategies FAILED the pass bar in the strategy tournament (docs/REPLAY_FINDINGS.md). You chose to run them anyway
+as labelled experiments, so they can be watched live. No real money; Schwab untouched; the main paper test unchanged.
+
+- **Stock momentum (MOM):** at the last close of each month, rank the 77 traded stocks by their return from 12 months
+  (252 sessions) ago to 1 month (21 sessions) ago; hold the top 10, 10% each.
+- **Low volatility (LOWV):** at the last close of each month, rank the 77 by the standard deviation of daily returns over
+  the last 252 sessions; hold the 10 calmest, 10% each.
+- **Account:** each has its own Alpaca paper account, $1,000, no deposits, the whole account in the strategy (0/100).
+  No stops, targets or time limits; a stock leaves only at a monthly rebalance. Idle cash stays cash.
+- **Rebalance:** first run of each month on a trading day (normally 08:00 ET on the 1st session): sells first (stocks
+  that left the top 10, trims above 10%), then buys once the sells have filled, from Alpaca's actual cash (no margin).
+  The first month starts at the experiment's first run, using the previous month's last close.
+- **Your moves are final:** a stock you sell there is never traded by the agent in that account again (the next-ranked
+  stock takes its place); shares you buy are yours and left alone; an agent order you cancel is not sent again.
+- **Emails:** weekly only, a section in the Saturday report: value, change since start vs SPY and vs the main paper
+  account, holdings, your moves, any problem.
+- **Safety:** paper host only (same guard as 2e); the agent refuses to trade an experiment whose keys open the main paper
+  account or another experiment's account. Rules in `strategies.py`, orders in `experiments.py`.
+- **To stop one:** set its `enabled: false` under `experiments:` in config.yaml on the MacBook and push.
+
 ## 3. The run cycle
 
 1. **Scheduler (launchd on the Mac):** runs every 15 min from 9:30 to 16:00 ET on trading days, a premarket run at 08:00 ET, a close run at 16:30 ET, and a weekly run on Saturday at 09:00 ET.

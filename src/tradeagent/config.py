@@ -296,6 +296,13 @@ class PaperBroker(Strict):
     provider: Literal["alpaca"] = "alpaca"
 
 
+class Experiment(Strict):
+    """A strategy experiment in its own Alpaca paper account (approved 2026-11-23; failed the bar, run as a labelled
+    experiment only). The whole account runs the strategy; rules in tradeagent/strategies.py."""
+    id: Literal["MOM", "LOWV"]
+    enabled: bool = True
+
+
 class EmailLocal(Strict):
     to: Optional[str] = None
     from_: Optional[str] = Field(default=None, alias="from")
@@ -339,6 +346,7 @@ class Config(Strict):
     schwab: Schwab
     shadow: Shadow
     paper_broker: PaperBroker = PaperBroker()
+    experiments: tuple[Experiment, ...] = ()
     auto_update: bool = False          # pull new code from GitHub by itself (always-on Mac)
     local: LocalConfig = LocalConfig()
 

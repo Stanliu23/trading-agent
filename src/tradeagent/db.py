@@ -128,6 +128,29 @@ CREATE TABLE IF NOT EXISTS paper_intents (
     detail           TEXT
 );
 
+-- Strategy experiments (each in its own Alpaca paper account): why the agent placed each order.
+CREATE TABLE IF NOT EXISTS exp_intents (
+    client_order_id  TEXT PRIMARY KEY,
+    exp_id           TEXT NOT NULL,
+    cycle            TEXT NOT NULL,
+    placed_at        TEXT NOT NULL,
+    symbol           TEXT NOT NULL,
+    side             TEXT NOT NULL CHECK (side IN ('buy','sell')),
+    dollars          REAL,
+    qty              REAL,
+    status           TEXT NOT NULL CHECK (status IN ('sent','failed')),
+    detail           TEXT
+);
+
+-- Strategy experiments: each account at each close.
+CREATE TABLE IF NOT EXISTS exp_daily (
+    exp_id    TEXT NOT NULL,
+    day       TEXT NOT NULL,
+    equity    REAL NOT NULL,
+    cash      REAL NOT NULL,
+    PRIMARY KEY (exp_id, day)
+);
+
 -- Alpaca paper test: the account at each close (value history for the emails).
 CREATE TABLE IF NOT EXISTS paper_daily (
     day       TEXT PRIMARY KEY,

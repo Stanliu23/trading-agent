@@ -15,6 +15,10 @@ KNOWN_SECRETS: dict[str, str] = {
     "schwab_refresh_token": "Phase 2 (Schwab API only)",
     "alpaca_paper_key": "the Alpaca paper test",
     "alpaca_paper_secret": "the Alpaca paper test",
+    "alpaca_exp_mom_key": "the momentum experiment (its own Alpaca paper account)",
+    "alpaca_exp_mom_secret": "the momentum experiment (its own Alpaca paper account)",
+    "alpaca_exp_lowv_key": "the low-volatility experiment (its own Alpaca paper account)",
+    "alpaca_exp_lowv_secret": "the low-volatility experiment (its own Alpaca paper account)",
 }
 
 

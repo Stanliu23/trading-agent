@@ -55,6 +55,12 @@ claude auth login
    uv run tradeagent set-secret alpaca_paper_key        # paper test: the PAPER key from alpaca.markets
    uv run tradeagent set-secret alpaca_paper_secret
    uv run tradeagent paper-check                        # shows the paper account; places nothing
+   # strategy experiments (SPEC 2f): one more Alpaca paper account each, $1,000, with its own keys
+   uv run tradeagent set-secret alpaca_exp_mom_key
+   uv run tradeagent set-secret alpaca_exp_mom_secret
+   uv run tradeagent set-secret alpaca_exp_lowv_key
+   uv run tradeagent set-secret alpaca_exp_lowv_secret
+   uv run tradeagent exp-check                          # shows both accounts, flags keys saved in the wrong slot; places nothing
    uv run tradeagent set-secret schwab_app_key          # Schwab app "Trade bot": Client ID
    uv run tradeagent set-secret schwab_app_secret       # Schwab app "Trade bot": Client Secret
    uv run tradeagent schwab-login                       # log in, tick your account, paste the 127.0.0.1 address within ~30 s

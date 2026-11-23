@@ -48,15 +48,19 @@ def urllib_transport(method: str, url: str, headers: dict, body: Optional[bytes]
 
 
 class Client:
-    def __init__(self, transport: Transport = urllib_transport):
+    """One Alpaca paper account. The main test uses alpaca_paper_key/secret; each experiment has its own pair."""
+
+    def __init__(self, transport: Transport = urllib_transport, key_name: str = "alpaca_paper_key",
+                 secret_name: str = "alpaca_paper_secret"):
         self.transport = transport
+        self.key_name, self.secret_name = key_name, secret_name
 
     def _call(self, method: str, path: str, params: Optional[dict] = None, body: Optional[dict] = None):
         url = PAPER + path + ("?" + urllib.parse.urlencode(params) if params else "")
         guard(method, url)
-        key, secret = secrets.get_secret("alpaca_paper_key"), secrets.get_secret("alpaca_paper_secret")
+        key, secret = secrets.get_secret(self.key_name), secrets.get_secret(self.secret_name)
         if not key or not secret:
-            raise AlpacaError("alpaca_paper_key / alpaca_paper_secret are not in the Keychain (tradeagent set-secret ...)")
+            raise AlpacaError(f"{self.key_name} / {self.secret_name} are not in the Keychain (tradeagent set-secret ...)")
         status, raw = self.transport(method, url, {"APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret,
                                                    "Content-Type": "application/json", "Accept": "application/json"},
                                      json.dumps(body).encode() if body is not None else None)

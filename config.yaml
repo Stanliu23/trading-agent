@@ -183,6 +183,13 @@ paper_broker:
   enabled: true
   provider: alpaca
 
+# Strategy experiments, each in its OWN Alpaca paper account (approved 2026-11-23). Both FAILED the pass bar and run
+# for watching only. Whole account in the strategy, $1,000, monthly rebalance, weekly email section, your moves final.
+# Keys: tradeagent set-secret alpaca_exp_mom_key / alpaca_exp_mom_secret / alpaca_exp_lowv_key / alpaca_exp_lowv_secret
+experiments:
+  - {id: MOM, enabled: true}     # stock momentum: top 10 of 77 by 12-month return skipping the last month
+  - {id: LOWV, enabled: true}    # low volatility: the 10 of 77 with the calmest daily moves over the last year
+
 shadow:
   start: "2026-11-19"
   start_cash: 1000          # paper test (2026-11-19): $1,000 to start, no deposits
