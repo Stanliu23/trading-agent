@@ -474,3 +474,30 @@ Setup statistics rebuilt on the 77 stocks (`docs/SETUP_STATS.md`):
 - Both still pass the evidence bar (Edge ≥ 2), so nothing switches off.
 - The order between setups when both signal is unchanged (S4 ranks above S2). So the agent behaves as in the 36-start check, which used the old statistics; only the stars shown change.
 - **Statistics approved by you on 2026-11-20.**
+
+## Strategy tournament (2026-11-23): 7 published strategies, 6 long/short splits, market conditions
+
+Your request: test other strategies with the same bar, at different long/short ratios and in different conditions, then
+pick 1-2. Rules, bar and pick rule were written in `research/strategy_tournament.py` before any result; full tables in
+`research/results/summary.md`. 36 starts moved to Apr 2015 - Jan 2024 so no window touches 2026 (kept for the final check).
+The rebuilt 40/60 account matches the real simulator (median gain 12.6% vs 12.4%, worst drop -13.1% vs -13.2%).
+
+| Strategy | Step 1 profit (design / check) | Step 2 vs today (better in / median gain / median drop) | 2026 | Result |
+|---|---|---|---|---|
+| Stock momentum | +464% / +59% | 83% / +5.1 pts / -8.0 pts | +37.6% | fails: drops 8 pts deeper |
+| Short-term reversal | +738% / +69% | 83% / +11.3 / -7.8 | +1.6% | fails: drops deeper |
+| Low volatility | +130% / +19% | 58% / +1.8 / -1.3 | +22.0% | fails narrowly (58% < 60%, drop -1.3 < -1) |
+| Sector rotation | +184% / +20% | 61% / +2.2 / -3.9 | -6.0% | fails: drop, and lost money in 2026 |
+| S3 with market filter | +34% / +69% | 47% / 0.0 / 0.0 | +7.0% | fails: no difference |
+| ETF trend timing | +62% / +27% | 42% / -0.6 / +0.3 | +2.4% | fails |
+| Donchian breakout | +35% / +9% | 39% / -2.0 / +1.3 | +5.5% | fails |
+
+**Pick rule result: none passed.** What it shows:
+- Today's short-term rules hold a lot of cash (switch and goal pause), so they give up return but cushion drops. Every
+  fully invested strategy beats them on return and then fails on the drop rule.
+- Index funds only (100/0) had a higher median gain than today's 40/60 (+17.8% vs +12.6%) with a deeper drop (-19.6% vs -13.1%).
+- Stock momentum and reversal look strongest, but they were tested on today's large caps (survivorship bias: these are
+  stocks we already know did well). Sector rotation, the same momentum idea on ETFs with no such bias, lost 6% in 2026.
+  Reversal's 2026 result (+1.6%) is far below its history, a sign the history is inflated.
+- In stress (VIX top 20%) and the 2020 crash, today's rules and the trend/breakout ETF rules lost least; momentum,
+  reversal and the index funds fell about as much as SPY.
