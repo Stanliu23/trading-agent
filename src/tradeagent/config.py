@@ -301,6 +301,7 @@ class Experiment(Strict):
     experiment only). The whole account runs the strategy; rules in tradeagent/strategies.py."""
     id: Literal["MOM", "LOWV"]
     enabled: bool = True
+    dip_share: float = Field(0.0, ge=0.0, lt=1.0)   # slice of this account run by the big-dip D2 experiment (dip.py)
 
 
 class EmailLocal(Strict):

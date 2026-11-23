@@ -20,11 +20,8 @@ OUT = B.OUT
 
 
 def d2_setup():
-    return dataclasses.replace(B.d1_setup(), id="D2", name="Big-dip rebound, quick profit",
-                               rule="A stock's first close 30% or more below its highest close of the last 60 sessions. "
-                                    "Sell the morning after the first close 3% above the buy price; stop 2.5xATR; out "
-                                    "after 20 sessions. One at a time.",
-                               profit_close_pct=0.03, max_open=1, goal_exempt=True)
+    from tradeagent.setups.library import DIP_D2           # the live experiment uses this exact setup
+    return DIP_D2
 
 
 def _init(stats):

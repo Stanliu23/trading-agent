@@ -142,9 +142,9 @@
    "title": "Big-dip rebound D2: take profit early, one at a time, no goal-pause effect",
    "source": "Stanley (2026-11-23): 'I like the big dip rule ... just sell the stock when we are earning money'; his choices: take profit early, fix the crash problem too, and run it as a paper experiment if it fails",
    "proposed": "2026-11-23",
-   "status": "backtest_failed",
+   "status": "experiment",
    "review": "A second version of D1 (idea 2026-11-23-4), designed after D1's result on the same data: its fixes target the two reasons D1 failed (early entries in crash clusters; losses switching on the goal pause). So the 2015-2025 test is less clean than a first test; Jan-Nov 2026 is the clean check. The 3% profit level was chosen by Stanley before any D2 result.",
-   "where": "Backtest first. If it passes and you approve: a new setup D2 in the main paper account. If it fails: its own Alpaca paper account as a labelled experiment (Stanley's choice).",
+   "where": "Failed its account test. Runs as a labelled paper experiment in a 25% slice of the low-volatility experiment account (Stanley's choice, 2026-11-23): one dip at a time, the slice's full 25% per dip; low volatility keeps 75%. Orders tagged tx-dip-, results kept apart (dip.py). No goal pause there (that is a main-account rule).",
    "backtest_rule": "Fixed 2026-11-23 before any result. Signal as D1: a stock's first close at or below 70% of its highest close of the last 60 sessions (77 traded stocks). Entry next open. Exits: stop 2.5 x ATR(14) at the signal close (intraday, as all stops); sell at the next open after the first close at or above entry x 1.03; time exit at the close of the 20th session. Account rules: at most 1 D2 position open or queued at a time; D2's profit and loss are left out of the goal check (it cannot switch the goal pause on or keep it on), but D2 obeys the pauses like every rule. Everything else as today (sizing by tier, earnings skip, per-setup switch). Step 1: the standard setup evidence bar (2015-2025, held-out from 2024: >= 30 trades, >= 5 years, positive held-out, Edge >= 2). Step 2: 36 quarterly starts Apr 2015 - Jan 2024, 24 months, $300 + $250/month, 40/60: today's rules + D2 vs today's rules: better in >= 60% of starts, median gain > 0, median worst drop no more than 1 point deeper. Step 3: Jan-Nov 2026 must not trail today's rules by more than 1 point.",
    "live_check": "Every D2 paper signal from the day it is switched on, followed with its own exits; compared with its backtest average R.",
    "removal_rule": "After 30 closed D2 paper trades: removed if its average R is more than 2 standard errors below its backtest average. Early removal after 10 if the average is below -0.5R. The per-setup switch also pauses it whenever its last 20 average below 0R.",
@@ -160,6 +160,11 @@
      "date": "2026-11-23",
      "what": "rejected by its fixed rule (step 2); per Stanley's earlier choice it goes to a paper experiment",
      "by": "the rule"
+    },
+    {
+     "date": "2026-11-23",
+     "what": "runs as a paper experiment in a 25% slice of the low-volatility account",
+     "by": "Stanley: 'can you add the rule in one of the existing accounts?' then chose the low-volatility 25% slice"
     }
    ]
   }

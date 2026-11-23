@@ -49,7 +49,7 @@ def assumed(purpose: str, side: str, bar: pd.Series, pre_open: bool, stop=None, 
         return c, "close", "Q1"
     if purpose == "rebalance" and side == "buy":
         return o, "open (bought after the sells filled)", "Q5"
-    if purpose in ("entry", "signal", "rebalance"):
+    if purpose in ("entry", "signal", "rebalance", "profit"):
         return (o, "open", "Q1") if pre_open else (None, "sent after the open: not counted", "")
     return None, "unknown purpose", ""
 

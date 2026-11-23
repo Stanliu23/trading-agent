@@ -166,3 +166,22 @@ def get(setup_id: str) -> Setup:
         if s.id == setup_id:
             return s
     raise KeyError(setup_id)
+
+
+# --- experiments only (never in LIBRARY, so the main account never uses them) -------------------------------------------
+
+def _big_dip_signal(df):
+    c = df["close"]
+    level = 0.70 * c.rolling(60, min_periods=60).max()
+    return (c <= level) & (c.shift(1) > level.shift(1))
+
+
+# Big-dip D2 (idea 2026-11-23-6): failed the account test; runs as a labelled experiment in a 25% slice of the
+# low-volatility paper account (Stanley's choice, 2026-11-23). Rules exactly as tested.
+DIP_D2 = Setup(
+    id="D2", name="Big-dip rebound, quick profit", bucket="short_term", kind="swing", universe=tuple(TRADED_STOCKS),
+    rule="A stock's first close 30% or more below its highest close of the last 60 sessions. Sell the morning after the "
+         "first close 3% above the buy price; stop 2.5xATR; out after 20 sessions. One at a time.",
+    logic="Large caps that fall 30% in a few weeks have often bounced within days.",
+    signal=_big_dip_signal, stop_atr=2.5, max_hold_days=20, profit_close_pct=0.03, max_open=1, goal_exempt=True,
+)

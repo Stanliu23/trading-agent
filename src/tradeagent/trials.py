@@ -29,6 +29,7 @@ STATUS_TEXT = {
     "kept": "kept after its trial",
     "removed": "removed",
     "rejected": "rejected",
+    "experiment": "failed its backtest; running as a labelled paper experiment",
 }
 
 

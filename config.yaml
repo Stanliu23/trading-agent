@@ -188,7 +188,7 @@ paper_broker:
 # Keys: tradeagent set-secret alpaca_exp_mom_key / alpaca_exp_mom_secret / alpaca_exp_lowv_key / alpaca_exp_lowv_secret
 experiments:
   - {id: MOM, enabled: true}     # stock momentum: top 10 of 77 by 12-month return skipping the last month
-  - {id: LOWV, enabled: true}    # low volatility: the 10 of 77 with the calmest daily moves over the last year
+  - {id: LOWV, enabled: true, dip_share: 0.25}   # low volatility (75%: 10 calmest of 77 at 7.5% each) + big-dip D2 (25% slice, one dip at a time; failed its test, labelled experiment, 2026-11-23)
 
 # Ideas on trial (research/ideas_ledger.json, docs/LEARNING.md part 3). An idea is listed here only after you approve
 # it and it passes its backtest. Off (or removed by its own removal rule) = the previous approved rule is used.

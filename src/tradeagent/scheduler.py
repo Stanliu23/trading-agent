@@ -262,7 +262,8 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
                       else "Alpaca keys not saved: emails use the pretend account; ")
         if config.experiments and sess and kind in ("premarket", "intraday", "close"):
             from tradeagent import experiments          # own paper accounts; never raises
-            detail += experiments.run_all(config, conn, state.bars, today, now, kind, dry_run, main_client=client)
+            detail += experiments.run_all(config, conn, state.bars, today, now, kind, dry_run, main_client=client,
+                                          earnings=getattr(state, "earnings", {}))
         if kind == "intraday":
             quotes = {p.symbol: q for p in state.sim.open_positions if (q := market.quote(p.symbol))}
             sigmas = {}

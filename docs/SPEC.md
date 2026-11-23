@@ -124,6 +124,7 @@ as labelled experiments, so they can be watched live. No real money; Schwab unto
 - **Safety:** paper host only (same guard as 2e); the agent refuses to trade an experiment whose keys open the main paper
   account or another experiment's account. Rules in `strategies.py`, orders in `experiments.py`.
 - **To stop one:** set its `enabled: false` under `experiments:` in config.yaml on the MacBook and push.
+- **Big-dip D2 slice in the low-volatility account (2026-11-23):** D2 failed its account test; at Stanley's choice it runs in 25% of the low-volatility account (`dip_share: 0.25`), one dip at a time, rules exactly as tested (`library.DIP_D2`, `dip.py`): buy the morning after a stock's first close 30%+ below its 60-day high (deepest first, earnings skip), stop 2.5xATR checked every 15 minutes, sell the morning after a close 3%+ above the buy price, out after 20 sessions, paused by its per-setup switch. Low volatility then holds its 10 stocks at 7.5% each and leaves the slice's cash free. Orders tagged `tx-dip-`; the Saturday report shows the slice separately. The account's total (and learning question Q6) now mixes both strategies.
 - **Sector cap on momentum (trial, approved 2026-11-23):** at most 3 of the 10 picks from one GICS sector (`strategies.SECTOR`). It runs while `trials: "2026-11-23-5"` is on and its removal rule has not fired (docs/LEARNING.md part 3); otherwise the uncapped top 10 is used.
 
 ## 2g. Learning from the paper accounts (designed 2026-11-23)

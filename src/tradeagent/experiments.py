@@ -68,11 +68,12 @@ class Book:
     pending: set[str]                            # agent order ids not finished yet
     known: set[str]                              # agent order ids Alpaca has
     notes: list[str] = field(default_factory=list)
+    other_qty: dict[str, float] = field(default_factory=dict)   # another agent strategy in the same account (tx-...)
 
 
 def book(orders: list[dict], positions: list[dict], exp_id: str) -> Book:
     pre = prefix(exp_id)
-    agent, blocked = defaultdict(float), {}
+    agent, other, blocked = defaultdict(float), defaultdict(float), {}
     cancelled, pending, known = set(), set(), set()
     for o in orders:
         c, sym, side = o.get("client_order_id") or "", o["symbol"], o["side"]
@@ -85,16 +86,21 @@ def book(orders: list[dict], positions: list[dict], exp_id: str) -> Book:
                 cancelled.add(c)                 # the agent never cancels, so this was you
             if sym not in blocked:
                 agent[sym] += q if side == "buy" else -q
+        elif c.startswith("tx-"):                   # another agent strategy sharing this account: not yours
+            other[sym] += q if side == "buy" else -q
         elif side == "sell" and q > 0:
             blocked.setdefault(sym, (o.get("filled_at") or o.get("submitted_at") or "")[:10])
             agent[sym] = 0.0                     # whatever is left of it is yours now
     pos = {p["symbol"]: float(p["qty"]) for p in positions}
     agent_qty = {s: min(q, pos.get(s, 0.0)) for s, q in agent.items() if s not in blocked and min(q, pos.get(s, 0.0)) > 1e-9}
-    yours = {s: q - agent_qty.get(s, 0.0) for s, q in pos.items() if q - agent_qty.get(s, 0.0) > 1e-9}
+    other_qty = {s: min(q, pos.get(s, 0.0) - agent_qty.get(s, 0.0)) for s, q in other.items()
+                 if min(q, pos.get(s, 0.0) - agent_qty.get(s, 0.0)) > 1e-9}
+    yours = {s: q - agent_qty.get(s, 0.0) - other_qty.get(s, 0.0) for s, q in pos.items()
+             if q - agent_qty.get(s, 0.0) - other_qty.get(s, 0.0) > 1e-9}
     notes = [f"You sold {s} on {d}: the agent will not trade it in this account again." for s, d in blocked.items()]
     notes += [f"You hold {q:.4f} {s} yourself; the agent leaves it alone." for s, q in yours.items()]
     notes += [f"You cancelled the agent's order {c}; it will not be sent again." for c in sorted(cancelled)]
-    return Book(agent_qty, yours, blocked, cancelled, pending, known, notes)
+    return Book(agent_qty, yours, blocked, cancelled, pending, known, notes, other_qty)
 
 
 # --- one run --------------------------------------------------------------------------------------------------------
@@ -133,7 +139,8 @@ def start_info(conn, exp_id: str, client, today: Optional[date] = None) -> tuple
 
 
 def step(exp_id: str, client, c: pd.DataFrame, today: date, conn, now: datetime,
-         sector_cap: Optional[int] = None) -> list[str]:
+         sector_cap: Optional[int] = None, share: float = 1.0) -> list[str]:
+    """``share``: this strategy's part of the account (the rest is another strategy's slice, e.g. the dip slice)."""
     """Advance this month's rebalance as far as it can go now. Returns what it did, in plain English."""
     cycle = f"{today:%Y%m}"
     done_key, plan_key = f"exp:{exp_id}:{cycle}:done", f"exp:{exp_id}:{cycle}:plan"
@@ -150,8 +157,8 @@ def step(exp_id: str, client, c: pd.DataFrame, today: date, conn, now: datetime,
     if plan is None:
         sig = strategies.signal_day(c.index, today)
         tg = strategies.targets(exp_id, c, sig, set(b.blocked), sector_cap=sector_cap)
-        value = cash + sum(q * px[s] for s, q in b.agent_qty.items())
-        each = value / strategies.TOP_N
+        value = cash + sum(q * px[s] for s, q in b.agent_qty.items()) + sum(q * px[s] for s, q in b.other_qty.items())
+        each = share * value / strategies.TOP_N
         sells = []
         for s, q in sorted(b.agent_qty.items()):
             have = q * px[s]
@@ -199,11 +206,13 @@ def step(exp_id: str, client, c: pd.DataFrame, today: date, conn, now: datetime,
     if any(unfinished(cid(exp_id, cycle, "sell", s)) for s, _ in plan["sells"] if s not in b.blocked):
         return out                                # wait for the sells to finish, then buy from real cash
     if plan["buys"] is None:
-        value = cash + sum(q * px[s] for s, q in b.agent_qty.items())
-        each = value / strategies.TOP_N
+        other_val = sum(q * px[s] for s, q in b.other_qty.items())
+        value = cash + sum(q * px[s] for s, q in b.agent_qty.items()) + other_val
+        each = share * value / strategies.TOP_N
         need = {s: each - b.agent_qty.get(s, 0.0) * px[s] for s in plan["targets"] if s not in b.blocked}
         need = {s: x for s, x in need.items() if x >= MIN_ORDER}
-        room = max(cash - MIN_ORDER, 0.0)
+        reserve = max(0.0, (1 - share) * value - other_val)         # the other slice's cash stays free
+        room = max(cash - reserve - MIN_ORDER, 0.0)
         scale = min(1.0, room / sum(need.values())) if need else 1.0
         plan["buys"] = [[s, round(x * scale, 2)] for s, x in need.items() if x * scale >= MIN_ORDER]
         _set(conn, plan_key, json.dumps(plan))
@@ -237,7 +246,7 @@ def _distinct(clients: dict[str, alpaca.Client], main: Optional[alpaca.Client]) 
 
 def run_all(config, conn, bars, today: date, now: datetime, kind: str, dry_run: bool,
             main_client: Optional[alpaca.Client] = None,
-            make_client: Callable[[str], alpaca.Client] = client_for) -> str:
+            make_client: Callable[[str], alpaca.Client] = client_for, earnings: Optional[dict] = None) -> str:
     """Called by the scheduler on trading days. Never raises; returns a short status for the run log."""
     exps = [e for e in config.experiments if ready(e)]
     if not exps:
@@ -261,16 +270,28 @@ def run_all(config, conn, bars, today: date, now: datetime, kind: str, dry_run: 
                 from tradeagent import trials             # the sector cap runs only while its trial is on
                 cap = (strategies.SECTOR_CAP if e.id == "MOM" and trials.is_active(config, conn, strategies.SECTOR_CAP_IDEA)
                        else None)
-                did = step(e.id, clients[e.id], c, today, conn, now, sector_cap=cap)
+                did = step(e.id, clients[e.id], c, today, conn, now, sector_cap=cap, share=1 - e.dip_share)
                 if did:
                     _set(conn, f"exp:{e.id}:last_note", f"{today}: " + " ".join(did))
                     parts.append(f"{e.id}: {len(did)} step(s)")
+            if e.dip_share > 0 and not dry_run:              # the big-dip D2 slice (labelled experiment)
+                from tradeagent import dip
+                start, _ = start_info(conn, e.id, clients[e.id], today)
+                did = dip.step(conn, clients[e.id], bars, today, now, kind, e.dip_share, earnings or {},
+                               config.backtest.round_trip_cost, start)
+                if did:
+                    _set(conn, f"exp:{e.id}:dip_note", f"{today}: " + " ".join(did))
+                    parts.append(f"{e.id} dip: {len(did)}")
             if kind == "close" and not dry_run:                 # a dry run records no start and no close
                 start_info(conn, e.id, clients[e.id], today)
                 save_close(conn, e.id, clients[e.id], today)
                 from tradeagent import learning              # fill tracker: measures only
                 start, _ = start_info(conn, e.id, clients[e.id], today)
-                learning.record_fills(conn, e.id, clients[e.id].orders(f"{start}T00:00:00Z"), bars, prefix(e.id))
+                orders = clients[e.id].orders(f"{start}T00:00:00Z")
+                learning.record_fills(conn, e.id, orders, bars, prefix(e.id))
+                if e.dip_share > 0:
+                    from tradeagent import dip
+                    learning.record_fills(conn, e.id, orders, bars, dip.PREFIX, dip.fill_intents(conn))
         except Exception as exc:
             _set(conn, f"exp:{e.id}:problem", f"{today}: {type(exc).__name__}: {exc}"[:300])
             parts.append(f"{e.id} error ({type(exc).__name__})")
@@ -314,12 +335,16 @@ def weekly_lines(config, conn, bars, now: datetime, make_client: Callable[[str],
         out.append(Line(text, src, "up" if since >= 0 else "down"))
         try:
             client = make_client(e.id)
-            b = book(client.orders(f"{start}T00:00:00Z"), client.positions(), e.id)
+            orders = client.orders(f"{start}T00:00:00Z")
+            b = book(orders, client.positions(), e.id)
             held = ", ".join(sorted(b.agent_qty)) or "nothing yet"
             last = _meta(conn, f"exp:{e.id}:last_rebalance")
             out.append(Line(f"{name} holds {len(b.agent_qty)}: {held}" + (f"; last rebalance {last}." if last else "."),
                             src))
             out += [Line(f"{name}: {n}", src) for n in b.notes]
+            if e.dip_share > 0:
+                from tradeagent import dip
+                out.append(Line(dip.weekly_line(orders, bars, config.backtest.round_trip_cost), f"{src} (tx-dip- orders)"))
         except Exception as exc:
             out.append(Line(f"{name}: could not read the account ({type(exc).__name__}).", src, "down"))
     out.append(Line("Both experiments FAILED the pass bar and were tested on today's large companies (results look "
