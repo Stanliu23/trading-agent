@@ -78,8 +78,9 @@ def _deliver(em: emailer.Email, config: Config, conn, dry_run: bool, out_dir: Pa
 
 def _system_lines(conn, now: datetime) -> list[Line]:
     day = now.astimezone(NY).date().isoformat()
-    n_ok = conn.execute("SELECT COUNT(*) FROM runs WHERE substr(started_at,1,10)=? AND status IN ('ok','quiet')", (day,)).fetchone()[0]
-    n_err = conn.execute("SELECT COUNT(*) FROM runs WHERE substr(started_at,1,10)=? AND status='error'", (day,)).fetchone()[0]
+    sched = "substr(started_at,1,10)=? AND kind != 'manual'"                  # scheduled runs only, not dry runs
+    n_ok = conn.execute(f"SELECT COUNT(*) FROM runs WHERE {sched} AND status IN ('ok','quiet')", (day,)).fetchone()[0]
+    n_err = conn.execute(f"SELECT COUNT(*) FROM runs WHERE {sched} AND status='error'", (day,)).fetchone()[0]
     ai = analyst.runs_today(conn, day)
     out = [Line(f"Runs today: {n_ok} OK, {n_err} errors · AI write-ups today: {ai}", "run log")]
     upd = db.get_meta(conn, "last_update")
@@ -212,8 +213,11 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
     now = now or datetime.now(NY)
     conn = db.connect(db.init_db())
     started = now.isoformat(timespec="seconds")
+    # a dry run is logged as "manual": logged under its own kind it would count as today's real run, and the
+    # scheduled one (orders, email) would then be skipped
+    real = kind in ("intraday", "premarket", "close", "weekly") and not dry_run
     cur = conn.execute("INSERT INTO runs(kind, started_at, status) VALUES (?, ?, 'running')",
-                       (kind if kind in ("intraday", "premarket", "close", "weekly") else "manual", started))
+                       (kind if real else "manual", started))
     run_id = cur.lastrowid
     conn.commit()
     out_dir = PROJECT_ROOT / "data" / "run_preview"
@@ -245,7 +249,7 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
                         late = now.astimezone(NY) >= sess.close - pd.Timedelta(minutes=20).to_pytimedelta()
                         placed += paperbroker.place_watch(client, b, quotes_p, today, now, _intents(conn), record, late)
                         executed = [p for p in placed if p.side == "sell" and p.purpose in ("stop", "target", "time")]
-                state = _paper_state(conn, client, shadow, today, save_close=(kind == "close"))
+                state = _paper_state(conn, client, shadow, today, save_close=(kind == "close" and not dry_run))
             except alpaca.AlpacaError as exc:
                 detail = f"Alpaca unavailable, emails use the pretend account ({exc}); "
         elif config.paper_broker.enabled:
@@ -301,7 +305,8 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
         with open(PROJECT_ROOT / "logs" / "errors.log", "a") as f:
             f.write(f"{started} {kind}\n{traceback.format_exc()}\n")
     conn.execute("UPDATE runs SET finished_at=?, status=?, detail=? WHERE id=?",
-                 (datetime.now(NY).isoformat(timespec="seconds"), status, detail[:500], run_id))
+                 (datetime.now(NY).isoformat(timespec="seconds"), status,
+                  ((f"dry run of {kind}: " if dry_run else "") + detail)[:500], run_id))
     conn.commit()
     conn.close()
     return f"{kind}: {status} ({detail})"

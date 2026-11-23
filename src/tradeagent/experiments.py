@@ -260,7 +260,7 @@ def run_all(config, conn, bars, today: date, now: datetime, kind: str, dry_run: 
                 if did:
                     _set(conn, f"exp:{e.id}:last_note", f"{today}: " + " ".join(did))
                     parts.append(f"{e.id}: {len(did)} step(s)")
-            if kind == "close":
+            if kind == "close" and not dry_run:                 # a dry run records no start and no close
                 start_info(conn, e.id, clients[e.id], today)
                 save_close(conn, e.id, clients[e.id], today)
         except Exception as exc:

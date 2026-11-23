@@ -243,3 +243,17 @@ def test_weekly_section_reports_each_experiment(conn, c, monkeypatch):
     text = " ".join(l.text for l in lines)
     assert "Stock momentum experiment" in text and "since 2026-11-24" in text and "main paper account +1.0%" in text
     assert "holds 10" in text and "FAILED the pass bar" in text
+
+
+def test_dry_run_close_records_no_start_and_no_close(conn, c, monkeypatch):
+    monkeypatch.setattr(ex, "ready", lambda e: True)
+    monkeypatch.setattr(ex, "TRADED_STOCKS", SYMS)
+    clients = {"MOM": FakeAlpaca(number="A"), "LOWV": FakeAlpaca(number="B")}
+    bars = {s: pd.DataFrame({"close": _flat(c)[s]}) for s in SYMS} | {"SPY": pd.DataFrame({"close": _flat(c)["S00"]})}
+    ex.run_all(_cfg(), conn, bars, date(2026, 11, 24), datetime(2026, 11, 24, 16, 40), "close", True,
+               make_client=clients.__getitem__)
+    assert conn.execute("SELECT COUNT(*) FROM exp_daily").fetchone()[0] == 0
+    assert db.get_meta(conn, "exp:MOM:start") is None and db.get_meta(conn, "exp:LOWV:start") is None
+    ex.run_all(_cfg(), conn, bars, date(2026, 11, 24), datetime(2026, 11, 24, 16, 40), "close", False,
+               make_client=clients.__getitem__)
+    assert conn.execute("SELECT COUNT(*) FROM exp_daily").fetchone()[0] == 2         # the real close still records
