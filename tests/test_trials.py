@@ -27,7 +27,7 @@ def test_real_ledger_has_the_two_proposals_with_rules_fixed():
     ideas = {i["id"]: i for i in trials.ledger()}
     assert {"2026-11-23-1", "2026-11-23-2", "2026-11-23-3"} <= set(ideas)
     for i in ideas.values():
-        assert i["status"] in ("proposed", "approved") and i["backtest_rule"] and i["removal_rule"] and i["where"]
+        assert i["status"] in trials.STATUS_TEXT and i["backtest_rule"] and i["removal_rule"] and i["where"]
 
 
 def test_proposed_ideas_wait_for_approval(conn, tmp_path):
