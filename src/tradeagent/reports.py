@@ -328,7 +328,8 @@ def _decompose(state: AccountState, sym: str, start: pd.Timestamp, end: pd.Times
 
 
 def weekly(state: AccountState, config: Config, *, system_lines: Optional[list[Line]] = None,
-           watch_lines: Optional[list[Line]] = None, learning_lines: Optional[list[Line]] = None) -> Email:
+           watch_lines: Optional[list[Line]] = None, learning_lines: Optional[list[Line]] = None,
+           ideas_lines: Optional[list[Line]] = None) -> Email:
     d = state.sim.daily
     end = state.day
     week_start = end - pd.DateOffset(days=int(end.weekday()))          # Monday of the last session's week
@@ -419,6 +420,8 @@ def weekly(state: AccountState, config: Config, *, system_lines: Optional[list[L
         sections.append(Section("Watched on paper", watch_lines))
     if learning_lines:
         sections.append(Section("What the paper test is teaching (fixed questions, docs/LEARNING.md)", learning_lines))
+    if ideas_lines:
+        sections.append(Section("Ideas from GitHub (proposals only: nothing is built until you approve)", ideas_lines))
     if nxt_lines:
         sections.append(Section("Next week", nxt_lines))
     if system_lines:

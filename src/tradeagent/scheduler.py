@@ -307,8 +307,9 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
                     pass
             learn = learning.weekly_lines(conn, state.bars, config, now, main_book, _intents(conn),
                                            save=not dry_run)
+            from tradeagent import ideas                  # reads the `ideas` branch only; never merges or pushes
             em = reports.weekly(state, config, watch_lines=watch, system_lines=_system_lines(conn, now),
-                                learning_lines=learn)
+                                learning_lines=learn, ideas_lines=ideas.weekly_lines(now))
             detail += _deliver(em, config, conn, dry_run, out_dir)
         else:
             raise ValueError(kind)
