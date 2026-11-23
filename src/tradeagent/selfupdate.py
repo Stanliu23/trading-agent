@@ -67,7 +67,13 @@ def maybe_update(conn, now: datetime, *, root: Path = PROJECT_ROOT, run: Run = s
         head, remote = _git(["rev-parse", "HEAD"], root, run), _git(["rev-parse", "origin/main"], root, run)
         if head == remote:
             return None
-        _git(["checkout", "--", *GENERATED_FILES], root, run)
+        # Restore only generated files that show as changed: restoring a file the repo no longer has would fail on
+        # every run and leave this Mac unable to pull the fix.
+        dirty = {line.split(maxsplit=1)[-1] for line in
+                 _git(["status", "--porcelain", "--untracked-files=no"], root, run).splitlines() if line.strip()}
+        regenerated = [f for f in GENERATED_FILES if f in dirty]
+        if regenerated:
+            _git(["checkout", "--", *regenerated], root, run)
         if _git(["status", "--porcelain", "--untracked-files=no"], root, run):
             msg = "Auto-update paused: files were edited on this Mac. Nothing was changed."
             _set(conn, "last_update", f"{now:%Y-%m-%d %H:%M} {msg}")

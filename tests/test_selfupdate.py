@@ -92,3 +92,19 @@ def test_no_restore_when_already_up_to_date(conn, tmp_path):
     st = {"calls": [], "head": "a", "remote": "a", "changed": [], "dirty": " M docs/SETUP_STATS.md"}
     assert selfupdate.maybe_update(conn, datetime(2026, 11, 21, 9, 0, tzinfo=NY), root=tmp_path, run=fake_git(st)) is None
     assert not any(c[3:4] == ["checkout"] for c in st["calls"] if c[0] == "git")
+
+
+def test_generated_file_is_only_restored_when_it_changed(conn, tmp_path):
+    # a clean tree never runs the restore, so a stats doc removed from the repo later cannot break updates
+    (tmp_path / ".git").mkdir()
+    st = {"calls": [], "head": "a", "remote": "b", "changed": ["x"], "dirty": ""}
+    msg = selfupdate.maybe_update(conn, datetime(2026, 11, 21, 9, 0, tzinfo=NY), root=tmp_path, run=fake_git(st))
+    assert msg.startswith("Updated to abc123")
+    assert not any(c[3:4] == ["checkout"] for c in st["calls"] if c[0] == "git")
+
+
+def test_other_dirty_files_are_never_restored(conn, tmp_path):
+    (tmp_path / ".git").mkdir()
+    st = {"calls": [], "head": "a", "remote": "b", "changed": ["x"], "dirty": " M docs/SPEC.md"}
+    msg = selfupdate.maybe_update(conn, datetime(2026, 11, 21, 9, 0, tzinfo=NY), root=tmp_path, run=fake_git(st))
+    assert "paused" in msg and not any(c[3:4] == ["checkout"] for c in st["calls"] if c[0] == "git")
