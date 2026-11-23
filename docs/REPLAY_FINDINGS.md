@@ -518,3 +518,19 @@ All 9 variants were below all-at-once in every period. Check gain -0.046R per tr
 against a required +0.05R: **rejected; steps 3-4 not run.** Why (description only): on trades that confirmed, the part
 bought at the signal earned +0.8 to +1.3R per full-size unit, the added part only +0.07 to +0.10R, losing money 35-40%
 of the time. For our setups most of the move comes before the confirmation, so starting smaller gives up the best part.
+
+## Big-dip rule D1 and momentum sector cap (2026-11-23): rules fixed before running (commit 36dcd49)
+
+**D1 big-dip rebound: rejected (step 2).** A stock's first close 30%+ below its 60-day high; stop 2.5xATR; out after 20
+sessions. As a setup it is the strongest we have tested: 244 trades 2015-2025, +0.31R per trade, held-out
++0.49R, Edge 5, Confidence 4 (Tier 3: 37% lose and 1 in 20 trades loses more than 17%). In the
+account it fails: better in 22% of 36 starts, median -1.29 pts, worst drop 2.65 pts deeper
+(2026: +2.47 pts). Why: its signals cluster in crashes (81 in 2020, 67 in 2022), the account can afford only the
+first ones, which come early in the fall, and those losses switch on the goal pause, which then blocks S2. Average
+per-trade results do not survive limited cash and the account's own safety rules. Honesty note: the 30%/60-day
+trigger was chosen after a descriptive look at 2015-2025.
+
+**Sector cap for momentum (max 3 of 10 per GICS sector): passed by rule (b).** Per start it cut the worst drop by
+1.74 pts (median) for -0.48 pts of gain; better in 47% of starts. Jan-Nov 2026: -0.66 pts of gain,
+worst drop 20.7 pts shallower (the uncapped book was mostly chip stocks when they fell). Waiting for your approval
+to switch it on in the momentum experiment.

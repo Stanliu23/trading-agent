@@ -1,0 +1,38 @@
+{
+ "better_share": 0.4722222222222222,
+ "median_gain_pts": -0.48197907738207224,
+ "median_drop_pts": 1.7371294147577423,
+ "uncapped_median_gain": 23.15973306629801,
+ "uncapped_median_worst": -22.191234628413824,
+ "capped_median_gain": 26.192627595264373,
+ "capped_median_worst": -22.006081090692774,
+ "rule_a": false,
+ "rule_b": true,
+ "passed": true,
+ "2026_gain_pts": -0.6567344838259548,
+ "2026_drop_pts": 20.72922850916312,
+ "capped_picks_2026-11-20": [
+  "MU",
+  "MRVL",
+  "INTC",
+  "TGT",
+  "COP",
+  "MRK",
+  "XOM",
+  "CVX",
+  "BMY",
+  "UNH"
+ ],
+ "uncapped_picks_2026-11-20": [
+  "MU",
+  "MRVL",
+  "INTC",
+  "AMD",
+  "TGT",
+  "TXN",
+  "COP",
+  "ADI",
+  "AMAT",
+  "MRK"
+ ]
+}

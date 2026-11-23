@@ -1,0 +1,68 @@
+{
+ "step1": {
+  "setup_id": "D1",
+  "name": "Big-dip rebound",
+  "bucket": "short_term",
+  "kind": "swing",
+  "symbols_tested": 77,
+  "n": 244,
+  "first_entry": "2015-04-23",
+  "loss_rate": 0.3729508196721312,
+  "mean_ret": 0.050210688442803034,
+  "median_ret": 0.06612968094751426,
+  "tail_ret": -0.17168908136564084,
+  "worst_ret": -0.3292191655407213,
+  "best_ret": 0.5505642624137269,
+  "exp_r": 0.31492365891283375,
+  "stop_rate": 0.27049180327868855,
+  "avg_hold_days": 16.688524590163933,
+  "years_positive": 1.0,
+  "holdout_start": "2024-01-01",
+  "in_n": 199,
+  "in_metric": 0.2763570256790864,
+  "out_n": 45,
+  "out_metric": 0.4854738814354057,
+  "passes_evidence": true,
+  "evidence_note": "passes",
+  "tier": 3,
+  "edge": 5,
+  "confidence": 4,
+  "recommendable": true,
+  "trades_by_year": {
+   "2015": 14,
+   "2016": 12,
+   "2017": 2,
+   "2018": 16,
+   "2019": 6,
+   "2020": 81,
+   "2022": 67,
+   "2023": 1,
+   "2024": 14,
+   "2025": 31
+  },
+  "mean_r_by_year": {
+   "2015": 0.374,
+   "2016": 0.071,
+   "2017": 1.199,
+   "2018": 0.13,
+   "2019": 0.966,
+   "2020": 0.328,
+   "2022": 0.166,
+   "2023": 0.982,
+   "2024": 0.226,
+   "2025": 0.603
+  }
+ },
+ "step2": {
+  "better_share": 0.2222222222222222,
+  "median_gain_pts": -1.2925464648414202,
+  "median_drop_pts": -2.651939945223175,
+  "passed": false,
+  "d1_trades_median": 10.0
+ },
+ "step3": {
+  "gain_2026_pts": 2.4686303472647717,
+  "passed": true
+ },
+ "result": "FAILED step 2"
+}

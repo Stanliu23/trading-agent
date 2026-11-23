@@ -62,19 +62,24 @@
    "title": "Big-dip rebound (D1), a new short-term rule",
    "source": "Stanley's question about NVIDIA's -47% fall and +31% day (2026-11-23); my count of 401 past cases",
    "proposed": "2026-11-23",
-   "status": "approved",
+   "status": "backtest_failed",
    "review": "Descriptive count before this test (2015-2025, 77 stocks): after a stock first closed 30%+ below its 60-day high it was up 20 sessions later in 75% of cases (median +10.3%), but a third of the cases were the 2020 crash, 26% fell another 10%+ first, and the 77 are today's survivors. Honesty note: the 30%/60-day trigger was picked after seeing those 2015-2025 numbers, so the 2024-2025 check is not fully clean; 2026 is.",
    "where": "Backtest first. If it passes and you approve: a new setup D1 in the main paper account's short-term bucket.",
    "backtest_rule": "Fixed 2026-11-23 before any result. D1, short-term, the 77 traded stocks. Signal at a close: close <= 70% of the highest close of the last 60 sessions, and the previous close was above that level (first day across). Entry next open; stop 2.5 x ATR(14) at the signal close; no target; time exit at the close of the 20th session; no exit signal. Usual sizing, earnings skip, per-setup switch and every other rule as for S1-S4. Step 1: the standard setup evidence bar used for S1-S4 (backtest 2015-2025, held-out from 2024: >= 30 trades, >= 5 years, positive held-out, Edge >= 2), giving its tier. Step 2: 36 quarterly starts Apr 2015 - Jan 2024, 24 months, $300 + $250/month, 40/60: today's rules plus D1 vs today's rules: better in >= 60% of starts, median gain > 0, median worst drop no more than 1 point deeper. Step 3: Jan-Nov 2026 must not trail today's rules by more than 1 point.",
    "live_check": "Every D1 paper signal (all 77 stocks) from the day it is switched on, followed with its own exits; compared with its backtest average R.",
    "removal_rule": "After 30 closed D1 paper trades: removed if its average R is more than 2 standard errors below its backtest average. Early removal after 10 if the average is below -0.5R. (The per-setup switch also pauses it whenever its last 20 average below 0R.)",
    "check": null,
-   "backtest_result": null,
+   "backtest_result": "Step 1 PASSED: 244 trades 2015-2025, +0.31R per trade, held-out +0.49R (45 trades), loss rate 37%, 1 in 20 trades worse than -17%, Edge 5, Confidence 4, Tier 3. Step 2 FAILED: today's rules + D1 better in 22% of 36 starts, median -1.29 pts, worst drop -2.65 pts deeper. 2026: +2.47 pts (reported). Why: signals cluster in crashes (81 in 2020, 67 in 2022); with limited cash the account takes the first ones, early in the fall, so D1's own account trades lost money in 67% of runs (median -$19.50), and those losses switched on the goal pause, which then blocked S2 (example start 2019-10: pause 334 days vs 193; S2 +$612 without D1, -$8 with it). Files: research/big_dip_study.py, results/big_dip_*.",
    "decisions": [
     {
      "date": "2026-11-23",
      "what": "approved for testing",
      "by": "Stanley: 'test the big dip rule and sector cap too'"
+    },
+    {
+     "date": "2026-11-23",
+     "what": "rejected by its fixed rule (step 2)",
+     "by": "the rule"
     }
    ]
   },
@@ -83,19 +88,24 @@
    "title": "Sector cap for the momentum experiment",
    "source": "Stanley's question (2026-11-23): 8 of the 10 momentum picks were chip stocks",
    "proposed": "2026-11-23",
-   "status": "approved",
+   "status": "backtest_passed",
    "review": "Sectors are today's GICS sectors (research/sector_cap_study.py), applied to the whole history: a small bias, since some companies changed sector.",
    "where": "Backtest first. If it passes and you approve: the momentum experiment's own paper account (not the main account).",
    "backtest_rule": "Fixed 2026-11-23 before any result. Momentum as running (top 10 of the 77 by 12-1 month return, 10% each, monthly), but at most 3 of the 10 from one GICS sector: walk down the ranking and skip a stock whose sector already has 3. Compared with uncapped momentum, whole account in the strategy (0/100), 36 quarterly starts Apr 2015 - Jan 2024, 24 months, $300 + $250/month, 0.1% round trip, idle cash in BIL as in the tournament. Pass if EITHER (a) better than uncapped in >= 60% of starts, median gain > 0 and median worst drop no more than 1 point deeper, OR (b) median worst drop at least 1 point shallower and median gain no more than 1 point lower. Jan-Nov 2026 reported.",
    "live_check": "The uncapped ranking is kept on paper every month next to the capped holdings.",
    "removal_rule": "Reviewed with the experiment itself (it is a labelled experiment, not a live rule): removed if after 6 monthly rebalances the capped account trails the uncapped paper ranking by more than the 5th percentile of 6-month gaps in the backtest.",
    "check": null,
-   "backtest_result": null,
+   "backtest_result": "PASSED by rule (b): per start, worst drop +1.74 pts shallower (median), gain -0.48 pts (median), better in 47% of 36 starts; rule (a) not met. Medians of each: capped +26.2% / worst -22.0%, uncapped +23.2% / -22.2%. Jan-Nov 2026: gain -0.66 pts, worst drop +20.7 pts shallower. Files: research/sector_cap_study.py, results/sector_cap_*.",
    "decisions": [
     {
      "date": "2026-11-23",
      "what": "approved for testing",
      "by": "Stanley: 'test the big dip rule and sector cap too'"
+    },
+    {
+     "date": "2026-11-23",
+     "what": "passed its fixed rule; waiting for Stanley to approve switching it on",
+     "by": "the rule"
     }
    ]
   }
