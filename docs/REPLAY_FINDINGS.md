@@ -501,3 +501,20 @@ The rebuilt 40/60 account matches the real simulator (median gain 12.6% vs 12.4%
   Reversal's 2026 result (+1.6%) is far below its history, a sign the history is inflated.
 - In stress (VIX top 20%) and the 2020 crash, today's rules and the trend/breakout ETF rules lost least; momentum,
   reversal and the index funds fell about as much as SPY.
+
+## Scaling in on confirmation (2026-11-23): rejected by its fixed rule
+
+Your idea: buy a small part when a rule fires and add if the move continues. Menu and rules were fixed and committed
+(1112fd8) before any result: start f in {1/3, 1/2, 2/3} of the normal size, add once at the next open after a close at
+entry + k x R, k in {0.5, 1, 1.5}, add size (1 - f) / (1 + k) so the most a trade can lose stays 1R, stop unchanged.
+
+| Profit per trade (R of a full-size position) | 2015-2023 design (1,940) | 2024-2025 check (435) | 2026 (216) |
+|---|---|---|---|
+| All at once (today) | +0.112 | +0.175 | +0.088 |
+| Best scaled variant on design: start 2/3, add at +0.5R | +0.084 | +0.129 | +0.075 |
+| Start 1/2, add at +1R | +0.060 | +0.092 | +0.066 |
+
+All 9 variants were below all-at-once in every period. Check gain -0.046R per trade (90% range -0.071 to -0.022R)
+against a required +0.05R: **rejected; steps 3-4 not run.** Why (description only): on trades that confirmed, the part
+bought at the signal earned +0.8 to +1.3R per full-size unit, the added part only +0.07 to +0.10R, losing money 35-40%
+of the time. For our setups most of the move comes before the confirmation, so starting smaller gives up the best part.

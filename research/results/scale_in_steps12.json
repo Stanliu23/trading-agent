@@ -1,0 +1,17 @@
+{
+ "best_on_design": "f0.67_k0.5",
+ "design_best": 0.08390869972775779,
+ "design_all_at_once": 0.11153617193603661,
+ "check_best": 0.12913644158330845,
+ "check_all_at_once": 0.1753998647876911,
+ "check_gain": -0.04626342320438264,
+ "check_gain_90": [
+  -0.0709172985068634,
+  -0.021609547901901886
+ ],
+ "check_trades": 435,
+ "add_rate_design": 0.4711340206185567,
+ "step2_passed": false,
+ "final_best": 0.07475878979452484,
+ "final_all_at_once": 0.08751129276484607
+}
