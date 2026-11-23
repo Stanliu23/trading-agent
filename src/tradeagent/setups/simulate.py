@@ -74,6 +74,7 @@ def simulate_swing(df: pd.DataFrame, setup: Setup, symbol: str, cost: float) -> 
             target = None
 
         exit_px = exit_idx = reason = None
+        best = None
         j = e_idx
         while j < n:
             if j > e_idx and o[j] <= stop:
@@ -95,6 +96,9 @@ def simulate_swing(df: pd.DataFrame, setup: Setup, symbol: str, cost: float) -> 
                 break
             if setup.breakeven_after_r is not None and h[j] >= entry + setup.breakeven_after_r * risk:
                 stop = max(stop, entry)  # takes effect from the next session (intraday order is unknown)
+            if setup.trail_atr is not None and np.isfinite(a[i]):
+                best = max(best, c[j]) if best is not None else c[j]
+                stop = max(stop, best - setup.trail_atr * a[i])  # from the next session
             j += 1
         if reason is None:
             exit_px, exit_idx, reason = c[n - 1], n - 1, "end"

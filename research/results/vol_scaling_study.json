@@ -1,0 +1,15 @@
+{
+ "better_share": 0.25,
+ "median_gain_pts": -0.7937732028790623,
+ "median_drop_pts": 1.8296382920565577,
+ "today_median_gain": 12.624058109484071,
+ "today_median_worst": -13.11591285335173,
+ "scaled_median_gain": 9.031830246393088,
+ "scaled_median_worst": -11.697089747670313,
+ "band_trades_median": 19.5,
+ "avg_target_share": 0.8959236151528545,
+ "step_36_passed": false,
+ "gain_2026_pts": 0.3695111078135209,
+ "drop_2026_pts": -0.029956943033505823,
+ "passed": false
+}

@@ -534,3 +534,16 @@ trigger was chosen after a descriptive look at 2015-2025.
 1.74 pts (median) for -0.48 pts of gain; better in 47% of starts. Jan-Nov 2026: -0.66 pts of gain,
 worst drop 20.7 pts shallower (the uncapped book was mostly chip stocks when they fell). Waiting for your approval
 to switch it on in the momentum experiment.
+
+## Volatility scaling and S2 trailing stop (2026-11-23): both rejected by their fixed rules (commit 78eaae9)
+
+**Volatility-scaled long-term bucket.** Long-term share = min(1, 15% / SPY 20-day volatility), traded when 10+ points
+off. Over 36 starts: better than today's rules in 25%, median gain -0.79 pts, worst drop
+1.83 pts shallower; 2026 +0.37 pts. It trades return for smaller drops, as the critique of the
+paper expected. Rejected (its bar asked for better results, not just smaller drops); it also conflicts with the approved
+rule that long-term funds are sold only on a thesis break.
+
+**S2 trailing stop** (3xATR below the best close, replacing the 4xATR target). Per trade: 2015-2023
++0.081R vs +0.059R, 2024-2025 +0.195R vs +0.177R (+0.017R, needed +0.05R),
+2026 +0.176R vs +0.195R. Too small to tell from luck: rejected, account test not run. The option
+stays in the code (`trail_atr`), switched off.

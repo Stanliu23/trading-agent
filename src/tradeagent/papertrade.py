@@ -42,6 +42,8 @@ class Position:
     max_hold: Optional[int]
     sessions_held: int = 0
     pending_exit: bool = False
+    trail: Optional[float] = None      # trailing-stop distance in dollars (setups with trail_atr)
+    best: Optional[float] = None       # highest close since entry
 
 
 @dataclass
@@ -228,7 +230,13 @@ def simulate_portfolio(
                 cash[bucket] += dollars
                 continue
             qty = dollars * (1 - cost_half) / o
-            positions.append(Position(sym, setup.id, bucket, qty, o, stop, target, day, setup.max_hold_days))
+            pos = Position(sym, setup.id, bucket, qty, o, stop, target, day, setup.max_hold_days)
+            if setup.trail_atr is not None:
+                df_ = bars[sym]
+                k = df_.index.get_loc(day) - 1                      # the signal close
+                a_ = ind.atr(df_.iloc[: k + 1], 14).iloc[-1] if k >= 0 else float("nan")
+                pos.trail = setup.trail_atr * float(a_) if np.isfinite(a_) else None
+            positions.append(pos)
         queued = []
 
         # 3. intraday stops/targets (short-term only)
@@ -254,6 +262,9 @@ def simulate_portfolio(
             if c is None:
                 continue
             p.sessions_held += 1
+            if p.trail is not None and p.stop is not None:     # trailing stop, used from the next session
+                p.best = c if p.best is None else max(p.best, c)
+                p.stop = max(p.stop, p.best - p.trail)
             df = bars[p.symbol]
             i = df.index.get_loc(day)
             if i >= 61:

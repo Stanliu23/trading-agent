@@ -1,0 +1,78 @@
+{
+ "per_trade": {
+  "design": {
+   "current": {
+    "trades": 1241,
+    "mean_r": 0.0593,
+    "win_rate": 0.447,
+    "avg_hold": 12.3,
+    "exits": {
+     "stop": 600,
+     "time": 397,
+     "target": 244
+    }
+   },
+   "trail": {
+    "trades": 1133,
+    "mean_r": 0.0806,
+    "win_rate": 0.426,
+    "avg_hold": 13.3,
+    "exits": {
+     "stop": 660,
+     "time": 473
+    }
+   }
+  },
+  "check": {
+   "current": {
+    "trades": 273,
+    "mean_r": 0.1775,
+    "win_rate": 0.505,
+    "avg_hold": 12.5,
+    "exits": {
+     "stop": 119,
+     "time": 93,
+     "target": 61
+    }
+   },
+   "trail": {
+    "trades": 249,
+    "mean_r": 0.1948,
+    "win_rate": 0.478,
+    "avg_hold": 13.6,
+    "exits": {
+     "stop": 138,
+     "time": 111
+    }
+   }
+  },
+  "final": {
+   "current": {
+    "trades": 133,
+    "mean_r": 0.1948,
+    "win_rate": 0.436,
+    "avg_hold": 9.8,
+    "exits": {
+     "stop": 64,
+     "target": 41,
+     "time": 28
+    }
+   },
+   "trail": {
+    "trades": 110,
+    "mean_r": 0.1758,
+    "win_rate": 0.4,
+    "avg_hold": 11.4,
+    "exits": {
+     "stop": 78,
+     "time": 32
+    }
+   }
+  }
+ },
+ "step1": {
+  "check_gain_r": 0.0173,
+  "passed": false
+ },
+ "result": "FAILED step 1"
+}
