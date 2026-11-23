@@ -125,6 +125,14 @@ as labelled experiments, so they can be watched live. No real money; Schwab unto
   account or another experiment's account. Rules in `strategies.py`, orders in `experiments.py`.
 - **To stop one:** set its `enabled: false` under `experiments:` in config.yaml on the MacBook and push.
 
+## 2g. Learning from the paper accounts (designed 2026-11-23)
+
+A fill tracker logs every agent fill in all three Alpaca paper accounts with the price the simulator assumed, and
+nine fixed questions (trading cost, stop fills, signal frequency, your moves, rebalance timing, experiments vs luck,
+the per-setup switch, live vs backtest results, missed runs) are answered every Saturday once each has enough cases.
+Questions, minimums and pass rules were fixed before any data: docs/LEARNING.md. They measure and report only; the
+automatic cost update is designed there and stays off until you approve it.
+
 ## 3. The run cycle
 
 1. **Scheduler (launchd on the Mac):** runs every 15 min from 9:30 to 16:00 ET on trading days, a premarket run at 08:00 ET, a close run at 16:30 ET, and a weekly run on Saturday at 09:00 ET.

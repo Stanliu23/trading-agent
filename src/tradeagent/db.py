@@ -128,6 +128,38 @@ CREATE TABLE IF NOT EXISTS paper_intents (
     detail           TEXT
 );
 
+-- Fill tracker (docs/LEARNING.md): every filled agent order with the price the simulator assumed for it.
+CREATE TABLE IF NOT EXISTS fill_log (
+    order_id         TEXT PRIMARY KEY,
+    account          TEXT NOT NULL,              -- main | MOM | LOWV
+    client_order_id  TEXT,
+    symbol           TEXT NOT NULL,
+    side             TEXT NOT NULL,
+    purpose          TEXT,
+    submitted_at     TEXT,
+    filled_at        TEXT,
+    day              TEXT,
+    qty              REAL,
+    fill             REAL,
+    assumed          REAL,
+    basis            TEXT,
+    cost_pct         REAL,                       -- positive = worse for us than assumed
+    question         TEXT,                       -- Q1 | Q2 | Q5 | ''
+    lot_entry        REAL,
+    lot_stop         REAL
+);
+
+-- Learning questions (docs/LEARNING.md): every weekly answer, so what was learned and when is kept.
+CREATE TABLE IF NOT EXISTS learning_log (
+    scored_at  TEXT NOT NULL,
+    qid        TEXT NOT NULL,
+    n          INTEGER,
+    need       INTEGER,
+    status     TEXT NOT NULL,
+    text       TEXT NOT NULL,
+    PRIMARY KEY (scored_at, qid)
+);
+
 -- Strategy experiments (each in its own Alpaca paper account): why the agent placed each order.
 CREATE TABLE IF NOT EXISTS exp_intents (
     client_order_id  TEXT PRIMARY KEY,

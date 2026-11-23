@@ -250,6 +250,11 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
                         placed += paperbroker.place_watch(client, b, quotes_p, today, now, _intents(conn), record, late)
                         executed = [p for p in placed if p.side == "sell" and p.purpose in ("stop", "target", "time")]
                 state = _paper_state(conn, client, shadow, today, save_close=(kind == "close" and not dry_run))
+                if kind == "close" and not dry_run:              # fill tracker: measures only, never trades
+                    from tradeagent import learning
+                    start = shadow.sim.daily.index[0]
+                    learning.record_fills(conn, "main", client.orders(f"{start:%Y-%m-%d}T00:00:00Z"), state.bars,
+                                          paperbroker.PREFIX, _intents(conn))
             except alpaca.AlpacaError as exc:
                 detail = f"Alpaca unavailable, emails use the pretend account ({exc}); "
         elif config.paper_broker.enabled:
@@ -293,7 +298,17 @@ def run_kind(kind: str, config: Config, *, now: Optional[datetime] = None, dry_r
             if config.experiments:
                 from tradeagent import experiments
                 watch += experiments.weekly_lines(config, conn, state.bars, now, main_since=lambda d: _main_since(conn, d))
-            em = reports.weekly(state, config, watch_lines=watch, system_lines=_system_lines(conn, now))
+            from tradeagent import learning
+            main_book = None
+            if client is not None:
+                try:
+                    main_book = _paper_book(conn, client, shadow, today)
+                except alpaca.AlpacaError:
+                    pass
+            learn = learning.weekly_lines(conn, state.bars, config, now, main_book, _intents(conn),
+                                           save=not dry_run)
+            em = reports.weekly(state, config, watch_lines=watch, system_lines=_system_lines(conn, now),
+                                learning_lines=learn)
             detail += _deliver(em, config, conn, dry_run, out_dir)
         else:
             raise ValueError(kind)

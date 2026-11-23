@@ -263,6 +263,9 @@ def run_all(config, conn, bars, today: date, now: datetime, kind: str, dry_run: 
             if kind == "close" and not dry_run:                 # a dry run records no start and no close
                 start_info(conn, e.id, clients[e.id], today)
                 save_close(conn, e.id, clients[e.id], today)
+                from tradeagent import learning              # fill tracker: measures only
+                start, _ = start_info(conn, e.id, clients[e.id], today)
+                learning.record_fills(conn, e.id, clients[e.id].orders(f"{start}T00:00:00Z"), bars, prefix(e.id))
         except Exception as exc:
             _set(conn, f"exp:{e.id}:problem", f"{today}: {type(exc).__name__}: {exc}"[:300])
             parts.append(f"{e.id} error ({type(exc).__name__})")
