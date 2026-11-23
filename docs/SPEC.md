@@ -89,7 +89,7 @@ Account value includes deposits. The switch to moderate happens once and is neve
 - **Fallback:** if the AI is off, over its daily cap (10 runs), or unavailable, a fixed template writes the lines from the facts. Recommendations never depend on the AI.
 - **Why not Vibe-Trading's own Claude provider:** it passes a `--restricted` flag that the installed Claude Code CLI (2.1.236) rejects. The analyst calls `claude -p` directly with the same isolation flags minus that one, and it's lighter on tokens than the full Vibe-Trading agent loop.
 
-## 2e. Two-week test on Alpaca's paper account (approved 2026-11-19)
+## 2e. Test on Alpaca's paper account (approved 2026-11-19; open-ended since 2026-11-23)
 
 - **Who trades:** the agent places the pretend account's orders in an **Alpaca paper account** (simulated money). Your Schwab account stays read-only and untouched.
 - **Only paper can be reached:** the Alpaca connection refuses any address except `paper-api.alpaca.markets`. The live host is blocked in code and by tests, and the agent never deletes or replaces orders.
@@ -100,6 +100,8 @@ Account value includes deposits. The switch to moderate happens once and is neve
   - a buy you place is flagged until you run `tradeagent tag SYMBOL long_term|short_term`. A short-term tag gives it S2's exits (stop 2×ATR, target 4×ATR, 20 sessions); long-term is held.
 - **Emails describe the Alpaca account.** The rules-only pretend account keeps running, and the weekly email compares the two.
 - **Money:** Alpaca's real paper balance ($1,000 at the start, nothing added). The plan is sized from the balance recorded at the first run, then split 40/60. Cash is Alpaca's actual cash on every run; anything added or removed later counts as short-term. Idle cash is not parked in BIL during the test.
+- **Length:** originally 2 weeks; on 2026-11-23 you extended it with no end date. It runs until you stop it. Nothing in the code ends it.
+- **To stop:** set `paper_broker.enabled: false` in `config.yaml` on the MacBook and push; the always-on Mac picks it up at its next daily update (after 06:00 ET). From then on the agent places no Alpaca orders and emails go back to the rules-only pretend account. Anything still held in Alpaca stays there; the agent does not sell it.
 
 ## 3. The run cycle
 

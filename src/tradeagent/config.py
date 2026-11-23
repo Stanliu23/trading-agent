@@ -291,7 +291,7 @@ class Schwab(Strict):
 
 
 class PaperBroker(Strict):
-    """2-week test: the agent places the shadow plan in Alpaca's paper account (no real money)."""
+    """Paper test (no end date; runs until Stanley turns it off): the agent places the shadow plan in Alpaca's paper account (no real money)."""
     enabled: bool = False
     provider: Literal["alpaca"] = "alpaca"
 

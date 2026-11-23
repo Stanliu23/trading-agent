@@ -1,4 +1,4 @@
-"""The 2-week test on Alpaca's paper account: the agent places the shadow plan's trades, you may step in.
+"""The test on Alpaca's paper account (no end date): the agent places the shadow plan's trades, you may step in.
 
 How it works:
 - The shadow account (``account.build``) still decides: which buys, at what size, with which stop/target.

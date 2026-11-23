@@ -2,7 +2,7 @@
 # Personal details (email addresses) go in config.local.yaml, which is never committed.
 
 version: 1
-mode: shadow                 # shadow = emails marked SHADOW, you don't act. Switch to live after the 2-week run.
+mode: shadow                 # shadow = emails marked SHADOW, you don't act. Live only after you approve it.
 timezone: America/New_York
 
 account:
@@ -172,8 +172,9 @@ schwab:
 
 # Shadow run: a pretend account built by replaying every rule from `start` with real prices.
 # Deposits follow the same assumption as the replays until the Schwab connection exists.
-# 2-week test on Alpaca's PAPER account (approved 2026-11-19): the agent places the shadow plan's orders there,
-# you may cancel, sell or buy yourself and the agent respects it. Only Alpaca's paper host can be reached.
+# Test on Alpaca's PAPER account (approved 2026-11-19; no end date since 2026-11-23, runs until you stop it):
+# the agent places the shadow plan's orders there, you may cancel, sell or buy yourself and the agent respects it.
+# Only Alpaca's paper host can be reached. To stop: set paper_broker.enabled to false on this MacBook and push.
 # Always-on Mac pulls new code from GitHub by itself once a day, at the first run after 06:00 ET (before
 # premarket), fast-forward only, stops if anything was edited locally (approved 2026-11-20; daily 2026-11-20).
 auto_update: true

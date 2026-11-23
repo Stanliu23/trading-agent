@@ -56,7 +56,7 @@ Each phase ends with a **Done when** check. We don't start the next phase until 
 
 **Done when:** the snapshot matches the Schwab app to the cent.
 
-**Paper test (2026-11-19):** you chose to run the 2-week test on an Alpaca paper account, with the agent placing the trades and you free to step in (see SPEC 2e). Built: `alpaca.py` (paper host only), `paperbroker.py` (orders, stops/targets/time limits, your changes respected), and emails from the Alpaca account. `paper-check` tests the connection.
+**Paper test (2026-11-19):** you chose to run the test on an Alpaca paper account, with the agent placing the trades and you free to step in (see SPEC 2e). Built: `alpaca.py` (paper host only), `paperbroker.py` (orders, stops/targets/time limits, your changes respected), and emails from the Alpaca account. `paper-check` tests the connection. On 2026-11-23 you extended it past 2 weeks with no end date: it runs until you stop it (SPEC 2e).
 
 ## Phase 3: email pipeline (needs the Gmail app password)
 

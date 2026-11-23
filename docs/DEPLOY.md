@@ -52,7 +52,7 @@ claude auth login
 
    ```bash
    cd ~/trading-agent && uv run tradeagent set-secret gmail_app_password
-   uv run tradeagent set-secret alpaca_paper_key        # 2-week paper test: the PAPER key from alpaca.markets
+   uv run tradeagent set-secret alpaca_paper_key        # paper test: the PAPER key from alpaca.markets
    uv run tradeagent set-secret alpaca_paper_secret
    uv run tradeagent paper-check                        # shows the paper account; places nothing
    uv run tradeagent set-secret schwab_app_key          # Schwab app "Trade bot": Client ID

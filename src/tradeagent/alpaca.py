@@ -1,4 +1,4 @@
-"""Alpaca PAPER account client: the 2-week test's simulated brokerage. No real money can be reached.
+"""Alpaca PAPER account client: the paper test's simulated brokerage. No real money can be reached.
 
 ``guard`` lets requests through only to Alpaca's paper host (paper-api.alpaca.markets). The live host
 (api.alpaca.markets) and every other host are refused before anything is sent, so even a live key pasted by
