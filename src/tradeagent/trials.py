@@ -63,7 +63,9 @@ def is_active(config, conn, idea_id: str) -> bool:
 
 def weekly_lines(conn, bars, config, now: datetime, save: bool = True, path=LEDGER,
                  checks: Optional[dict] = None) -> list[Line]:
-    checks = CHECKS if checks is None else checks
+    if checks is None:
+        from tradeagent import trial_checks  # noqa: F401  (registers the built checks)
+        checks = CHECKS
     out = []
     for idea in ledger(path):
         i, title, st = idea["id"], idea["title"], idea.get("status", "proposed")

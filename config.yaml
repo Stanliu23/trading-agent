@@ -192,7 +192,8 @@ experiments:
 
 # Ideas on trial (research/ideas_ledger.json, docs/LEARNING.md part 3). An idea is listed here only after you approve
 # it and it passes its backtest. Off (or removed by its own removal rule) = the previous approved rule is used.
-trials: {}
+trials:
+  "2026-11-23-5": true    # momentum sector cap (max 3 per sector), approved 2026-11-23; first used at the Dec 1 rebalance
 
 shadow:
   start: "2026-11-19"

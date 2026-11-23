@@ -257,3 +257,54 @@ def test_dry_run_close_records_no_start_and_no_close(conn, c, monkeypatch):
     ex.run_all(_cfg(), conn, bars, date(2026, 11, 24), datetime(2026, 11, 24, 16, 40), "close", False,
                make_client=clients.__getitem__)
     assert conn.execute("SELECT COUNT(*) FROM exp_daily").fetchone()[0] == 2         # the real close still records
+
+
+# --- the momentum sector cap trial ----------------------------------------------------------------------------------
+
+def test_sector_cap_keeps_at_most_three_per_sector():
+    from tradeagent.setups.library import TRADED_STOCKS
+    idx = pd.bdate_range("2025-06-02", "2026-11-30")
+    rng = np.random.default_rng(3)
+    chips = ["MU", "MRVL", "INTC", "AMD", "AMAT", "LRCX", "TXN", "ADI", "KLAC", "NXPI"]
+    data = {s: 50 * np.exp(np.cumsum((0.004 if s in chips else 0.0005) + 0.01 * rng.standard_normal(len(idx))))
+            for s in TRADED_STOCKS}
+    c = pd.DataFrame(data, index=idx)
+    d = pd.Timestamp("2026-10-30")
+    unc = strategies.targets("MOM", c, d)
+    cap = strategies.targets("MOM", c, d, sector_cap=3)
+    assert sum(strategies.SECTOR[s] == "Information Technology" for s in unc) >= 8
+    assert len(cap) == 10 and max(pd.Series([strategies.SECTOR[s] for s in cap]).value_counts()) <= 3
+    assert cap[:3] == [s for s in unc if strategies.SECTOR[s] == "Information Technology"][:3]
+
+
+def test_cap_is_used_only_while_its_trial_is_on(conn, c, monkeypatch):
+    from tradeagent import trials
+    monkeypatch.setattr(ex, "ready", lambda e: True)
+    monkeypatch.setattr(ex, "TRADED_STOCKS", SYMS)
+    seen = []
+    monkeypatch.setattr(ex, "step", lambda *a, **k: seen.append((a[0], k.get("sector_cap"))) or [])
+    bars = {s: pd.DataFrame({"close": _flat(c)[s]}) for s in SYMS} | {"SPY": pd.DataFrame({"close": _flat(c)["S00"]})}
+    clients = {"MOM": FakeAlpaca(number="A"), "LOWV": FakeAlpaca(number="B")}
+    cfg = _cfg()
+    assert cfg.trials.get(strategies.SECTOR_CAP_IDEA) is True
+    ex.run_all(cfg, conn, bars, date(2026, 12, 1), datetime(2026, 12, 1, 8), "premarket", False, make_client=clients.__getitem__)
+    assert ("MOM", 3) in seen and ("LOWV", None) in seen
+    trials.remove(conn, strategies.SECTOR_CAP_IDEA, "trailed uncapped", datetime(2027, 6, 5))
+    seen.clear()
+    ex.run_all(cfg, conn, bars, date(2027, 7, 1), datetime(2027, 7, 1, 8), "premarket", False, make_client=clients.__getitem__)
+    assert ("MOM", None) in seen                                         # removed: back to uncapped
+
+
+def test_sector_cap_check_waits_then_removes_when_far_behind(monkeypatch):
+    from tradeagent import trial_checks as tc
+    idx = pd.bdate_range("2025-06-02", "2027-07-15")
+    rng = np.random.default_rng(5)
+    from tradeagent.setups.library import TRADED_STOCKS
+    data = {s: 50 * np.exp(np.cumsum(0.0005 + 0.01 * rng.standard_normal(len(idx)))) for s in TRADED_STOCKS}
+    bars = {s: pd.DataFrame({"close": v}, index=idx) for s, v in data.items()} | {"SPY": pd.DataFrame({"close": data["AAPL"]}, index=idx)}
+    short = {k: v.loc[:"2027-03-15"] for k, v in bars.items()}
+    assert tc.sector_cap_check(None, short, None, "2026-12-01").action == "waiting"
+    monkeypatch.setattr(tc, "sector_cap_gaps", lambda c, start=None, end=None: pd.Series([-0.02] * 6))
+    assert tc.sector_cap_check(None, bars, None, "2026-12-01").action == "remove"           # -11.3% < -6.1%
+    monkeypatch.setattr(tc, "sector_cap_gaps", lambda c, start=None, end=None: pd.Series([0.0] * 6))
+    assert tc.sector_cap_check(None, bars, None, "2026-12-01").action == "keep_watching"

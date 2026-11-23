@@ -20,19 +20,7 @@ import strategy_tournament as T  # noqa: E402  (same engine and data as the tour
 
 OUT = T.ROOT / "research" / "results"
 CAP = 3
-SECTOR = {
-    **dict.fromkeys(["AAPL", "MSFT", "NVDA", "CSCO", "ORCL", "ADBE", "CRM", "INTC", "AMD", "QCOM", "TXN", "AVGO", "MU",
-                     "AMAT", "LRCX", "KLAC", "ADI", "MRVL", "NXPI", "INTU", "NOW", "IBM", "ACN"], "Information Technology"),
-    **dict.fromkeys(["GOOGL", "META", "NFLX", "DIS", "T", "VZ", "CMCSA"], "Communication Services"),
-    **dict.fromkeys(["AMZN", "HD", "MCD", "NKE", "LOW", "SBUX", "BKNG"], "Consumer Discretionary"),
-    **dict.fromkeys(["PG", "KO", "PEP", "COST", "WMT", "TGT"], "Consumer Staples"),
-    **dict.fromkeys(["JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "BLK", "AXP"], "Financials"),
-    **dict.fromkeys(["UNH", "JNJ", "MRK", "ABBV", "PFE", "LLY", "TMO", "AMGN", "GILD", "BMY", "ISRG"], "Health Care"),
-    **dict.fromkeys(["XOM", "CVX", "COP", "SLB"], "Energy"),
-    **dict.fromkeys(["UNP", "CAT", "DE", "HON", "GE", "LMT", "RTX"], "Industrials"),
-    **dict.fromkeys(["NEE", "DUK"], "Utilities"),
-    "LIN": "Materials",
-}
+from tradeagent.strategies import SECTOR  # noqa: E402  (one list, shared with the live rule)
 
 
 def weights_mom_capped(C, stocks):

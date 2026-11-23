@@ -1,0 +1,9 @@
+{
+ "made": "2026-11-23",
+ "months": 131,
+ "six_month_windows": 126,
+ "threshold_6m_log_gap": -0.0631002539802299,
+ "median_6m_log_gap": 0.004066329568286878,
+ "first": "2015-02-27",
+ "last": "2025-12-31"
+}

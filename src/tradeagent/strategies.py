@@ -51,6 +51,37 @@ def ranking(strategy: str, c: pd.DataFrame, day: pd.Timestamp) -> list[str]:
     raise ValueError(strategy)
 
 
-def targets(strategy: str, c: pd.DataFrame, day: pd.Timestamp, blocked: set[str] = frozenset()) -> list[str]:
-    """The 10 stocks to hold, skipping any you sold yourself (the next-ranked one takes its place)."""
-    return [s for s in ranking(strategy, c, day) if s not in blocked][:TOP_N]
+# Today's GICS sectors of the 77 traded stocks (used by the momentum sector cap, idea 2026-11-23-5).
+SECTOR = {
+    **dict.fromkeys(["AAPL", "MSFT", "NVDA", "CSCO", "ORCL", "ADBE", "CRM", "INTC", "AMD", "QCOM", "TXN", "AVGO", "MU",
+                     "AMAT", "LRCX", "KLAC", "ADI", "MRVL", "NXPI", "INTU", "NOW", "IBM", "ACN"], "Information Technology"),
+    **dict.fromkeys(["GOOGL", "META", "NFLX", "DIS", "T", "VZ", "CMCSA"], "Communication Services"),
+    **dict.fromkeys(["AMZN", "HD", "MCD", "NKE", "LOW", "SBUX", "BKNG"], "Consumer Discretionary"),
+    **dict.fromkeys(["PG", "KO", "PEP", "COST", "WMT", "TGT"], "Consumer Staples"),
+    **dict.fromkeys(["JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "BLK", "AXP"], "Financials"),
+    **dict.fromkeys(["UNH", "JNJ", "MRK", "ABBV", "PFE", "LLY", "TMO", "AMGN", "GILD", "BMY", "ISRG"], "Health Care"),
+    **dict.fromkeys(["XOM", "CVX", "COP", "SLB"], "Energy"),
+    **dict.fromkeys(["UNP", "CAT", "DE", "HON", "GE", "LMT", "RTX"], "Industrials"),
+    **dict.fromkeys(["NEE", "DUK"], "Utilities"),
+    "LIN": "Materials",
+}
+SECTOR_CAP_IDEA = "2026-11-23-5"
+SECTOR_CAP = 3
+
+
+def targets(strategy: str, c: pd.DataFrame, day: pd.Timestamp, blocked: set[str] = frozenset(),
+            sector_cap: int | None = None) -> list[str]:
+    """The 10 stocks to hold, skipping any you sold yourself (the next-ranked one takes its place). With
+    ``sector_cap``, at most that many from one GICS sector: a stock whose sector is full is skipped too."""
+    picks, count = [], {}
+    for s in ranking(strategy, c, day):
+        if s in blocked:
+            continue
+        sec = SECTOR.get(s, s)
+        if sector_cap is not None and count.get(sec, 0) >= sector_cap:
+            continue
+        picks.append(s)
+        count[sec] = count.get(sec, 0) + 1
+        if len(picks) == TOP_N:
+            break
+    return picks

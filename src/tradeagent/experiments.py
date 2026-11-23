@@ -132,7 +132,8 @@ def start_info(conn, exp_id: str, client, today: Optional[date] = None) -> tuple
     return d, float(e)
 
 
-def step(exp_id: str, client, c: pd.DataFrame, today: date, conn, now: datetime) -> list[str]:
+def step(exp_id: str, client, c: pd.DataFrame, today: date, conn, now: datetime,
+         sector_cap: Optional[int] = None) -> list[str]:
     """Advance this month's rebalance as far as it can go now. Returns what it did, in plain English."""
     cycle = f"{today:%Y%m}"
     done_key, plan_key = f"exp:{exp_id}:{cycle}:done", f"exp:{exp_id}:{cycle}:plan"
@@ -148,7 +149,7 @@ def step(exp_id: str, client, c: pd.DataFrame, today: date, conn, now: datetime)
 
     if plan is None:
         sig = strategies.signal_day(c.index, today)
-        tg = strategies.targets(exp_id, c, sig, set(b.blocked))
+        tg = strategies.targets(exp_id, c, sig, set(b.blocked), sector_cap=sector_cap)
         value = cash + sum(q * px[s] for s, q in b.agent_qty.items())
         each = value / strategies.TOP_N
         sells = []
@@ -160,7 +161,8 @@ def step(exp_id: str, client, c: pd.DataFrame, today: date, conn, now: datetime)
                 sells.append([s, (have - each) / px[s]])
         plan = {"signal": sig.date().isoformat(), "targets": tg, "sells": sells, "buys": None, "fails": {}}
         _set(conn, plan_key, json.dumps(plan))
-        out.append(f"Ranked at the {sig:%b %d} close: {', '.join(tg)}.")
+        out.append(f"Ranked at the {sig:%b %d} close: {', '.join(tg)}"
+                   + (f" (at most {sector_cap} per sector, trial {strategies.SECTOR_CAP_IDEA})." if sector_cap else "."))
 
     sent_now: set[str] = set()
 
@@ -256,7 +258,10 @@ def run_all(config, conn, bars, today: date, now: datetime, kind: str, dry_run: 
             conn.execute("DELETE FROM meta WHERE key = ?", (f"exp:{e.id}:problem",))
             conn.commit()
             if kind in ("premarket", "intraday") and not dry_run:
-                did = step(e.id, clients[e.id], c, today, conn, now)
+                from tradeagent import trials             # the sector cap runs only while its trial is on
+                cap = (strategies.SECTOR_CAP if e.id == "MOM" and trials.is_active(config, conn, strategies.SECTOR_CAP_IDEA)
+                       else None)
+                did = step(e.id, clients[e.id], c, today, conn, now, sector_cap=cap)
                 if did:
                     _set(conn, f"exp:{e.id}:last_note", f"{today}: " + " ".join(did))
                     parts.append(f"{e.id}: {len(did)} step(s)")

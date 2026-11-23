@@ -124,6 +124,7 @@ as labelled experiments, so they can be watched live. No real money; Schwab unto
 - **Safety:** paper host only (same guard as 2e); the agent refuses to trade an experiment whose keys open the main paper
   account or another experiment's account. Rules in `strategies.py`, orders in `experiments.py`.
 - **To stop one:** set its `enabled: false` under `experiments:` in config.yaml on the MacBook and push.
+- **Sector cap on momentum (trial, approved 2026-11-23):** at most 3 of the 10 picks from one GICS sector (`strategies.SECTOR`). It runs while `trials: "2026-11-23-5"` is on and its removal rule has not fired (docs/LEARNING.md part 3); otherwise the uncapped top 10 is used.
 
 ## 2g. Learning from the paper accounts (designed 2026-11-23)
 

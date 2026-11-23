@@ -59,5 +59,5 @@ def test_trial_without_a_check_or_switched_off_is_flagged(conn, tmp_path):
     assert "switched off in config" in off[0].text and not trials.is_active(_cfg(False), conn, "X1")
 
 
-def test_nothing_is_on_trial_today():
-    assert load_config().trials == {}
+def test_only_the_sector_cap_is_on_trial():
+    assert load_config().trials == {"2026-11-23-5": True}

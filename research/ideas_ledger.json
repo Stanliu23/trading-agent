@@ -88,13 +88,13 @@
    "title": "Sector cap for the momentum experiment",
    "source": "Stanley's question (2026-11-23): 8 of the 10 momentum picks were chip stocks",
    "proposed": "2026-11-23",
-   "status": "backtest_passed",
+   "status": "trial",
    "review": "Sectors are today's GICS sectors (research/sector_cap_study.py), applied to the whole history: a small bias, since some companies changed sector.",
    "where": "Backtest first. If it passes and you approve: the momentum experiment's own paper account (not the main account).",
    "backtest_rule": "Fixed 2026-11-23 before any result. Momentum as running (top 10 of the 77 by 12-1 month return, 10% each, monthly), but at most 3 of the 10 from one GICS sector: walk down the ranking and skip a stock whose sector already has 3. Compared with uncapped momentum, whole account in the strategy (0/100), 36 quarterly starts Apr 2015 - Jan 2024, 24 months, $300 + $250/month, 0.1% round trip, idle cash in BIL as in the tournament. Pass if EITHER (a) better than uncapped in >= 60% of starts, median gain > 0 and median worst drop no more than 1 point deeper, OR (b) median worst drop at least 1 point shallower and median gain no more than 1 point lower. Jan-Nov 2026 reported.",
-   "live_check": "The uncapped ranking is kept on paper every month next to the capped holdings.",
-   "removal_rule": "Reviewed with the experiment itself (it is a labelled experiment, not a live rule): removed if after 6 monthly rebalances the capped account trails the uncapped paper ranking by more than the 5th percentile of 6-month gaps in the backtest.",
-   "check": null,
+   "live_check": "Every month the uncapped ranking is followed on paper next to the capped one, both the same way: equal weight, from the month-end close the ranking is read at to the next month-end close (no costs on either side). Clarified 2026-11-23, before the trial started: the account itself is not used for the comparison, so fills and costs cannot tilt it.",
+   "removal_rule": "From 6 completed monthly rebalances on, every Saturday: removed if the last 6 months' capped-minus-uncapped gap (log) is below the 5th percentile of 6-month gaps in 2015-2025, measured the same way: -0.0631 (about -6.1%; research/results/sector_cap_reference.json). Removal switches the momentum experiment back to uncapped at the next rebalance.",
+   "check": "trial_checks.sector_cap_check",
    "backtest_result": "PASSED by rule (b): per start, worst drop +1.74 pts shallower (median), gain -0.48 pts (median), better in 47% of 36 starts; rule (a) not met. Medians of each: capped +26.2% / worst -22.0%, uncapped +23.2% / -22.2%. Jan-Nov 2026: gain -0.66 pts, worst drop +20.7 pts shallower. Files: research/sector_cap_study.py, results/sector_cap_*.",
    "decisions": [
     {
@@ -106,8 +106,14 @@
      "date": "2026-11-23",
      "what": "passed its fixed rule; waiting for Stanley to approve switching it on",
      "by": "the rule"
+    },
+    {
+     "date": "2026-11-23",
+     "what": "approved: switch the trial on (first used at the Dec 1 rebalance, once pushed)",
+     "by": "Stanley: 'Yes, approve the cap'"
     }
-   ]
+   ],
+   "trial_start": "2026-12-01"
   }
  ]
 }
